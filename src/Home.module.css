@@ -20,7 +20,7 @@
       .top {
         font-family: 'Orbitron';
         font-size: 1.5rem;
-        font-weight: bolder;
+        font-weight: 800;
 
         span {
           font-family: 'Inter';
@@ -84,7 +84,7 @@
 
   .trending,
   .popular,
-  .topRated {
+  .latest {
     margin-top: 1rem;
 
     &[data-scroll='start'] {
@@ -148,13 +148,13 @@
           color: orange;
         }
 
-        .crown {
+        .sparkles {
           color: gold;
         }
 
         span {
           font-family: 'Orbitron';
-          font-weight: bold;
+          font-weight: 600;
           font-size: 1.2rem;
         }
       }
@@ -239,6 +239,7 @@
         }
 
         .rate,
+        .eps,
         .titleWrapper {
           position: absolute;
         }
@@ -248,7 +249,7 @@
           left: 10px;
           display: flex;
           align-items: center;
-          gap: 5px;
+          gap: 2.5px;
           font-size: 0.75rem;
           padding: 5px 10px;
           background: #00000080;
@@ -258,6 +259,22 @@
 
           .star {
             color: yellow;
+          }
+        }
+
+        .eps {
+          top: 5px;
+          right: 10px;
+          font-size: 0.75rem;
+          padding: 5px 10px;
+          background: #00000080;
+          border-radius: 100em;
+          backdrop-filter: blur(2px);
+          color: #fafafa;
+
+          span {
+            font-size: 1rem;
+            line-height: 0;
           }
         }
 
@@ -284,7 +301,6 @@
             font-family: 'Orbitron';
             font-weight: 600;
             font-size: 0.8rem;
-            letter-spacing: 1px;
             color: #fafafa;
 
             display: -webkit-box;

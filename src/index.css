@@ -1,14 +1,14 @@
 @font-face {
   font-family: 'Inter';
-  src: url('./assets/Inter.woff2') format('woff2');
-  font-weight: normal;
+  src: url('./assets/Inter.woff2') format('woff2-variations');
+  font-weight: 100 900;
   font-style: normal;
 }
 
 @font-face {
   font-family: 'Orbitron';
-  src: url('./assets/Orbitron.woff2') format('woff2');
-  font-weight: normal;
+  src: url('./assets/Orbitron.woff2') format('woff2-variations');
+  font-weight: 100 900;
   font-style: normal;
 }
 
@@ -16,12 +16,14 @@
   --bg-color: #fafafa;
   --color-1: black;
   --color-2: #8264db;
+  --color-3: #259996;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-color: black;
-    --color-1: #fafafa;
+    --color-1: #fafafaff;
+    --color-3: #1bd3ceff;
   }
 }
 

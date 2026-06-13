@@ -1,7 +1,8 @@
 import style from './Navigator.module.css';
 import { House, Settings, BookOpen, Download, Search } from 'lucide-react';
-import { motion, stagger } from 'motion/react';
-import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { useState, useEffect, useContext } from 'react';
+import { AppContext } from './App.jsx';
 
 const parentVariant = {
   hidden: {
@@ -59,9 +60,20 @@ const labelVariants = {
   }
 };
 
-function Navigator({page, setPage}) {
+function Navigator() {
+  const { page, setPage, setViewerOpen } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState(page);
   const [introFinished, setIntroFinished] = useState(false);
+
+  const closeViewer = page => {
+    if (location.hash.includes('viewer')) {
+      history.replaceState(null, "", `#${page}`);
+      dispatchEvent(new Event("hashchange"))
+    } else {
+      setViewerOpen(false);
+      setPage(page);
+    }
+  };
 
   useEffect(() => {
     const introTimeout = setTimeout(() => {
@@ -71,10 +83,10 @@ function Navigator({page, setPage}) {
       clearTimeout(introTimeout);
     };
   }, []);
-  
+
   useEffect(() => {
-    setPage(activeTab)
-  }, [activeTab])
+    setActiveTab(page);
+  }, [page]);
 
   return (
     <motion.section
@@ -86,7 +98,9 @@ function Navigator({page, setPage}) {
       <motion.div
         variants={childVariant}
         className={`${style.home} ${introFinished && activeTab === 'home' ? style.active : ''}`}
-        onClick={() => setActiveTab('home')}
+        onClick={() => {
+          closeViewer('home');
+        }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>
           <House />
@@ -101,18 +115,17 @@ function Navigator({page, setPage}) {
               opacity: introFinished ? 1 : 0
             }}
             animate={{
-              x: 0,
-              opacity: 1,
+              x: introFinished ? 0 : '-100%',
+              opacity: introFinished ? 1 : 0,
               transition: {
-                delay: 3,
                 type: 'spring',
                 stiffness: 300,
                 damping: 20
               }
             }}
             layoutId='underline'
-            transition={{type: 'spring', stiffness: 300, damping: 25}}
-            className={style.underline}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
           />
         )}
       </motion.div>
@@ -120,7 +133,9 @@ function Navigator({page, setPage}) {
       <motion.div
         variants={childVariant}
         className={`${style.search} ${introFinished && activeTab === 'search' ? style.active : ''}`}
-        onClick={() => setActiveTab('search')}
+        onClick={() => {
+          closeViewer('search');
+        }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>
           <Search />
@@ -129,14 +144,33 @@ function Navigator({page, setPage}) {
           Search
         </motion.span>
         {activeTab === 'search' && (
-          <motion.div layoutId='underline' transition={{type: 'spring', stiffness: 300, damping: 25}} className={style.underline} />
+          <motion.div
+            initial={{
+              x: introFinished ? 0 : '-200%',
+              opacity: introFinished ? 1 : 0
+            }}
+            animate={{
+              x: introFinished ? 0 : '-200%',
+              opacity: introFinished ? 1 : 0,
+              transition: {
+                type: 'spring',
+                stiffness: 300,
+                damping: 20
+              }
+            }}
+            layoutId='underline'
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
+          />
         )}
       </motion.div>
 
       <motion.div
         variants={childVariant}
         className={`${style.downloads} ${introFinished && activeTab === 'downloads' ? style.active : ''}`}
-        onClick={() => setActiveTab('downloads')}
+        onClick={() => {
+          closeViewer('downloads');
+        }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>
           <Download />
@@ -145,14 +179,33 @@ function Navigator({page, setPage}) {
           Downloads
         </motion.span>
         {activeTab === 'downloads' && (
-          <motion.div layoutId='underline' transition={{type: 'spring', stiffness: 300, damping: 25}} className={style.underline} />
+          <motion.div
+            initial={{
+              x: introFinished ? 0 : '-300%',
+              opacity: introFinished ? 1 : 0
+            }}
+            animate={{
+              x: introFinished ? 0 : '-300%',
+              opacity: introFinished ? 1 : 0,
+              transition: {
+                type: 'spring',
+                stiffness: 300,
+                damping: 20
+              }
+            }}
+            layoutId='underline'
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
+          />
         )}
       </motion.div>
 
       <motion.div
         variants={childVariant}
         className={`${style.library} ${introFinished && activeTab === 'library' ? style.active : ''}`}
-        onClick={() => setActiveTab('library')}
+        onClick={() => {
+          closeViewer('library');
+        }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>
           <BookOpen />
@@ -161,14 +214,33 @@ function Navigator({page, setPage}) {
           Library
         </motion.span>
         {activeTab === 'library' && (
-          <motion.div layoutId='underline' transition={{type: 'spring', stiffness: 300, damping: 25}} className={style.underline} />
+          <motion.div
+            initial={{
+              x: introFinished ? 0 : '200%',
+              opacity: introFinished ? 1 : 0
+            }}
+            animate={{
+              x: introFinished ? 0 : '200%',
+              opacity: introFinished ? 1 : 0,
+              transition: {
+                type: 'spring',
+                stiffness: 300,
+                damping: 20
+              }
+            }}
+            layoutId='underline'
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
+          />
         )}
       </motion.div>
 
       <motion.div
         variants={childVariant}
         className={`${style.settings} ${introFinished && activeTab === 'settings' ? style.active : ''}`}
-        onClick={() => setActiveTab('settings')}
+        onClick={() => {
+          closeViewer('settings');
+        }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>
           <Settings />
@@ -177,7 +249,24 @@ function Navigator({page, setPage}) {
           Settings
         </motion.span>
         {activeTab === 'settings' && (
-          <motion.div layoutId='underline' transition={{type: 'spring', stiffness: 300, damping: 25}} className={style.underline} />
+          <motion.div
+            initial={{
+              x: introFinished ? 0 : '100%',
+              opacity: introFinished ? 1 : 0
+            }}
+            animate={{
+              x: introFinished ? 0 : '100%',
+              opacity: introFinished ? 1 : 0,
+              transition: {
+                type: 'spring',
+                stiffness: 300,
+                damping: 20
+              }
+            }}
+            layoutId='underline'
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
+          />
         )}
       </motion.div>
     </motion.section>
