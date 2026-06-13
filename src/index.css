@@ -1,0 +1,62 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('./assets/Inter.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Orbitron';
+  src: url('./assets/Orbitron.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --bg-color: #fafafa;
+  --color-1: black;
+  --color-2: #8264db;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: black;
+    --color-1: #fafafa;
+  }
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  height: 100dvh;
+  width: 100%;
+  background: var(--bg-color);
+  color: var(--color-1);
+  font-family: 'Inter';
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 1024px;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+
+@media (min-width: 1050px) {
+  #root {
+    box-sizing: border-box;
+    border-inline: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
+  }
+}

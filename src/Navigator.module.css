@@ -1,0 +1,64 @@
+.navigationSection {
+  overflow: hidden;
+  flex-shrink: 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
+  background: var(--bg-color);
+  min-height: 0;
+  padding: 1rem;
+  z-index: 10;
+  display: flex;
+
+  .home,
+  .search,
+  .downloads,
+  .library,
+  .settings {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.6rem;
+    line-height: 10px;
+    font-weight: 600;
+    width: calc(100% / 5);
+    position: relative;
+
+    div:first-of-type {
+      transition:
+        color 0.25s,
+        opacity 0.25s,
+        transform 0.25s;
+    }
+
+    span {
+      opacity: 0.7;
+      overflow: hidden;
+      transition:
+        color 0.25s,
+        opacity 0.25s,
+        font-size .25s;
+    }
+
+    .underline {
+      position: absolute;
+      bottom: -5px;
+      height: 2px;
+      left: 10%;
+      right: 10%;
+      background: var(--color-2);
+    }
+
+    &.active {
+      color: var(--color-2);
+
+      > div:first-of-type {
+        opacity: 1 !important;
+        transform: scale(1.1) !important;
+      }
+
+      span {
+        opacity: 1 !important;
+        font-size: .5rem !important;
+      }
+    }
+  }
+}

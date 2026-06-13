@@ -1,0 +1,310 @@
+.homeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    width: 1px;
+  }
+
+  .welcomeSection {
+    .banner {
+      display: flex;
+      flex-direction: column;
+
+      .top {
+        font-family: 'Orbitron';
+        font-size: 1.5rem;
+        font-weight: bolder;
+
+        span {
+          font-family: 'Inter';
+          color: var(--color-2);
+        }
+      }
+
+      .bottom {
+        padding-top: 5px;
+        font-size: 0.9rem;
+        color: color-mix(in srgb, var(--color-1), transparent 25%);
+
+        span {
+          color: var(--color-1);
+        }
+      }
+    }
+  }
+
+  .searchBar {
+    display: flex;
+    align-items: center;
+    padding-inline: 10px;
+    background: color-mix(in srgb, var(--color-1), transparent 80%);
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--color-2), transparent 50%);
+    gap: 0.5rem;
+
+    svg {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+    }
+
+    .scanLine {
+      color: color-mix(in srgb, var(--color-2), transparent 25%);
+      user-select: none;
+      transition: scale 0.15s;
+
+      &:active {
+        scale: 1.1;
+      }
+    }
+
+    input {
+      flex-grow: 1;
+      height: 40px;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: 'Inter';
+      color: var(--color-1);
+    }
+
+    .hr {
+      height: 20px;
+      width: 1px;
+      background: color-mix(in srgb, var(--color-1), transparent 75%);
+    }
+  }
+
+  .trending,
+  .popular,
+  .topRated {
+    margin-top: 1rem;
+
+    &[data-scroll='start'] {
+      .chevronLeft {
+        pointer-events: none;
+        color: color-mix(in srgb, var(--color-1), transparent 90%);
+        border-color: color-mix(
+          in srgb,
+          var(--color-2),
+          transparent 90%
+        ) !important;
+        background-color: color-mix(
+          in srgb,
+          var(--color-1),
+          transparent 95%
+        ) !important;
+        scale: 0.9;
+      }
+    }
+
+    &[data-scroll='end'] {
+      .chevronRight {
+        pointer-events: none;
+        color: color-mix(in srgb, var(--color-1), transparent 90%);
+        border-color: color-mix(
+          in srgb,
+          var(--color-2),
+          transparent 90%
+        ) !important;
+        background-color: color-mix(
+          in srgb,
+          var(--color-1),
+          transparent 95%
+        ) !important;
+        scale: 0.9;
+      }
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+
+      .left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-grow: 1;
+
+        svg {
+          flex-shrink: 0;
+          width: 20px;
+          height: 20px;
+          color: var(--color-2);
+        }
+
+        .zap {
+          color: #4ede4e;
+        }
+
+        .flame {
+          color: orange;
+        }
+
+        .crown {
+          color: gold;
+        }
+
+        span {
+          font-family: 'Orbitron';
+          font-weight: bold;
+          font-size: 1.2rem;
+        }
+      }
+
+      .right {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .chevronLeft,
+        .chevronRight {
+          width: 20px;
+          height: 20px;
+          box-sizing: content-box;
+          flex-shrink: 0;
+          padding: 0.5rem;
+          background: color-mix(in srgb, var(--color-1), transparent 90%);
+          user-select: none;
+          border-radius: 5px;
+          border: 1px solid color-mix(in srgb, var(--color-2), transparent 70%);
+          transition:
+            scale 0.15s,
+            color 0.15s,
+            border-color 0.15s;
+
+          &:active {
+            scale: 1.1;
+          }
+        }
+      }
+    }
+
+    .carousel {
+      display: flex;
+      gap: 1rem;
+      padding-top: 1rem;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      .card {
+        user-select: none;
+        position: relative;
+        overflow: hidden;
+        scroll-snap-align: start;
+        border-radius: 5px;
+        flex: 0 0 var(--flex-basis, 150px);
+        aspect-ratio: 3 / 4;
+        background: color-mix(in srgb, var(--color-1), transparent 90%);
+
+        &.loading {
+          --lighter: color-mix(in srgb, var(--color-1), transparent 70%);
+          --darker: color-mix(in srgb, var(--color-1), transparent 80%);
+          background: linear-gradient(
+            to right,
+            var(--darker) 20%,
+            var(--lighter),
+            var(--darker) 80%
+          );
+          background-size: 200%;
+          background-position: 0 200%;
+          animation: loading-card 5s linear infinite;
+        }
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          opacity: 1;
+          transition: opacity 0.5s;
+
+          &.loading {
+            background: none;
+            opacity: 0;
+          }
+        }
+
+        .rate,
+        .titleWrapper {
+          position: absolute;
+        }
+
+        .rate {
+          top: 5px;
+          left: 10px;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 0.75rem;
+          padding: 5px 10px;
+          background: #00000080;
+          border-radius: 100em;
+          backdrop-filter: blur(2px);
+          color: #fafafa;
+
+          .star {
+            color: yellow;
+          }
+        }
+
+        .titleWrapper {
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: linear-gradient(to top, #000000f0, transparent);
+          height: fit-content;
+          padding-inline: 10px;
+          padding-bottom: 5px;
+          height: 150px;
+          gap: 2.5px;
+          display: flex;
+          flex-direction: column;
+          justify-content: end;
+
+          .seasonYear {
+            font-size: 0.75rem;
+            color: color-mix(in srgb, var(--color-2), #ffffff 5%);
+          }
+
+          .title {
+            font-family: 'Orbitron';
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            color: #fafafa;
+
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            text-overflow: ellipsis;
+            overflow: hidden;
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes loading-card {
+  0% {
+    background-position: 0 200%;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
