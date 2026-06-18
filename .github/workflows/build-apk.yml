@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   push:
     branches:
-      - main # Change this to 'master' if your default branch is named master
+      - main
 
 jobs:
   build:

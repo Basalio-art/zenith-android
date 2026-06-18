@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { AnimeDataContext } from './App.jsx';
+import { AppContext } from './App.jsx';
 import { motion } from 'motion/react';
 import style from './Home.module.css';
 import {
@@ -14,12 +14,19 @@ import {
 } from 'lucide-react';
 
 function Home() {
-  const { trendingAnime, popularAnime, topRatedAnime } =
-    useContext(AnimeDataContext);
+  const {
+    trendingAnime,
+    popularAnime,
+    topRatedAnime,
+    setSearchQuery,
+    setPage,
+    setViewAnimeData
+  } = useContext(AppContext);
 
   const trendingRef = useRef(null);
   const popularRef = useRef(null);
   const topRatedRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const calculateCardsWidth = container => {
     if (!container) return;
@@ -87,9 +94,7 @@ function Home() {
   }, []);
 
   return (
-    <section
-      className={style.homeSection}
-    >
+    <section className={style.homeSection}>
       <div className={style.welcomeSection}>
         <div className={style.banner}>
           <span className={style.top}>
@@ -103,9 +108,32 @@ function Home() {
 
       <div className={style.searchBar}>
         <Search className={style.searchIcon} />
-        <input type='text' autoComplete='off' />
+        <input
+          type='text'
+          autoComplete='off'
+          ref={searchInputRef}
+          onKeyUp={e => {
+            if (e.key === 'Enter') {
+              if (e.target.value.trim() === '') return;
+              setSearchQuery(e.target.value.trim());
+              setPage('search');
+            }
+          }}
+        />
         <div className={style.hr} />
-        <ScanLine className={style.scanLine} />
+        <ScanLine
+          className={style.scanLine}
+          onClick={() => {
+            if (
+              !searchInputRef.current ||
+              searchInputRef.current.value.trim() === ''
+            )
+              return;
+
+            setSearchQuery(searchInputRef.current.value.trim());
+            setPage('search');
+          }}
+        />
       </div>
 
       <div className={style.trending} data-scroll='start'>
@@ -142,7 +170,11 @@ function Home() {
                 ></div>
               ))
             : trendingAnime.map(anime => (
-                <div key={`trending-card-${anime.id}`} className={style.card}>
+                <div
+                  key={`trending-card-${anime.id}`}
+                  className={style.card}
+                  onClick={() => setViewAnimeData(anime)}
+                >
                   <img
                     className={style.loading}
                     onLoad={e => {
@@ -216,7 +248,11 @@ function Home() {
                 ></div>
               ))
             : popularAnime.map(anime => (
-                <div key={`popular-card-${anime.id}`} className={style.card}>
+                <div
+                  key={`popular-card-${anime.id}`}
+                  className={style.card}
+                  onClick={() => setViewAnimeData(anime)}
+                >
                   <img
                     className={style.loading}
                     onLoad={e => {
@@ -290,7 +326,11 @@ function Home() {
                 ></div>
               ))
             : topRatedAnime.map(anime => (
-                <div key={`top-rated-card-${anime.id}`} className={style.card}>
+                <div
+                  key={`top-rated-card-${anime.id}`}
+                  className={style.card}
+                  onClick={() => setViewAnimeData(anime)}
+                >
                   <img
                     className={style.loading}
                     onLoad={e => {

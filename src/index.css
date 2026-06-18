@@ -16,12 +16,14 @@
   --bg-color: #fafafa;
   --color-1: black;
   --color-2: #8264db;
+  --color-3: #259996;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-color: black;
     --color-1: #fafafa;
+    --color-3: #1bd3ce;
   }
 }
 

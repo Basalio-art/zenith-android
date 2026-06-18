@@ -4,14 +4,15 @@ import { useState, useRef, useEffect, createContext } from 'react';
 import { WifiOff, TriangleAlert, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import Navigator from './Navigator.jsx';
-import Search from './Search.jsx';
+import SearchResult from './Search.jsx';
+import ViewAnime from './ViewAnime.jsx';
 
-export const AnimeDataContext = createContext(null);
+export const AppContext = createContext(null);
 
 const ANILIST_QUERY = `
   query {
     trending: Page(page: 1, perPage: 10) {
-      media (sort: TRENDING_DESC, type: ANIME, isAdult: false) {
+      media (sort: TRENDING_DESC, type: ANIME, isAdult: false, status_in: [FINISHED, RELEASING, CANCELLED], episodes_greater: 0) {
         id
         title {
           english
@@ -23,10 +24,23 @@ const ANILIST_QUERY = `
         averageScore
         format
         seasonYear
+        bannerImage
+        description
+        status
+        nextAiringEpisode {
+          airingAt       
+          timeUntilAiring 
+          episode         
+        }
+        trailer {
+          id
+          site
+          thumbnail
+        }
       }
     }
     popular: Page(page: 1, perPage: 10) {
-      media (sort: POPULARITY_DESC, type: ANIME, isAdult: false) {
+      media (sort: POPULARITY_DESC, type: ANIME, isAdult: false, status_in: [FINISHED, RELEASING, CANCELLED], episodes_greater: 0) {
         id
         title {
           english
@@ -38,10 +52,23 @@ const ANILIST_QUERY = `
         averageScore
         format
         seasonYear
+        bannerImage
+        description
+        status
+        nextAiringEpisode {
+          airingAt       
+          timeUntilAiring 
+          episode         
+        }
+        trailer {
+          id
+          site
+          thumbnail
+        }
       }
     }
     topRated: Page(page: 1, perPage: 10) {
-      media (sort: SCORE_DESC, type: ANIME, isAdult: false) {
+      media (sort: SCORE_DESC, type: ANIME, isAdult: false, status_in: [FINISHED, RELEASING, CANCELLED], episodes_greater: 0) {
         id
         title {
           english
@@ -53,14 +80,60 @@ const ANILIST_QUERY = `
         averageScore
         format
         seasonYear
+        bannerImage
+        description
+        status
+        nextAiringEpisode {
+          airingAt       
+          timeUntilAiring 
+          episode         
+        }
+        trailer {
+          id
+          site
+          thumbnail
+        }
       }
     }
   }
   `;
 
+const ANILIST_SEARCH_QUERY = `
+  query ($search: String) {
+    Page (page: 1, perPage: 50) {
+      media (search: $search, type: ANIME, isAdult: false, episodes_greater: 0) {
+        id
+        title {
+          english
+          romaji
+        }
+        coverImage {
+          extraLarge
+        }
+        averageScore
+        seasonYear
+        format
+        bannerImage
+        description
+        status
+        nextAiringEpisode {
+          airingAt       
+          timeUntilAiring 
+          episode         
+        }
+        trailer {
+          id
+          site
+          thumbnail
+        }
+      }
+    }
+  }
+`;
+
 const PAGE = {
   home: <Home />,
-  search: <Search />
+  search: <SearchResult />
 };
 
 function App() {
@@ -69,6 +142,12 @@ function App() {
   const [trendingAnime, setTrendingAnime] = useState([]);
   const [popularAnime, setPopularAnime] = useState([]);
   const [topRatedAnime, setTopRatedAnime] = useState([]);
+  const [searchData, setSearchData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState(null);
+  const [searchInputClear, setSearchInputClear] = useState(false);
+  const [searchIsLoading, setSearchIsLoading] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewAnimeData, setViewAnimeData] = useState(null)
   const [page, setPage] = useState('home');
 
   const isInitialMount = useRef(true);
@@ -109,6 +188,12 @@ function App() {
     }, 5000);
   };
 
+  const handleMessageDragEnd = (e, id) => {
+    if (e.offset.x <= -50 || e.offset.x >= 120) {
+      removeMessage(id);
+    }
+  };
+
   const removeMessage = id => {
     setMessage(prev => prev.filter(message => message.id !== id));
   };
@@ -123,7 +208,7 @@ function App() {
           Accept: 'application/json'
         },
         body: JSON.stringify({ query: ANILIST_QUERY }),
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(60000)
       });
 
       if (!response.ok) {
@@ -140,6 +225,43 @@ function App() {
       newMessage(`Failed syncing dashboards from AniList`, 'alert');
     }
   };
+
+  const fetchSearchQuery = async query => {
+    setSearchIsLoading(true);
+    try {
+      const response = await fetch('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: ANILIST_SEARCH_QUERY,
+          variables: { search: query }
+        }),
+        signal: AbortSignal.timeout(60000)
+      });
+
+      if (!response.ok) {
+        setSearchData([]);
+        newMessage('Search failed', 'alert');
+        setSearchIsLoading(false);
+        setSearchQuery(null);
+        return;
+      }
+
+      const json = await response.json();
+      setSearchData(json.data?.Page?.media || []);
+    } catch (error) {
+      setSearchData([]);
+      newMessage('Search failed', 'alert');
+      setSearchQuery(null);
+    }
+    setSearchIsLoading(false);
+  };
+
+  useEffect(() => {
+    if (!searchQuery) return;
+
+    fetchSearchQuery(searchQuery);
+  }, [searchQuery]);
 
   useEffect(() => {
     internetCheck();
@@ -178,6 +300,11 @@ function App() {
       clearInterval(intervalFetch);
     };
   }, [hasInternet]);
+  
+  useEffect(() => {
+    if (!viewAnimeData) return
+    setViewerOpen(true)
+  }, [viewAnimeData])
 
   return (
     <>
@@ -203,6 +330,10 @@ function App() {
           {message.map(({ id, message, type }) => (
             <motion.div
               initial={{ x: '-100%', opacity: 0 }}
+              drag='x'
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={{ left: 0.5, right: 0.5 }}
+              onDragEnd={(e, i) => handleMessageDragEnd(i, id)}
               animate={{
                 x: 0,
                 opacity: 1,
@@ -228,38 +359,59 @@ function App() {
         </AnimatePresence>
       </motion.div>
 
-      <AnimeDataContext.Provider
-        value={{ trendingAnime, popularAnime, topRatedAnime }}
+      <AppContext.Provider
+        value={{
+          trendingAnime,
+          popularAnime,
+          topRatedAnime,
+          searchData,
+          setSearchQuery,
+          searchQuery,
+          setSearchInputClear,
+          searchInputClear,
+          page,
+          setPage,
+          searchIsLoading,
+          viewerOpen,
+          setViewerOpen,
+          setViewAnimeData,
+          viewAnimeData
+        }}
       >
-        <LayoutGroup>
-          <AnimatePresence mode='popLayout'>
-            <motion.div
-              key={page}
-              initial={{ opacity: 0, y: 100 }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                transition: {
-                  duration: 0.15,
-                  ease: 'linear'
-                }
-              }}
-              exit={{
-                opacity: 0,
-                y: 100,
-                transition: {
-                  duration: 0.15,
-                  ease: 'linear'
-                }
-              }}
-              className={style.pageContainer}
-            >
-              {PAGE[page]}
-            </motion.div>
-          </AnimatePresence>
-        </LayoutGroup>
-        <Navigator page={page} setPage={setPage} />
-      </AnimeDataContext.Provider>
+        <div className={style.wrapper}>
+          <LayoutGroup>
+            <AnimatePresence mode='popLayout'>
+              {!viewerOpen && (
+                <motion.div
+                  key={page}
+                  initial={{ opacity: 0, y: 100 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    transition: {
+                      duration: 0.15,
+                      ease: 'linear'
+                    }
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: 100,
+                    transition: {
+                      duration: 0.15,
+                      ease: 'linear'
+                    }
+                  }}
+                  className={style.pageContainer}
+                >
+                  {PAGE[page]}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </LayoutGroup>
+          <ViewAnime />
+        </div>
+        <Navigator />
+      </AppContext.Provider>
     </>
   );
 }

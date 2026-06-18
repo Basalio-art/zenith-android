@@ -1,7 +1,7 @@
 .wifiOff {
   position: fixed;
-  top: .5rem;
-  right: .5rem;
+  top: 0.5rem;
+  right: 0.5rem;
   border-radius: 100%;
   color: #d93e3ef0;
   z-index: 50;
@@ -11,35 +11,42 @@
 .messageSection {
   display: flex;
   flex-direction: column;
-  gap: .5rem;
+  gap: 0.5rem;
   position: fixed;
   align-items: start;
   top: 0;
   left: 0;
   z-index: 100;
-  padding: .5rem;
-  
+  padding: 0.5rem;
+
   .messageCard {
     background: var(--color-1);
     color: var(--bg-color);
     display: flex;
-    gap: .5rem;
-    font-size: .8rem;
+    gap: 0.5rem;
+    font-size: 0.8rem;
     border-radius: 5px;
     align-items: center;
     padding: 5px 10px;
-    
+    touch-action: none;
+
     svg {
       flex-shrink: 0;
     }
   }
 }
 
-.pageContainer {
-  flex-grow: 1;
+.wrapper {
+  position: relative;
   min-height: 0;
-  will-change: transform, opacity;
-  contain: content;
-  overflow: hidden;
-  transform: scale(1.5);
+  flex-grow: 1;
+  
+  .pageContainer {
+    width: 100%;
+    height: 100%;
+    will-change: transform, opacity;
+    contain: content;
+    overflow: hidden;
+    transform: scale(1.5);
+  }
 }
