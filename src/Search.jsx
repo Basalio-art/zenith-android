@@ -1,6 +1,6 @@
 import style from './Search.module.css';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useContext, useRef, memo, useEffect } from 'react';
+import { useState, useContext, useRef, memo } from 'react';
 import { ChevronRight, Search, X, ScanLine, Star } from 'lucide-react';
 import { AppContext } from './App.jsx';
 
@@ -11,7 +11,9 @@ function SearchResult() {
     searchQuery,
     setSearchInputClear,
     searchInputClear,
-    searchIsLoading
+    searchIsLoading,
+    setViewAnimeData,
+    setViewerOpen
   } = useContext(AppContext);
 
   const [isSearching, setIsSearching] = useState(false);
@@ -25,7 +27,7 @@ function SearchResult() {
           <AnimatePresence>
             {searchIsLoading && (
               <motion.div
-                key='loader'
+                key="loader"
                 initial={{ width: 0, height: 2.5 }}
                 animate={{
                   width: '65%',
@@ -43,7 +45,7 @@ function SearchResult() {
               />
             )}
           </AnimatePresence>
-          <AnimatePresence mode='popLayout'>
+          <AnimatePresence mode="popLayout">
             {!isSearching && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -63,7 +65,7 @@ function SearchResult() {
               transition: { duration: isSearching ? 0.5 : 0.15 }
             }}
           >
-            <AnimatePresence mode='wait'>
+            <AnimatePresence mode="wait">
               <motion.div
                 key={`isSearching-${isSearching}`}
                 initial={{ rotate: 0 }}
@@ -108,10 +110,12 @@ function SearchResult() {
                   className={style.wrapper}
                 >
                   <input
-                    ref={searchInputRef}
+                    type="text"
                     autoFocus
+                    autoComplete="off"
+                    ref={searchInputRef}
                     defaultValue={!searchInputClear ? searchQuery : ''}
-                    placeholder='Search title'
+                    placeholder="Search title"
                     onKeyUp={e => {
                       if (e.key === 'Enter' && e.target.value.trim() !== '') {
                         setSearchInputClear(false);
@@ -123,7 +127,11 @@ function SearchResult() {
                   <ScanLine
                     size={20}
                     onClick={() => {
-                      if (!searchInputRef.current || searchInputRef.current.value.trim() === '') return;
+                      if (
+                        !searchInputRef.current ||
+                        searchInputRef.current.value.trim() === ''
+                      )
+                        return;
 
                       setSearchInputClear(false);
                       setSearchQuery(searchInputRef.current.value.trim());
@@ -135,7 +143,7 @@ function SearchResult() {
           </motion.div>
         </div>
 
-        <AnimatePresence mode='popLayout'>
+        <AnimatePresence mode="popLayout">
           <motion.div
             className={style.result}
             key={searchData.length !== 0 ? searchData[0].id : 'empty'}
@@ -148,7 +156,12 @@ function SearchResult() {
             )}
             {searchData.length !== 0 &&
               searchData.map(anime => (
-                <AnimeCard key={`search-query-${anime.id}`} anime={anime} />
+                <AnimeCard
+                  key={`search-query-${anime.id}`}
+                  anime={anime}
+                  setViewData={setViewAnimeData}
+                  viewer={setViewerOpen}
+                />
               ))}
           </motion.div>
         </AnimatePresence>
@@ -157,9 +170,15 @@ function SearchResult() {
   );
 }
 
-const AnimeCard = memo(({ anime }) => {
+const AnimeCard = memo(({ anime, setViewData, viewer }) => {
   return (
-    <div className={style.card}>
+    <div
+      className={style.card}
+      onClick={() => {
+        setViewData(anime);
+        viewer(true);
+      }}
+    >
       <img src={anime.coverImage.extraLarge} />
       <div className={style.wrapper}>
         <span className={style.title}>

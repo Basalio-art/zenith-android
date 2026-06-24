@@ -19,6 +19,7 @@
       left: 0;
       height: 2.5px;
       background: var(--color-3);
+      z-index: 10px;
     }
 
     .left {
@@ -69,6 +70,7 @@
           color: var(--color-1);
           background: none;
           border: none;
+          font-family: 'Inter';
         }
 
         .hr {
@@ -103,7 +105,7 @@
     contain: content;
 
     .infoSearch {
-      font-size: 2.5rem;
+      font-size: 2rem;
       color: var(--color-3);
       font-family: 'Orbitron';
       font-weight: bold;
@@ -136,6 +138,7 @@
           font-weight: bold;
           font-size: 0.9rem;
           flex-shrink: 0;
+          letter-spacing: 1px;
 
           display: -webkit-box;
           -webkit-box-orient: vertical;

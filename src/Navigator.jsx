@@ -65,6 +65,16 @@ function Navigator() {
   const [activeTab, setActiveTab] = useState(page);
   const [introFinished, setIntroFinished] = useState(false);
 
+  const closeViewer = page => {
+    if (location.hash.includes('viewer')) {
+      history.replaceState(null, "", `#${page}`);
+      dispatchEvent(new Event("hashchange"))
+    } else {
+      setViewerOpen(false);
+      setPage(page);
+    }
+  };
+
   useEffect(() => {
     const introTimeout = setTimeout(() => {
       setIntroFinished(true);
@@ -89,8 +99,7 @@ function Navigator() {
         variants={childVariant}
         className={`${style.home} ${introFinished && activeTab === 'home' ? style.active : ''}`}
         onClick={() => {
-          setPage('home');
-          setViewerOpen(false);
+          closeViewer('home');
         }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>
@@ -125,7 +134,7 @@ function Navigator() {
         variants={childVariant}
         className={`${style.search} ${introFinished && activeTab === 'search' ? style.active : ''}`}
         onClick={() => {
-          (setPage('search'), setViewerOpen(false));
+          closeViewer('search');
         }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>
@@ -160,8 +169,7 @@ function Navigator() {
         variants={childVariant}
         className={`${style.downloads} ${introFinished && activeTab === 'downloads' ? style.active : ''}`}
         onClick={() => {
-          setPage('downloads');
-          setViewerOpen(false);
+          closeViewer('downloads');
         }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>
@@ -196,8 +204,7 @@ function Navigator() {
         variants={childVariant}
         className={`${style.library} ${introFinished && activeTab === 'library' ? style.active : ''}`}
         onClick={() => {
-          setPage('library');
-          setViewerOpen(false);
+          closeViewer('library');
         }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>
@@ -232,8 +239,7 @@ function Navigator() {
         variants={childVariant}
         className={`${style.settings} ${introFinished && activeTab === 'settings' ? style.active : ''}`}
         onClick={() => {
-          setPage('settings');
-          setViewerOpen(false);
+          closeViewer('settings');
         }}
       >
         <motion.div variants={iconVariant} initial='normal' animate='resize'>

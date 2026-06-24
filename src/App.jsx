@@ -20,6 +20,7 @@ const ANILIST_QUERY = `
         }
         coverImage {
           extraLarge
+          color
         }
         averageScore
         format
@@ -27,6 +28,18 @@ const ANILIST_QUERY = `
         bannerImage
         description
         status
+        genres
+        episodes
+        startDate {
+          month
+          year
+          day
+        }
+        endDate {
+          year
+          month
+          day
+        }
         nextAiringEpisode {
           airingAt       
           timeUntilAiring 
@@ -36,6 +49,22 @@ const ANILIST_QUERY = `
           id
           site
           thumbnail
+        }
+        countryOfOrigin
+        studios {
+          edges {
+            isMain
+            node {
+              id 
+              name
+            }
+          }
+        }
+        externalLinks {
+          id
+          url
+          site
+          type
         }
       }
     }
@@ -48,6 +77,7 @@ const ANILIST_QUERY = `
         }
         coverImage {
           extraLarge
+          color
         }
         averageScore
         format
@@ -55,6 +85,18 @@ const ANILIST_QUERY = `
         bannerImage
         description
         status
+        genres
+        episodes
+        startDate {
+          month
+          year
+          day
+        }
+        endDate {
+          year
+          month
+          day
+        }
         nextAiringEpisode {
           airingAt       
           timeUntilAiring 
@@ -64,6 +106,22 @@ const ANILIST_QUERY = `
           id
           site
           thumbnail
+        }
+        countryOfOrigin
+        studios {
+          edges {
+            isMain
+            node {
+              id 
+              name
+            }
+          }
+        }
+        externalLinks {
+          id
+          url
+          site
+          type
         }
       }
     }
@@ -76,6 +134,7 @@ const ANILIST_QUERY = `
         }
         coverImage {
           extraLarge
+          color
         }
         averageScore
         format
@@ -83,6 +142,18 @@ const ANILIST_QUERY = `
         bannerImage
         description
         status
+        genres
+        episodes
+        startDate {
+          month
+          year
+          day
+        }
+        endDate {
+          year
+          month
+          day
+        }
         nextAiringEpisode {
           airingAt       
           timeUntilAiring 
@@ -92,6 +163,22 @@ const ANILIST_QUERY = `
           id
           site
           thumbnail
+        }
+        countryOfOrigin
+        studios {
+          edges {
+            isMain
+            node {
+              id 
+              name
+            }
+          }
+        }
+        externalLinks {
+          id
+          url
+          site
+          type
         }
       }
     }
@@ -109,6 +196,7 @@ const ANILIST_SEARCH_QUERY = `
         }
         coverImage {
           extraLarge
+          color
         }
         averageScore
         seasonYear
@@ -116,6 +204,18 @@ const ANILIST_SEARCH_QUERY = `
         bannerImage
         description
         status
+        genres
+        episodes
+        startDate {
+          month
+          year
+          day
+        }
+        endDate {
+          year
+          month
+          day
+        }
         nextAiringEpisode {
           airingAt       
           timeUntilAiring 
@@ -125,6 +225,22 @@ const ANILIST_SEARCH_QUERY = `
           id
           site
           thumbnail
+        }
+        countryOfOrigin
+        studios {
+          edges {
+            isMain
+            node {
+              id 
+              name
+            }
+          }
+        }
+        externalLinks {
+          id
+          url
+          site
+          type
         }
       }
     }
@@ -147,7 +263,7 @@ function App() {
   const [searchInputClear, setSearchInputClear] = useState(false);
   const [searchIsLoading, setSearchIsLoading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewAnimeData, setViewAnimeData] = useState(null)
+  const [viewAnimeData, setViewAnimeData] = useState(null);
   const [page, setPage] = useState('home');
 
   const isInitialMount = useRef(true);
@@ -251,7 +367,10 @@ function App() {
       setSearchData(json.data?.Page?.media || []);
     } catch (error) {
       setSearchData([]);
-      newMessage('Search failed', 'alert');
+      newMessage(
+        'Search failed: Please check your internet connection',
+        'alert'
+      );
       setSearchQuery(null);
     }
     setSearchIsLoading(false);
@@ -262,23 +381,6 @@ function App() {
 
     fetchSearchQuery(searchQuery);
   }, [searchQuery]);
-
-  useEffect(() => {
-    internetCheck();
-    fetchAnimeData();
-
-    const intervalChecker = setInterval(internetCheck, 10000);
-
-    window.addEventListener('online', internetCheck);
-    window.addEventListener('offline', internetCheck);
-
-    return () => {
-      clearInterval(intervalChecker);
-
-      window.removeEventListener('online', internetCheck);
-      window.removeEventListener('offline', internetCheck);
-    };
-  }, []);
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -300,11 +402,23 @@ function App() {
       clearInterval(intervalFetch);
     };
   }, [hasInternet]);
-  
+
   useEffect(() => {
-    if (!viewAnimeData) return
-    setViewerOpen(true)
-  }, [viewAnimeData])
+    internetCheck();
+    fetchAnimeData();
+
+    const intervalChecker = setInterval(internetCheck, 10000);
+
+    window.addEventListener('online', internetCheck);
+    window.addEventListener('offline', internetCheck);
+
+    return () => {
+      clearInterval(intervalChecker);
+
+      window.removeEventListener('online', internetCheck);
+      window.removeEventListener('offline', internetCheck);
+    };
+  }, []);
 
   return (
     <>
@@ -325,7 +439,7 @@ function App() {
         )}
       </AnimatePresence>
 
-      <motion.div layout className={style.messageSection}>
+      <motion.section layout className={style.messageSection}>
         <AnimatePresence>
           {message.map(({ id, message, type }) => (
             <motion.div
@@ -333,7 +447,7 @@ function App() {
               drag='x'
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={{ left: 0.5, right: 0.5 }}
-              onDragEnd={(e, i) => handleMessageDragEnd(i, id)}
+              onDragEnd={(_, i) => handleMessageDragEnd(i, id)}
               animate={{
                 x: 0,
                 opacity: 1,
@@ -357,7 +471,7 @@ function App() {
             </motion.div>
           ))}
         </AnimatePresence>
-      </motion.div>
+      </motion.section>
 
       <AppContext.Provider
         value={{
@@ -381,7 +495,7 @@ function App() {
         <div className={style.wrapper}>
           <LayoutGroup>
             <AnimatePresence mode='popLayout'>
-              {!viewerOpen && (
+              {
                 <motion.div
                   key={page}
                   initial={{ opacity: 0, y: 100 }}
@@ -405,7 +519,7 @@ function App() {
                 >
                   {PAGE[page]}
                 </motion.div>
-              )}
+              }
             </AnimatePresence>
           </LayoutGroup>
           <ViewAnime />

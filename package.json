@@ -13,6 +13,7 @@
     "@capacitor/android": "^8.4.0",
     "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "^8.4.0",
+    "@capacitor/status-bar": "^8.0.2",
     "lucide-react": "^1.17.0",
     "motion": "^12.40.0",
     "react": "19.2.3",
