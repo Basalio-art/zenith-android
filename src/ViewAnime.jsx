@@ -1,6 +1,6 @@
 import style from './ViewAnime.module.css';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronUp, Minus } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import { useState, useContext, useEffect } from 'react';
 import { AppContext } from './App.jsx';
 
@@ -8,12 +8,13 @@ function ViewAnime() {
   const {
     viewerOpen,
     setViewerOpen,
-    viewAnimeData: anime
+    viewAnimeData: anime,
   } = useContext(AppContext);
 
   const [mainStudio, setMainStudio] = useState(null);
   const [officialSiteUrl, setOfficialSiteUrl] = useState(null);
   const [trailerLoaded, setTrailerLoaded] = useState(false);
+  const [expandDescription, setExpandDescription] = useState(false);
 
   const embededLink = () => {
     if (anime.trailer.site === 'youtube') {
@@ -23,15 +24,15 @@ function ViewAnime() {
     }
   };
 
-  const CapitalizeWords = words => {
+  const CapitalizeWords = (words) => {
     return words
       .toLowerCase()
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
-  const dateFormat = date => {
+  const dateFormat = (date) => {
     const year = date.year;
     const monthIndex = date.month ? date.month - 1 : null;
     const day = date.day;
@@ -42,7 +43,7 @@ function ViewAnime() {
       return new Date(year, monthIndex, day).toLocaleDateString('en-US', {
         month: 'short',
         year: 'numeric',
-        day: 'numeric'
+        day: 'numeric',
       });
     }
   };
@@ -67,13 +68,15 @@ function ViewAnime() {
 
   useEffect(() => {
     if (!viewerOpen) return;
-    const mainStudio = anime.studios.edges.find(studio => studio.isMain);
+    const mainStudio = anime.studios.edges.find((studio) => studio.isMain);
     setMainStudio(mainStudio?.node.name || 'Unknown');
 
     const officialSite = anime.externalLinks.find(
-      link => link.site === 'Official Site'
+      (link) => link.site === 'Official Site',
     );
     setOfficialSiteUrl(officialSite?.url || 'Unknown');
+
+    setExpandDescription(false);
   }, [anime]);
 
   return (
@@ -81,13 +84,13 @@ function ViewAnime() {
       {anime && (
         <AnimatePresence>
           <motion.section
-            key="view-Anime-Section"
+            key='view-Anime-Section'
             className={style.viewAnimeSection}
             initial={{ y: '110%', borderTopWidth: 0 }}
             animate={{
               y: viewerOpen ? 0 : '100%',
               borderTopWidth: viewerOpen ? 1 : 0,
-              transition: { duration: 0.5 }
+              transition: { duration: 0.5 },
             }}
           >
             <motion.div
@@ -96,8 +99,8 @@ function ViewAnime() {
                 rotateX: viewerOpen ? 180 : 0,
                 y: viewerOpen ? 0 : '-100%',
                 transition: {
-                  duration: 0.5
-                }
+                  duration: 0.5,
+                },
               }}
               className={style.chevronUp}
               onClick={() => {
@@ -128,7 +131,7 @@ function ViewAnime() {
                         : undefined,
                       backgroundImage: anime.bannerImage
                         ? `url(${anime.bannerImage})`
-                        : undefined
+                        : undefined,
                     }}
                   >
                     <AnimatePresence>
@@ -151,10 +154,10 @@ function ViewAnime() {
                           setTrailerLoaded(true);
                         }}
                         title={`${anime.title.english || anime.title.romaji} Trailer`}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
                         allowFullScreen
                         className={style.trailerVideo}
+                        style={{ border: 'none' }}
                       />
                     ) : (
                       !anime.bannerImage && (
@@ -187,18 +190,39 @@ function ViewAnime() {
                     </div>
                   )}
 
-                  <p
+                  <motion.p
                     className={style.description}
+                    initial={false}
+                    animate={{
+                      height: expandDescription ? 'auto' : 72,
+                      transition: { duration: 0.5, ease: 'easeOut' },
+                    }}
+                    style={{ WebkitLineClamp: expandDescription ? 'none' : 4 }}
+                    onClick={() => {
+                      setExpandDescription(true);
+                    }}
                     dangerouslySetInnerHTML={{
                       __html:
                         anime.description ||
-                        '<i>No description available for this title.</i>'
+                        '<i>No description available for this title.</i>',
                     }}
-                  ></p>
+                  ></motion.p>
 
                   <div className={style.stats}>
+                    {anime.tags.length > 0 && (
+                      <p>
+                        Tags:{' '}
+                        <span>
+                          {anime.tags
+                            .filter((tag) => !tag.isGeneralSpoiler)
+                            .map((tag) => tag.name)
+                            .join(', ')}
+                        </span>
+                      </p>
+                    )}
+
                     <p>
-                      Format: <span>{anime.format.replace('_', ' ')}</span>
+                      Format: <span>{anime.format?.replace('_', ' ') || 'Unknown'}</span>
                     </p>
 
                     <p>
@@ -216,6 +240,14 @@ function ViewAnime() {
                         {anime.nextAiringEpisode
                           ? Math.max(anime.nextAiringEpisode.episode - 1, 1)
                           : anime.episodes}
+                      </span>
+                    </p>
+
+                    <p>
+                      Rating:{' '}
+                      <span>
+                        {anime.averageScore > 0 ? anime.averageScore : '-'} /
+                        100
                       </span>
                     </p>
 
@@ -241,13 +273,66 @@ function ViewAnime() {
                     </p>
 
                     <p>
-                      Studios: <span>{mainStudio}</span>
+                      Mature Content:{' '}
+                      <span style={{ fontWeight: 'bold' }}>
+                        {(() => {
+                          const MATURE_GENRES = [
+                            'Horror',
+                            'Ecchi',
+                          ];
+                          const MATURE_TAGS = [
+                            'Gore',
+                            'Violence',
+                            'Body Horror',
+                            'Nudity',
+                          ];
+
+                          const isMature =
+                            anime.genres.some((g) =>
+                              MATURE_GENRES.includes(g),
+                            ) ||
+                            anime.tags.some((t) =>
+                              MATURE_TAGS.includes(t.name),
+                            );
+
+                          return isMature ? 'Yes (17+)' : 'No (All Ages)';
+                        })()}
+                      </span>
                     </p>
+
+                    <p>
+                      Main Studio: <span>{mainStudio}</span>
+                    </p>
+
+                    {(() => {
+                      const supportingStudios = anime.studios.edges.find(
+                        (studio) => !studio.isMain,
+                      );
+
+                      if (supportingStudios)
+                        return (
+                          <p>
+                            Supporting Studio:{' '}
+                            <span>
+                              {anime.studios.edges
+                                .filter((studio) => !studio.isMain)
+                                .map((studio) => studio.node.name)
+                                .join(', ')}
+                            </span>
+                          </p>
+                        );
+                    })()}
 
                     <p>
                       Official Site:{' '}
                       {officialSiteUrl ? (
-                        <a target='_blank' rel='noreferrer noopener' href={officialSiteUrl}>{officialSiteUrl}</a>
+                        <a
+                          target='_blank'
+                          rel='noreferrer noopener'
+                          href={officialSiteUrl}
+                        >
+                          {officialSiteUrl}
+                        </a>
                       ) : (
                         <span>{officialSiteUrl}</span>
                       )}

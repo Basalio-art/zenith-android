@@ -20,7 +20,7 @@
       .top {
         font-family: 'Orbitron';
         font-size: 1.5rem;
-        font-weight: bolder;
+        font-weight: 800;
 
         span {
           font-family: 'Inter';
@@ -154,7 +154,7 @@
 
         span {
           font-family: 'Orbitron';
-          font-weight: bold;
+          font-weight: 600;
           font-size: 1.2rem;
         }
       }
@@ -284,7 +284,6 @@
             font-family: 'Orbitron';
             font-weight: 600;
             font-size: 0.8rem;
-            letter-spacing: 1px;
             color: #fafafa;
 
             display: -webkit-box;

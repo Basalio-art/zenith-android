@@ -1,5 +1,5 @@
 .viewAnimeSection {
-  padding: 2rem 1rem;
+  padding: 2.25rem 1rem;
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -11,7 +11,7 @@
   border-top: 0px solid color-mix(in srgb, var(--color-1), transparent 75%);
   will-change: transform;
   contain: content;
-  
+
   .chevronUp {
     position: absolute;
     top: 0;
@@ -27,8 +27,8 @@
     z-index: 10;
 
     svg {
-      display: block;
     }
+    display: block;
   }
 
   .container {
@@ -102,7 +102,7 @@
         mask-image: linear-gradient(to bottom, black, transparent);
         margin-bottom: -75px;
       }
-      
+
       &[data-view-type='video'] {
         position: sticky;
         top: 0;
@@ -121,7 +121,6 @@
         font-family: 'Orbitron';
         font-size: 1.25rem;
         font-weight: bold;
-        letter-spacing: 1px;
         line-height: 20px;
         z-index: 10;
       }
@@ -136,11 +135,15 @@
     }
 
     .description {
-      max-height: calc(4 * (0.9rem * 1.25));
-      overflow-y: auto;
-      line-height: 1.25;
       font-size: 0.9rem;
       margin-bottom: 1rem;
+      line-height: 1.25;
+
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 4;
+      text-overflow: ellipsis;
     }
 
     .genres {
@@ -148,15 +151,18 @@
       flex-wrap: nowrap;
       gap: 0.5rem;
       font-size: 0.9rem;
-      overflow-x: auto;
       margin-bottom: 1rem;
+      overflow-x: auto;
 
       span {
+        z-index: 10;
         background: var(--color-2);
         color: color-mix(in srgb, black, var(--color-2) 50%);
         padding: 10px;
         line-height: 0.5;
         border-radius: 100em;
+        text-wrap: nowrap;
+        font-weight: 500;
       }
     }
 
@@ -164,15 +170,21 @@
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      vertical-align: middle;
-        font-size: .9rem;
+      font-size: 0.9rem;
 
-      a,
-      span {
-        font-weight: 900;
-        font-size: .95rem;
-        text-decoration: none;
-        color: var(--color-1);
+      p {
+        display: flex;
+        gap: 5px;
+        align-items: end;
+        text-wrap: nowrap;
+        overflow-x: auto;
+
+        a,
+        span {
+          font-weight: 900;
+          text-decoration: none;
+          color: var(--color-1);
+        }
       }
     }
   }

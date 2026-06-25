@@ -66,6 +66,11 @@ const ANILIST_QUERY = `
           site
           type
         }
+        tags {
+          name 
+          isGeneralSpoiler
+          isAdult
+        }
       }
     }
     popular: Page(page: 1, perPage: 10) {
@@ -122,6 +127,11 @@ const ANILIST_QUERY = `
           url
           site
           type
+        }
+        tags {
+          name 
+          isGeneralSpoiler
+          isAdult
         }
       }
     }
@@ -180,14 +190,22 @@ const ANILIST_QUERY = `
           site
           type
         }
+        tags {
+          name 
+          isGeneralSpoiler
+          isAdult
+        }
       }
     }
   }
   `;
 
 const ANILIST_SEARCH_QUERY = `
-  query ($search: String) {
-    Page (page: 1, perPage: 50) {
+  query ($search: String, $page: Int) {
+    Page (page: $page, perPage: 50) {
+      pageInfo {
+        hasNextPage
+      }
       media (search: $search, type: ANIME, isAdult: false, episodes_greater: 0) {
         id
         title {
@@ -241,6 +259,11 @@ const ANILIST_SEARCH_QUERY = `
           url
           site
           type
+        }
+        tags {
+          name 
+          isGeneralSpoiler
+          isAdult
         }
       }
     }
@@ -342,7 +365,7 @@ function App() {
     }
   };
 
-  const fetchSearchQuery = async query => {
+  const fetchSearchQuery = async (query, page = 1) => {
     setSearchIsLoading(true);
     try {
       const response = await fetch('https://graphql.anilist.co', {
@@ -350,7 +373,7 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: ANILIST_SEARCH_QUERY,
-          variables: { search: query }
+          variables: { search: query, page: page }
         }),
         signal: AbortSignal.timeout(60000)
       });

@@ -13,12 +13,22 @@ function SearchResult() {
     searchInputClear,
     searchIsLoading,
     setViewAnimeData,
-    setViewerOpen
+    setViewerOpen,
   } = useContext(AppContext);
 
   const [isSearching, setIsSearching] = useState(false);
 
   const searchInputRef = useRef(null);
+
+  const handleScroll = (e) => {
+    const target = e.target;
+
+    const height = target.clientHeight;
+    const scrollHeight = target.scrollHeight;
+    const bottomScroll = scrollHeight - (height + 10);
+
+    console.log(bottomScroll, target.scrollTop)
+  };
 
   return (
     <>
@@ -27,25 +37,25 @@ function SearchResult() {
           <AnimatePresence>
             {searchIsLoading && (
               <motion.div
-                key="loader"
+                key='loader'
                 initial={{ width: 0, height: 2.5 }}
                 animate={{
                   width: '65%',
-                  transition: { duration: 5 }
+                  transition: { duration: 5 },
                 }}
                 exit={{
                   height: 0,
                   width: '100%',
                   transition: {
                     width: { duration: 0.25 },
-                    height: { duration: 0.25, delay: 0.25 }
-                  }
+                    height: { duration: 0.25, delay: 0.25 },
+                  },
                 }}
                 className={style.loader}
               />
             )}
           </AnimatePresence>
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode='popLayout'>
             {!isSearching && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -62,10 +72,10 @@ function SearchResult() {
             initial={false}
             animate={{
               width: isSearching ? '100%' : '25px',
-              transition: { duration: isSearching ? 0.5 : 0.15 }
+              transition: { duration: isSearching ? 0.5 : 0.15 },
             }}
           >
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode='wait'>
               <motion.div
                 key={`isSearching-${isSearching}`}
                 initial={{ rotate: 0 }}
@@ -74,12 +84,12 @@ function SearchResult() {
                   transition: {
                     type: 'spring',
                     duration: isSearching ? 1.5 : 0.5,
-                    bounce: 0.5
-                  }
+                    bounce: 0.5,
+                  },
                 }}
                 exit={{
                   opacity: 0,
-                  transition: { duration: 0.05 }
+                  transition: { duration: 0.05 },
                 }}
                 onClick={() => {
                   if (isSearching) {
@@ -110,13 +120,13 @@ function SearchResult() {
                   className={style.wrapper}
                 >
                   <input
-                    type="text"
+                    type='text'
                     autoFocus
-                    autoComplete="off"
+                    autoComplete='off'
                     ref={searchInputRef}
                     defaultValue={!searchInputClear ? searchQuery : ''}
-                    placeholder="Search title"
-                    onKeyUp={e => {
+                    placeholder='Search title'
+                    onKeyUp={(e) => {
                       if (e.key === 'Enter' && e.target.value.trim() !== '') {
                         setSearchInputClear(false);
                         setSearchQuery(e.target.value.trim());
@@ -143,19 +153,20 @@ function SearchResult() {
           </motion.div>
         </div>
 
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode='popLayout'>
           <motion.div
             className={style.result}
             key={searchData.length !== 0 ? searchData[0].id : 'empty'}
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0, transition: { duration: 0.25 } }}
             exit={{ opacity: 0, y: 100, transition: { duration: 0.25 } }}
+            onScroll={handleScroll}
           >
             {searchData.length === 0 && (
               <span className={style.infoSearch}>No result</span>
             )}
             {searchData.length !== 0 &&
-              searchData.map(anime => (
+              searchData.map((anime) => (
                 <AnimeCard
                   key={`search-query-${anime.id}`}
                   anime={anime}
@@ -200,7 +211,7 @@ const AnimeCard = memo(({ anime, setViewData, viewer }) => {
           dangerouslySetInnerHTML={{
             __html:
               anime.description ||
-              '<i>No description available for this title.</i>'
+              '<i>No description available for this title.</i>',
           }}
         />
         <div className={style.space} />

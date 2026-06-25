@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useEffect, useRef, useContext } from 'react';
 import { AppContext } from './App.jsx';
 import { motion, AnimatePresence } from 'motion/react';
 import style from './Home.module.css';

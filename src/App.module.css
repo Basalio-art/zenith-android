@@ -4,7 +4,7 @@
   right: 0.5rem;
   border-radius: 100%;
   color: #d93e3ef0;
-  z-index: 50;
+  z-index: 500;
   pointer-events: none;
 }
 
@@ -16,7 +16,7 @@
   align-items: start;
   top: 0;
   left: 0;
-  z-index: 100;
+  z-index: 1000;
   padding: 0.5rem;
 
   .messageCard {

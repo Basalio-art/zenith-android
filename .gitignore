@@ -27,3 +27,5 @@ dist-ssr
 android/.gradle/
 android/build/
 android/app/build/
+
+.prettierrc

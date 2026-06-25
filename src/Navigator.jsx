@@ -1,7 +1,7 @@
 import style from './Navigator.module.css';
 import { House, Settings, BookOpen, Download, Search } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useState, useEffect, useContext, useRef } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { AppContext } from './App.jsx';
 
 const parentVariant = {

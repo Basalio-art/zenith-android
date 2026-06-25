@@ -19,7 +19,7 @@
       left: 0;
       height: 2.5px;
       background: var(--color-3);
-      z-index: 10px;
+      z-index: 50;
     }
 
     .left {
