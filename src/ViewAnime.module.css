@@ -10,7 +10,6 @@
   background: var(--bg-color);
   border-top: 0px solid color-mix(in srgb, var(--color-1), transparent 75%);
   will-change: transform;
-  contain: content;
 
   .chevronUp {
     position: absolute;
@@ -82,7 +81,7 @@
         mask-image: linear-gradient(to bottom, black, transparent);
       }
 
-      &[data-view-type='cover'] {
+      &[data-view-type="cover"] {
         width: min-content;
         float: left;
         background: color-mix(
@@ -94,7 +93,7 @@
         margin-right: 1rem;
       }
 
-      &[data-view-type='banner'] {
+      &[data-view-type="banner"] {
         aspect-ratio: 16 / 9;
         overflow: initial;
         background-position: center;
@@ -103,7 +102,7 @@
         margin-bottom: -75px;
       }
 
-      &[data-view-type='video'] {
+      &[data-view-type="video"] {
         position: sticky;
         top: 0;
         left: 0;
@@ -118,7 +117,7 @@
       margin-bottom: 1rem;
 
       .main {
-        font-family: 'Orbitron';
+        font-family: "Orbitron";
         font-size: 1.25rem;
         font-weight: bold;
         line-height: 20px;
@@ -171,6 +170,7 @@
       flex-direction: column;
       gap: 0.5rem;
       font-size: 0.9rem;
+      margin-bottom: 1rem;
 
       p {
         display: flex;
@@ -184,6 +184,23 @@
           font-weight: 900;
           text-decoration: none;
           color: var(--color-1);
+        }
+      }
+    }
+
+    .watchNDownload {
+      .wrapper {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: center;
+
+        .watch,
+        .download {
+          background: var(--color-2);
+          line-height: 1;
+          padding: 10px;
+          border-radius: 10px;
         }
       }
     }

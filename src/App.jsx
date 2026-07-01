@@ -1,11 +1,14 @@
-import Home from './Home.jsx';
-import style from './App.module.css';
-import { useState, useRef, useEffect, createContext } from 'react';
-import { WifiOff, TriangleAlert, MessageSquare } from 'lucide-react';
-import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
-import Navigator from './Navigator.jsx';
-import SearchResult from './Search.jsx';
-import ViewAnime from './ViewAnime.jsx';
+import Home from "./Home.jsx";
+import style from "./App.module.css";
+import { useState, useRef, useEffect, createContext } from "react";
+import { WifiOff, TriangleAlert, MessageSquare } from "lucide-react";
+import { motion, AnimatePresence, LayoutGroup } from "motion/react";
+import Navigator from "./Navigator.jsx";
+import SearchResult from "./Search.jsx";
+import ViewAnime from "./ViewAnime.jsx";
+import { ConfigProvider } from "./ConfigContext.jsx";
+import { AnimeProvider } from "./AnimeContext.jsx";
+import VideoStream from "./VideoStream.jsx";
 
 export const AppContext = createContext(null);
 
@@ -270,9 +273,13 @@ const ANILIST_SEARCH_QUERY = `
   }
 `;
 
-const PAGE = {
-  home: <Home />,
-  search: <SearchResult />
+const renderPage = (page) => {
+  switch (page) {
+    case "search":
+      return <SearchResult />;
+    case "home":
+      return <Home />;
+  }
 };
 
 function App() {
@@ -287,7 +294,8 @@ function App() {
   const [searchIsLoading, setSearchIsLoading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewAnimeData, setViewAnimeData] = useState(null);
-  const [page, setPage] = useState('home');
+  const [openPlayer, setOpenPlayer] = useState(false)
+  const [page, setPage] = useState("home");
 
   const isInitialMount = useRef(true);
 
@@ -298,11 +306,11 @@ function App() {
     }
 
     try {
-      await fetch('https://connectivitycheck.gstatic.com/generate_204', {
-        method: 'HEAD',
-        cache: 'no-store',
-        mode: 'no-cors',
-        signal: AbortSignal.timeout(5000)
+      await fetch("https://connectivitycheck.gstatic.com/generate_204", {
+        method: "HEAD",
+        cache: "no-store",
+        mode: "no-cors",
+        signal: AbortSignal.timeout(5000),
       });
       setHasInternet(true);
     } catch {
@@ -310,17 +318,17 @@ function App() {
     }
   };
 
-  const newMessage = (msg, type = 'message') => {
+  const newMessage = (msg, type = "message") => {
     if (!msg) return;
-    const id = Date.now() + '-' + (Math.random() * 1000).toFixed(0);
+    const id = Date.now() + "-" + (Math.random() * 1000).toFixed(0);
 
     const message = {
       id,
       message: msg,
-      type
+      type,
     };
 
-    setMessage(prev => [message, ...prev]);
+    setMessage((prev) => [message, ...prev]);
 
     setTimeout(() => {
       removeMessage(id);
@@ -333,25 +341,25 @@ function App() {
     }
   };
 
-  const removeMessage = id => {
-    setMessage(prev => prev.filter(message => message.id !== id));
+  const removeMessage = (id) => {
+    setMessage((prev) => prev.filter((message) => message.id !== id));
   };
 
   const fetchAnimeData = async () => {
     if (!hasInternet) return;
     try {
-      const response = await fetch('https://graphql.anilist.co', {
-        method: 'POST',
+      const response = await fetch("https://graphql.anilist.co", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({ query: ANILIST_QUERY }),
-        signal: AbortSignal.timeout(60000)
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
-        newMessage('Network response failure', 'alert');
+        newMessage("Network response failure", "alert");
         return;
       }
 
@@ -361,26 +369,26 @@ function App() {
       setPopularAnime(data.popular.media);
       setTopRatedAnime(data.topRated.media);
     } catch (error) {
-      newMessage(`Failed syncing dashboards from AniList`, 'alert');
+      newMessage(`Failed syncing dashboards from AniList`, "alert");
     }
   };
 
   const fetchSearchQuery = async (query, page = 1) => {
     setSearchIsLoading(true);
     try {
-      const response = await fetch('https://graphql.anilist.co', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("https://graphql.anilist.co", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: ANILIST_SEARCH_QUERY,
-          variables: { search: query, page: page }
+          variables: { search: query, page: page },
         }),
-        signal: AbortSignal.timeout(60000)
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
         setSearchData([]);
-        newMessage('Search failed', 'alert');
+        newMessage("Search failed", "alert");
         setSearchIsLoading(false);
         setSearchQuery(null);
         return;
@@ -391,8 +399,8 @@ function App() {
     } catch (error) {
       setSearchData([]);
       newMessage(
-        'Search failed: Please check your internet connection',
-        'alert'
+        "Search failed: Please check your internet connection",
+        "alert",
       );
       setSearchQuery(null);
     }
@@ -413,13 +421,13 @@ function App() {
 
     let intervalFetch;
     if (!hasInternet) {
-      newMessage('No internet connection detected', 'alert');
+      newMessage("No internet connection detected", "alert");
     } else {
       fetchAnimeData();
 
       intervalFetch = setInterval(fetchAnimeData, 360000);
 
-      newMessage('Connection restored', 'alert');
+      newMessage("Connection restored", "alert");
     }
     return () => {
       clearInterval(intervalFetch);
@@ -432,14 +440,14 @@ function App() {
 
     const intervalChecker = setInterval(internetCheck, 10000);
 
-    window.addEventListener('online', internetCheck);
-    window.addEventListener('offline', internetCheck);
+    window.addEventListener("online", internetCheck);
+    window.addEventListener("offline", internetCheck);
 
     return () => {
       clearInterval(intervalChecker);
 
-      window.removeEventListener('online', internetCheck);
-      window.removeEventListener('offline', internetCheck);
+      window.removeEventListener("online", internetCheck);
+      window.removeEventListener("offline", internetCheck);
     };
   }, []);
 
@@ -453,7 +461,7 @@ function App() {
             animate={{
               scale: 1,
               opacity: 1,
-              transition: { type: 'spring', stiffness: 300, damping: 20 }
+              transition: { type: "spring", stiffness: 300, damping: 20 },
             }}
             exit={{ scale: 0, opacity: 0, transition: { duration: 0.15 } }}
           >
@@ -466,8 +474,8 @@ function App() {
         <AnimatePresence>
           {message.map(({ id, message, type }) => (
             <motion.div
-              initial={{ x: '-100%', opacity: 0 }}
-              drag='x'
+              initial={{ x: "-100%", opacity: 0 }}
+              drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={{ left: 0.5, right: 0.5 }}
               onDragEnd={(_, i) => handleMessageDragEnd(i, id)}
@@ -475,21 +483,21 @@ function App() {
                 x: 0,
                 opacity: 1,
                 transition: {
-                  type: 'spring',
+                  type: "spring",
                   stiffness: 300,
-                  damping: 26
-                }
+                  damping: 26,
+                },
               }}
               exit={{
-                x: '-100%',
+                x: "-100%",
                 opacity: 0,
-                transition: { duration: 0.2 }
+                transition: { duration: 0.2 },
               }}
               key={id}
               className={style.messageCard}
             >
-              {type === 'message' && <MessageSquare size={17} />}
-              {type === 'alert' && <TriangleAlert size={17} />}
+              {type === "message" && <MessageSquare size={17} />}
+              {type === "alert" && <TriangleAlert size={17} />}
               <span>{message}</span>
             </motion.div>
           ))}
@@ -511,43 +519,54 @@ function App() {
           searchIsLoading,
           viewerOpen,
           setViewerOpen,
+          hasInternet,
           setViewAnimeData,
-          viewAnimeData
+          viewAnimeData,
+          setOpenPlayer,
+          openPlayer
         }}
       >
-        <div className={style.wrapper}>
-          <LayoutGroup>
-            <AnimatePresence mode='popLayout'>
-              {
-                <motion.div
-                  key={page}
-                  initial={{ opacity: 0, y: 100 }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    transition: {
-                      duration: 0.15,
-                      ease: 'linear'
-                    }
-                  }}
-                  exit={{
-                    opacity: 0,
-                    y: 100,
-                    transition: {
-                      duration: 0.15,
-                      ease: 'linear'
-                    }
-                  }}
-                  className={style.pageContainer}
-                >
-                  {PAGE[page]}
-                </motion.div>
-              }
-            </AnimatePresence>
-          </LayoutGroup>
-          <ViewAnime />
-        </div>
-        <Navigator />
+        <ConfigProvider>
+          <AnimeProvider>
+            <div className={style.wrapper}>
+              <LayoutGroup>
+                <AnimatePresence mode="popLayout">
+                  {
+                    <motion.div
+                      key={page}
+                      initial={{ opacity: 0, y: 100 }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        transition: {
+                          duration: 0.15,
+                          ease: "linear",
+                        },
+                      }}
+                      exit={{
+                        opacity: 0,
+                        y: 100,
+                        transition: {
+                          duration: 0.15,
+                          ease: "linear",
+                        },
+                      }}
+                      className={style.pageContainer}
+                    >
+                      {renderPage(page)}
+                    </motion.div>
+                  }
+                </AnimatePresence>
+              </LayoutGroup>
+
+              <ViewAnime />
+
+              <VideoStream />
+            </div>
+
+            <Navigator />
+          </AnimeProvider>
+        </ConfigProvider>
       </AppContext.Provider>
     </>
   );
