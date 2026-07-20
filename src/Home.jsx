@@ -307,7 +307,7 @@ function Home() {
         >
           <AnimatePresence>
             {trendingAnime.length === 0
-              ? [...Array(10)].map((_, idx) => (
+              ? [...Array(20)].map((_, idx) => (
                   <div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -448,7 +448,7 @@ function Home() {
         >
           <AnimatePresence>
             {popularAnime.length === 0
-              ? [...Array(10)].map((_, idx) => (
+              ? [...Array(20)].map((_, idx) => (
                   <div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

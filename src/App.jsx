@@ -92,15 +92,15 @@ function App() {
 
     try {
       const { data: trending } = await CapacitorHttp.get({
-        url: "http://localhost:9189/trending?page=1&per_page=10",
+        url: "http://localhost:9189/trending?page=1&per_page=20",
         headers: ZENITH_HEADERS,
       });
       const { data: popular } = await CapacitorHttp.get({
-        url: "http://localhost:9189/popular?page=1&per_page=10",
+        url: "http://localhost:9189/popular?page=1&per_page=20",
         headers: ZENITH_HEADERS,
       });
       const { data: recent } = await CapacitorHttp.get({
-        url: "http://localhost:9189/recent?page=1&per_page=10",
+        url: "http://localhost:9189/recent?page=1&per_page=20",
         headers: ZENITH_HEADERS,
       });
 
