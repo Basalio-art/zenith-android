@@ -1,5 +1,3 @@
 {
-  "backend-server" : [
-    "aHR0cHM6Ly96ZW5pdGgtYmFja2VuZC1hODk5Lm9ucmVuZGVyLmNvbQ=="
-  ]
+  "app-version" : "1.4.0"
 }
