@@ -39,11 +39,4 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
-
-    <!-- Required if your app targets Android 11 (SDK 30) or higher so your app can see Termux -->
-    <queries>
-        <package android:name="com.termux" />
-    </queries>
-
 </manifest>
