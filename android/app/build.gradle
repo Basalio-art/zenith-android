@@ -40,7 +40,7 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
-    implementation 'com.github.termux.termux-app:termux-shared:0.118.0'
+    implementation 'com.github.termux.termux-app:termux-shared:v0.118.0'
 }
 
 apply from: 'capacitor.build.gradle'
