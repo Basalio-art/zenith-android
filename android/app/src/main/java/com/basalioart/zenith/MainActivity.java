@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
 
+// Import the official Termux constants library
+import com.termux.shared.termux.TermuxConstants;
+
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -11,14 +14,23 @@ public class MainActivity extends BridgeActivity {
         
         try {
             Intent intent = new Intent();
-            intent.setClassName("com.termux", "com.termux.app.RunCommandService");
-            intent.setAction("com.termux.RUN_COMMAND");
-
-            // FIXED: Changed to the literal strings Termux actively scans for
-            intent.putExtra("com.termux.RUN_COMMAND_PATH", "/data/data/com.termux/files/usr/bin/bash");
-
-            String gitRepoUrl = "https://github.com/Basalio-art/anime-api.git"; 
             
+            // Set target component using official constants
+            intent.setClassName(
+                TermuxConstants.TERMUX_PACKAGE_NAME, 
+                TermuxConstants.TERMUX_RUN_COMMAND_SERVICE_NAME
+            );
+            intent.setAction(TermuxConstants.ACTION_RUN_COMMAND);
+
+            // 1. Pass the execution path safely using the Library Constant
+            // This maps to /data/data/com.termux/files/usr/bin/bash dynamically
+            intent.putExtra(
+                TermuxConstants.RUN_COMMAND_SERVICE.EXTRA_COMMAND_PATH, 
+                TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/bin/bash"
+            );
+
+            // 2. Your Go Backend Engine Script
+            String gitRepoUrl = "https://github.com/Basalio-art/anime-api.git"; 
             String script = 
                 "echo '[Zenith Engine] Checking environment...' && " +
                 "if ! command -v git &> /dev/null || ! command -v go &> /dev/null; then " +
@@ -36,12 +48,20 @@ public class MainActivity extends BridgeActivity {
                 "  echo '[Zenith Engine] First time setup: Compiling binary...' && go build -o server main.go && ./server; " +
                 "fi";
 
-            // FIXED: String array of arguments tied to correct key
-            intent.putExtra("com.termux.RUN_COMMAND_ARGUMENTS", new String[]{"-c", script});
+            // 3. Pass arguments using the official Library Extra key
+            intent.putExtra(
+                TermuxConstants.RUN_COMMAND_SERVICE.EXTRA_ARGUMENTS, 
+                new String[]{"-c", script}
+            );
             
-            // FIXED: Corrected key name for background execution
-            intent.putExtra("com.termux.RUN_COMMAND_BACKGROUND", false); 
+            // 4. Force background mode using the Library Extra key
+            // Set to true for total invisibility, or false to pop open a screen for debugging
+            intent.putExtra(
+                TermuxConstants.RUN_COMMAND_SERVICE.EXTRA_BACKGROUND, 
+                true
+            ); 
 
+            // Fire the automated intent session
             startService(intent);
             
         } catch (Exception e) {
