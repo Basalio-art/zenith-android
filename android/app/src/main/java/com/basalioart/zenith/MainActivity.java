@@ -15,21 +15,21 @@ public class MainActivity extends BridgeActivity {
         try {
             Intent intent = new Intent();
             
-            // Set target component using official constants
+            // FIXED: Path mapped inside TERMUX_APP sub-class
             intent.setClassName(
                 TermuxConstants.TERMUX_PACKAGE_NAME, 
-                TermuxConstants.TERMUX_RUN_COMMAND_SERVICE_NAME
+                TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE_NAME
             );
-            intent.setAction(TermuxConstants.ACTION_RUN_COMMAND);
+            
+            // FIXED: Path nested inside TERMUX_APP.RUN_COMMAND_SERVICE sub-class
+            intent.setAction(TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.ACTION_RUN_COMMAND);
 
-            // 1. Pass the execution path safely using the Library Constant
-            // This maps to /data/data/com.termux/files/usr/bin/bash dynamically
+            // FIXED: Path nested inside TERMUX_APP.RUN_COMMAND_SERVICE sub-class
             intent.putExtra(
-                TermuxConstants.RUN_COMMAND_SERVICE.EXTRA_COMMAND_PATH, 
+                TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_COMMAND_PATH, 
                 TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/bin/bash"
             );
 
-            // 2. Your Go Backend Engine Script
             String gitRepoUrl = "https://github.com/Basalio-art/anime-api.git"; 
             String script = 
                 "echo '[Zenith Engine] Checking environment...' && " +
@@ -48,20 +48,18 @@ public class MainActivity extends BridgeActivity {
                 "  echo '[Zenith Engine] First time setup: Compiling binary...' && go build -o server main.go && ./server; " +
                 "fi";
 
-            // 3. Pass arguments using the official Library Extra key
+            // FIXED: Nested extra string references updated
             intent.putExtra(
-                TermuxConstants.RUN_COMMAND_SERVICE.EXTRA_ARGUMENTS, 
+                TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_ARGUMENTS, 
                 new String[]{"-c", script}
             );
             
-            // 4. Force background mode using the Library Extra key
-            // Set to true for total invisibility, or false to pop open a screen for debugging
+            // FIXED: Nested extra string references updated
             intent.putExtra(
-                TermuxConstants.RUN_COMMAND_SERVICE.EXTRA_BACKGROUND, 
+                TermuxConstants.TERMUX_APP.RUN_COMMAND_SERVICE.EXTRA_BACKGROUND, 
                 true
             ); 
 
-            // Fire the automated intent session
             startService(intent);
             
         } catch (Exception e) {
