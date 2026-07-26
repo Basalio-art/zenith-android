@@ -8,9 +8,9 @@
     },
     "SystemBars": {
       "insetsHandling": "css",
-      "style": "DARK",
+      "style": "DEFAULT",
       "hidden": true,
-      "animation": "FADE"
+      "animation": "NONE"
     }
   }
 }
