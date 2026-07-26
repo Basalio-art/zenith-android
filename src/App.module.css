@@ -1,3 +1,10 @@
+.body {
+  height: 100dvh;
+  width: 100dvw;
+  display: flex;
+  flex-direction: column;
+}
+
 .wifiOff {
   position: fixed;
   top: 0.5rem;
@@ -50,3 +57,43 @@
     transform: scale(1.5);
   }
 }
+
+.startupNotice {
+  height: 100dvh;
+  width: 100dvw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  > * {
+    padding: 1.5rem;
+  }
+}
+
+.updateNotice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 500px;
+  text-align: center;
+
+  svg {
+    color: yellow;
+  }
+
+  .downloadBtn {
+    padding: 1rem;
+    line-height: .5;
+    background: var(--color-2);
+    border-radius: 10px;
+    font-size: .9rem;
+  }
+}
+
+.backendInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
