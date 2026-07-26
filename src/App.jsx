@@ -4,13 +4,17 @@ import { useState, useRef, useEffect, createContext } from 'react';
 import { WifiOff, TriangleAlert, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import { StatusBar } from '@capacitor/status-bar';
-import { Capacitor, CapacitorHttp } from '@capacitor/core';
+import { Capacitor, CapacitorHttp, SystemBars } from '@capacitor/core';
 import Navigator from './Navigator.jsx';
 import SearchResult from './Search.jsx';
 import ViewAnime from './ViewAnime.jsx';
 
 if (Capacitor.isNativePlatform()) {
   StatusBar.setOverlaysWebView({ overlay: true });
+}
+
+const hideSystemBars = async () => {
+  await SystemBars.hide()
 }
 
 export const AppContext = createContext(null);
@@ -245,6 +249,12 @@ function App() {
       window.removeEventListener('offline', internetCheck);
     };
   }, [isLoading]);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      hideSystemBars()
+    }
+  }, [])
 
   return (
     <>
