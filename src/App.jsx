@@ -602,8 +602,6 @@ function App() {
                 cd zenith-backend && go mod tidy && go build -o server main.go && ./server
               </span>
             </div>
-            if you already run this before run this instead to run the backend
-            immediately
             <h4>◈ If already installed, run this to start</h4>
             <div className={style.bash2}>
               <span className={style.textType}>bash</span>
