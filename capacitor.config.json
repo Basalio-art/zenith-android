@@ -12,5 +12,10 @@
       "hidden": true,
       "animation": "NONE"
     },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#ffffff"
+    }
   }
 }
