@@ -239,7 +239,7 @@ function App() {
 
   const checkBackendV = () => {
     return new Promise(async resolve => {
-      const version = BACKEND_VERSION;
+      let version = BACKEND_VERSION;
 
       try {
         const { data } = await CapacitorHttp.get({
