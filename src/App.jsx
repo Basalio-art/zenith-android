@@ -211,10 +211,10 @@ function App() {
         await CapacitorHttp.request({
           url: 'http://localhost:9189',
           method: 'HEAD',
-          cache: 'no-store'
         });
         return true;
-      } catch {
+      } catch(e) {
+        console.log(e)
         return false;
       }
     };
