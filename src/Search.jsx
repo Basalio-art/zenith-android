@@ -182,6 +182,7 @@ function SearchResult() {
 }
 
 const AnimeCard = memo(({ anime, setViewData, viewer }) => {
+  console.log(anime)
   return (
     <div
       className={style.card}
@@ -197,7 +198,7 @@ const AnimeCard = memo(({ anime, setViewData, viewer }) => {
         </span>
         <div className={style.seasonYearWrapper}>
           <span className={style.year}>
-            {anime.seasonYear || anime.format.replace('_', ' ')}
+            {anime.seasonYear || anime.format?.replace('_', ' ') || anime.countryOfOrigin}
           </span>
           {anime.averageScore && (
             <div className={style.score}>

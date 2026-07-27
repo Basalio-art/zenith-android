@@ -1,20 +1,27 @@
 import Home from './Home.jsx';
 import style from './App.module.css';
 import { useState, useRef, useEffect, createContext } from 'react';
-import { WifiOff, TriangleAlert, MessageSquare } from 'lucide-react';
+import {
+  WifiOff,
+  TriangleAlert,
+  MessageSquare,
+  Copy,
+  Check
+} from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import { Capacitor, CapacitorHttp, SystemBars } from '@capacitor/core';
+import { Clipboard } from '@capacitor/clipboard';
 import Navigator from './Navigator.jsx';
 import SearchResult from './Search.jsx';
 import ViewAnime from './ViewAnime.jsx';
 
 const hideSystemBars = async () => {
-  await SystemBars.hide()
-}
+  await SystemBars.hide();
+};
 
 export const AppContext = createContext(null);
 
-const renderPage = (page) => {
+const renderPage = page => {
   switch (page) {
     case 'search':
       return <SearchResult />;
@@ -25,10 +32,11 @@ const renderPage = (page) => {
 
 const ZENITH_HEADERS = {
   Origin: 'http://zenith.app',
-  Referer: 'http://zenith.app',
+  Referer: 'http://zenith.app'
 };
 
-const CURRENT_VERSION = '1.4.0';
+const APP_VERSION = '1.4.0';
+const BACKEND_VERSION = '1.1.0';
 
 const CONFIG_URL =
   'https://raw.githubusercontent.com/Basalio-art/zenith-android/refs/heads/main/config.json';
@@ -47,10 +55,27 @@ function App() {
   const [viewAnimeData, setViewAnimeData] = useState(null);
   const [openPlayer, setOpenPlayer] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [bash1Copied, setBash1Copied] = useState(false);
+  const [bash2Copied, setBash2Copied] = useState(false);
+  const [valid, setValid] = useState({
+    appVersion: {
+      required: APP_VERSION,
+      ok: true
+    },
+    backendRun: true,
+    backendVersion: {
+      required: BACKEND_VERSION,
+      ok: true
+    }
+  });
+  const [loadingInfo, setLoadingInfo] = useState({
+    msg: null,
+    loaded: 0,
+    loadLength: 3
+  });
   const [page, setPage] = useState('home');
 
   const isInitialInternetMount = useRef(true);
-  const isInitialRequirementsMount = useRef(true);
 
   const internetCheck = async () => {
     if (!navigator.onLine) {
@@ -63,7 +88,7 @@ function App() {
         method: 'HEAD',
         cache: 'no-store',
         mode: 'no-cors',
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(5000)
       });
       setHasInternet(true);
     } catch {
@@ -78,10 +103,10 @@ function App() {
     const message = {
       id,
       message: msg,
-      type,
+      type
     };
 
-    setMessage((prev) => [message, ...prev]);
+    setMessage(prev => [message, ...prev]);
 
     setTimeout(() => {
       removeMessage(id);
@@ -94,8 +119,8 @@ function App() {
     }
   };
 
-  const removeMessage = (id) => {
-    setMessage((prev) => prev.filter((message) => message.id !== id));
+  const removeMessage = id => {
+    setMessage(prev => prev.filter(message => message.id !== id));
   };
 
   const fetchAnimeData = async () => {
@@ -105,24 +130,22 @@ function App() {
       const { data: trending, status: trendingStatus } =
         await CapacitorHttp.get({
           url: 'http://localhost:9189/trending?page=1&per_page=20',
-          headers: ZENITH_HEADERS,
+          headers: ZENITH_HEADERS
         });
       const { data: popular, status: popularStatus } = await CapacitorHttp.get({
         url: 'http://localhost:9189/popular?page=1&per_page=20',
-        headers: ZENITH_HEADERS,
+        headers: ZENITH_HEADERS
       });
       const { data: recent, status: recentStatus } = await CapacitorHttp.get({
         url: 'http://localhost:9189/recent?page=1&per_page=20',
-        headers: ZENITH_HEADERS,
+        headers: ZENITH_HEADERS
       });
 
-      setTrendingAnime((prev) =>
-        trendingStatus === 200 ? trending.results : prev,
+      setTrendingAnime(prev =>
+        trendingStatus === 200 ? trending.results : prev
       );
-      setPopularAnime((prev) =>
-        popularStatus === 200 ? popular.results : prev,
-      );
-      setLatestAnime((prev) => (recentStatus === 200 ? recent.results : prev));
+      setPopularAnime(prev => (popularStatus === 200 ? popular.results : prev));
+      setLatestAnime(prev => (recentStatus === 200 ? recent.results : prev));
     } catch (error) {
       console.log('Error', error);
       // newMessage(`Failed syncing dashboards from AniList`, "alert");
@@ -138,8 +161,8 @@ function App() {
         params: {
           query: query,
           page: page,
-          per_page: 50,
-        },
+          per_page: 50
+        }
       });
 
       setSearchData(data.results || []);
@@ -147,52 +170,121 @@ function App() {
       setSearchData([]);
       newMessage(
         'Search failed: Please check your internet connection',
-        'alert',
+        'alert'
       );
       setSearchQuery(null);
     }
     setSearchIsLoading(false);
   };
 
-  const checkVersion = async () => {
-    let version = CURRENT_VERSION;
-    try {
-      const { data } = await CapacitorHttp.get({
-        url: CONFIG_URL,
-        connectTimeout: 5000,
-        readTimeout: 5000,
-      });
+  const checkVersion = () => {
+    return new Promise(async resolve => {
+      let version = APP_VERSION;
+      try {
+        const { data } = await CapacitorHttp.get({
+          url: CONFIG_URL,
+          connectTimeout: 5000,
+          readTimeout: 5000
+        });
 
-      version = JSON.parse(data)['app-version'];
-    } catch {}
+        version = JSON.parse(data)['app-version'];
+      } catch {
+        if (!hasInternet) version = APP_VERSION;
+      }
 
-    return new Promise((resolve) => {
-      resolve(version);
+      if (version !== APP_VERSION) {
+        setValid(prev => ({
+          ...prev,
+          appVersion: { required: version, ok: false }
+        }));
+      } else {
+        setTimeout(() => {
+          resolve(version);
+        }, 500);
+      }
     });
   };
 
-  const checkBackendR = async () => {
-    let isRunning = false;
+  const checkBackendR = () => {
+    const hasBackend = async () => {
+      try {
+        await CapacitorHttp.request({
+          url: 'http://localhost:9189',
+          method: 'HEAD',
+          cache: 'no-store'
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    };
 
-    try {
-      await CapacitorHttp.request({
-        url: 'http://localhost:9189',
-        method: 'HEAD',
-        cache: 'no-store',
-        connectTimeout: 5000,
-        readTimeout: 5000,
-      });
-    } catch {}
+    return new Promise(async resolve => {
+      let isRunning = false;
 
-    return new Promise((resolve) => {
-      resolve(isRunning);
+      setInterval(async () => {
+        isRunning = await hasBackend();
+
+        if (isRunning) {
+          setValid(prev => ({ ...prev, backendRun: true }));
+          setTimeout(() => {
+            resolve(isRunning);
+          }, 500);
+        } else {
+          setValid(prev => ({ ...prev, backendRun: false }));
+        }
+      }, 1000);
     });
+  };
+
+  const checkBackendV = () => {
+    return new Promise(async resolve => {
+      const version = BACKEND_VERSION;
+
+      try {
+        const { data } = await CapacitorHttp.get({
+          url: CONFIG_URL,
+          connectTimeout: 5000,
+          readTimeout: 5000
+        });
+        version = JSON.parse(data)['backend-version'];
+      } catch {}
+
+      setTimeout(() => {
+        resolve(version === BACKEND_VERSION ? true : false);
+      }, 500);
+    });
+  };
+
+  const wait = () => {
+    return new Promise(resolve => setTimeout(resolve, 1500));
   };
 
   const loadingStartup = async () => {
+    setLoadingInfo(prev => ({ ...prev, msg: 'Verifying app version . . .' }));
     await checkVersion();
+    setLoadingInfo(prev => ({
+      ...prev,
+      loaded: 1,
+      msg: 'Checking Termux server status . . .'
+    }));
     await checkBackendR();
+    setLoadingInfo(prev => ({
+      ...prev,
+      loaded: 2,
+      msg: 'Verifying backend changes . . .'
+    }));
+    await checkBackendV();
+    setLoadingInfo(prev => ({ ...prev, loaded: 3, msg: 'Initialization complete!' }));
+
+    await wait();
     setIsLoading(false);
+  };
+
+  const handleCopy = async text => {
+    await Clipboard.write({
+      string: text
+    });
   };
 
   useEffect(() => {
@@ -247,9 +339,9 @@ function App() {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      hideSystemBars()
+      hideSystemBars();
     }
-  }, [])
+  }, []);
 
   return (
     <>
@@ -263,12 +355,12 @@ function App() {
                 animate={{
                   scale: 1,
                   opacity: 1,
-                  transition: { type: 'spring', stiffness: 300, damping: 20 },
+                  transition: { type: 'spring', stiffness: 300, damping: 20 }
                 }}
                 exit={{
                   scale: 0,
                   opacity: 0,
-                  transition: { duration: 0.15 },
+                  transition: { duration: 0.15 }
                 }}
               >
                 <WifiOff size={24} />
@@ -281,7 +373,7 @@ function App() {
               {message.map(({ id, message, type }) => (
                 <motion.div
                   initial={{ x: '-100%', opacity: 0 }}
-                  drag="x"
+                  drag='x'
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={{ left: 0.5, right: 0.5 }}
                   onDragEnd={(_, i) => handleMessageDragEnd(i, id)}
@@ -291,15 +383,15 @@ function App() {
                     transition: {
                       type: 'spring',
                       stiffness: 300,
-                      damping: 26,
-                    },
+                      damping: 26
+                    }
                   }}
                   exit={{
                     x: '-100%',
                     opacity: 0,
-                    transition: { duration: 0.2 },
+                    transition: { duration: 0.2 }
                   }}
-                  key={id}
+                  key={`message-${id}`}
                   className={style.messageCard}
                 >
                   {type === 'message' && <MessageSquare size={17} />}
@@ -330,12 +422,12 @@ function App() {
               setViewAnimeData,
               viewAnimeData,
               setOpenPlayer,
-              openPlayer,
+              openPlayer
             }}
           >
             <div className={style.wrapper}>
               <LayoutGroup>
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence mode='popLayout'>
                   {
                     <motion.div
                       key={page}
@@ -345,16 +437,16 @@ function App() {
                         y: 0,
                         transition: {
                           duration: 0.15,
-                          ease: 'linear',
-                        },
+                          ease: 'linear'
+                        }
                       }}
                       exit={{
                         opacity: 0,
                         y: 100,
                         transition: {
                           duration: 0.15,
-                          ease: 'linear',
-                        },
+                          ease: 'linear'
+                        }
                       }}
                       className={style.pageContainer}
                     >
@@ -371,57 +463,175 @@ function App() {
           </AppContext.Provider>
         </div>
       )}
-      {/* {(() => {
-        if (isLatestVersion === null || termuxBackendRunning === null) return;
-        const { appVersion, backend } = validRequirements;
-        const variant = {
-          hidden: {
-            opacity: 0,
-            y: -20,
-            transition: {
-              duration: 0.5,
-            },
-          },
-          show: {
-            opacity: 1,
-            y: 0,
-            transition: {
-              duration: 0.5,
-            },
-          },
-        };
-        let children;
-        if (!appVersion) {
-          children = (
+      {isLoading && (
+        <div className={style.loadingPage}>
+          <div className={style.loadingIndicator}>
             <motion.div
-              className={style.updateNotice}
-              initial={variant.hidden}
-              animate={variant.show}
-            >
-              <TriangleAlert className={style.triangleAlert} size={30} />A new
-              version of Zenith is available. Update now to get the latest
-              features and performance improvements.
-              <div className={style.downloadBtn}>Download v1.5.0</div>
-            </motion.div>
-          );
-        } else if (!backend) {
-          children = (
-            <motion.div
-              className={style.backendInfo}
-              initial={variant.hidden}
-              animate={variant.show}
-            >
-              <TriangleAlert className={style.triangleAlert} size={30} />
-              Install and Open Termux for the app server
-            </motion.div>
-          );
-        }
-        return (
-          <div className={style.startupNotice}>
-            <AnimatePresence>{children}</AnimatePresence>
+              initial={{ scaleX: 0 }}
+              animate={{
+                scaleX: (() => {
+                  const loaded = loadingInfo.loaded;
+                  const loadLength = loadingInfo.loadLength;
+
+                  return 0.8 + (loaded / loadLength) * 0.2;
+                })()
+              }}
+              transition={{
+                duration: 1.5
+              }}
+            ></motion.div>
           </div>
-        );
-      })()} */}
+          <AnimatePresence mode='popLayout'>
+            {loadingInfo.msg && (
+              <motion.div
+                className={style.loadingInfo}
+                key={`loading-id${loadingInfo.loaded * Math.random()}`}
+                initial={{
+                  opacity: 0,
+                  y: 10
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0
+                }}
+                exit={{
+                  opacity: 0,
+                  y: -10
+                }}
+                transition={{
+                  duration: 0.25
+                }}
+              >
+                {loadingInfo.msg}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+      <AnimatePresence>
+        {!valid.appVersion.ok && (
+          <motion.div
+            className={style.invalidAppVersion}
+            key='invalid-app-version'
+            initial={{
+              opacity: 0,
+              x: '-50%',
+              y: '-40%'
+            }}
+            animate={{
+              opacity: 1,
+              y: '-50%'
+            }}
+            exit={{
+              opacity: 0,
+              y: '-30%'
+            }}
+            transition={{
+              duration: 0.5
+            }}
+          >
+            <div className={style.head}>
+              <TriangleAlert className={style.triangleAlert} size={30} />
+              <h3>Update Required</h3>
+            </div>
+            <div>
+              A new version of Zenith is available. Update now to get the latest
+              features and performance improvements.
+            </div>
+            <div className={style.downloadBtn}>
+              Download v{valid.appVersion.required}
+            </div>
+          </motion.div>
+        )}
+        {!valid.backendRun && (
+          <motion.div
+            className={style.noBackend}
+            key='no-backend'
+            initial={{
+              opacity: 0,
+              x: '-50%',
+              y: '-40%'
+            }}
+            animate={{
+              opacity: 1,
+              y: '-50%'
+            }}
+            exit={{
+              opacity: 0,
+              y: '-30%'
+            }}
+            transition={{
+              duration: 0.5
+            }}
+          >
+            <div className={style.head}>
+              <TriangleAlert className={style.triangleAlert} size={25} />
+              <h3>Local Server Required</h3>
+            </div>
+            <div>
+              Zenith requires a local backend server running in Termux to fetch
+              data.
+            </div>
+            <h4>◈ First-time setup & start</h4>
+            <div className={style.bash1}>
+              <span className={style.textType}>bash</span>
+              <motion.div
+                className={style.copyBtn}
+                whileTap={{
+                  scale: 1.2
+                }}
+                transition={{
+                  type: 'spring'
+                }}
+                onClick={e => {
+                  console.log(e);
+                  handleCopy(e.target.parentNode.lastElementChild.innerText);
+                  setBash1Copied(true);
+                }}
+              >
+                {bash1Copied ? (
+                  <Check size={20} color='lime' />
+                ) : (
+                  <Copy size={20} />
+                )}
+              </motion.div>
+              <span className={style.text}>
+                pkg update -y && pkg upgrade -y && cd ~ && pkg install git &&
+                pkg install golang && git clone
+                https://github.com/Basalio-art/anime-api.git zenith-backend &&
+                cd zenith-backend && go mod tidy && go build -o server main.go && ./server
+              </span>
+            </div>
+            if you already run this before run this instead to run the backend
+            immediately
+            <h4>◈ If already installed, run this to start</h4>
+            <div className={style.bash2}>
+              <span className={style.textType}>bash</span>
+              <motion.div
+                className={style.copyBtn}
+                whileTap={{
+                  scale: 1.2
+                }}
+                transition={{
+                  type: 'spring'
+                }}
+                onClick={e => {
+                  console.log(e);
+                  handleCopy(e.target.parentNode.lastElementChild.innerText);
+                  setBash1Copied(true);
+                }}
+              >
+                {bash2Copied ? (
+                  <Check size={20} color='lime' />
+                ) : (
+                  <Copy size={20} />
+                )}
+              </motion.div>
+              <span className={style.text}>cd ~/zenith-backend && ./server</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
