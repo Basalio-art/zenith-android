@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import { Capacitor, CapacitorHttp, SystemBars } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
+import { StatusBar } from '@capacitor/status-bar';
 import Navigator from './Navigator.jsx';
 import SearchResult from './Search.jsx';
 import ViewAnime from './ViewAnime.jsx';
@@ -36,7 +37,6 @@ const ZENITH_HEADERS = {
 };
 
 const APP_VERSION = '1.4.0';
-const BACKEND_VERSION = '1.1.0';
 
 const CONFIG_URL =
   'https://raw.githubusercontent.com/Basalio-art/zenith-android/refs/heads/main/config.json';
@@ -57,6 +57,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [bash1Copied, setBash1Copied] = useState(false);
   const [bash2Copied, setBash2Copied] = useState(false);
+  const [bash3Copied, setBash3Copied] = useState(false);
   const [valid, setValid] = useState({
     appVersion: {
       required: APP_VERSION,
@@ -64,7 +65,7 @@ function App() {
     },
     backendRun: true,
     backendVersion: {
-      required: BACKEND_VERSION,
+      required: null,
       ok: true
     }
   });
@@ -210,11 +211,10 @@ function App() {
       try {
         await CapacitorHttp.request({
           url: 'http://localhost:9189',
-          method: 'HEAD',
+          method: 'HEAD'
         });
         return true;
-      } catch(e) {
-        console.log(e)
+      } catch (e) {
         return false;
       }
     };
@@ -238,21 +238,51 @@ function App() {
   };
 
   const checkBackendV = () => {
-    return new Promise(async resolve => {
-      let version = BACKEND_VERSION;
+    const CURRENT_VERSION = async () => {
+      const { data } = await CapacitorHttp.get({
+        url: 'http://localhost:9189/version',
+        headers: ZENITH_HEADERS
+      });
 
+      return data.version;
+    };
+
+    const ONLINE_VERSION = async () => {
       try {
         const { data } = await CapacitorHttp.get({
           url: CONFIG_URL,
           connectTimeout: 5000,
           readTimeout: 5000
         });
-        version = JSON.parse(data)['backend-version'];
-      } catch {}
+        return JSON.parse(data)['backend-version'];
+      } catch {
+        if (!hasInternet) return await CURRENT_VERSION;
+      }
+    };
 
-      setTimeout(() => {
-        resolve(version === BACKEND_VERSION ? true : false);
-      }, 500);
+    return new Promise(async resolve => {
+      const version = await ONLINE_VERSION();
+
+      let intervalId = setTimeout(async () => {
+        const currentVersion = await CURRENT_VERSION();
+
+        if (version !== currentVersion) {
+          setValid(prev => ({
+            ...prev,
+            backendVersion: { ok: false, required: version }
+          }));
+        } else {
+          clearInterval(intervalId);
+          setValid(prev => ({
+            ...prev,
+            backendVersion: { ok: true, required: version }
+          }));
+
+          setTimeout(() => {
+            resolve(version);
+          }, 500);
+        }
+      }, 1000);
     });
   };
 
@@ -275,7 +305,11 @@ function App() {
       msg: 'Verifying backend changes . . .'
     }));
     await checkBackendV();
-    setLoadingInfo(prev => ({ ...prev, loaded: 3, msg: 'Initialization complete!' }));
+    setLoadingInfo(prev => ({
+      ...prev,
+      loaded: 3,
+      msg: 'Initialization complete!'
+    }));
 
     await wait();
     setIsLoading(false);
@@ -339,7 +373,10 @@ function App() {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      hideSystemBars();
+      // hideSystemBars();
+      StatusBar.addListener('statusBarVisibilityChanged', e => {
+        console.log(e);
+      });
     }
   }, []);
 
@@ -531,7 +568,7 @@ function App() {
             }}
           >
             <div className={style.head}>
-              <TriangleAlert className={style.triangleAlert} size={30} />
+              <TriangleAlert className={style.triangleAlert} size={25} />
               <h3>Update Required</h3>
             </div>
             <div>
@@ -595,12 +632,13 @@ function App() {
                   <Copy size={20} />
                 )}
               </motion.div>
-              <span className={style.text}>
+              <code className={style.text}>
                 pkg update -y && pkg upgrade -y && cd ~ && pkg install git &&
                 pkg install golang && git clone
                 https://github.com/Basalio-art/anime-api.git zenith-backend &&
-                cd zenith-backend && go mod tidy && go build -o server main.go && ./server
-              </span>
+                cd zenith-backend && go mod tidy && go build -o server main.go
+                && ./server
+              </code>
             </div>
             <h4>◈ If already installed, run this to start</h4>
             <div className={style.bash2}>
@@ -616,7 +654,7 @@ function App() {
                 onClick={e => {
                   console.log(e);
                   handleCopy(e.target.parentNode.lastElementChild.innerText);
-                  setBash1Copied(true);
+                  setBash2Copied(true);
                 }}
               >
                 {bash2Copied ? (
@@ -625,7 +663,69 @@ function App() {
                   <Copy size={20} />
                 )}
               </motion.div>
-              <span className={style.text}>cd ~/zenith-backend && ./server</span>
+              <code className={style.text}>
+                cd ~/zenith-backend && ./server
+              </code>
+            </div>
+          </motion.div>
+        )}
+        {!valid.backendVersion.ok && (
+          <motion.div
+            className={style.backendChanges}
+            key='backend-changes'
+            initial={{
+              opacity: 0,
+              x: '-50%',
+              y: '-40%'
+            }}
+            animate={{
+              opacity: 1,
+              y: '-50%'
+            }}
+            exit={{
+              opacity: 0,
+              y: '-30%'
+            }}
+            transition={{
+              duration: 0.5
+            }}
+          >
+            <div className={style.head}>
+              <TriangleAlert className={style.triangleAlert} size={25} />
+              <h3>Local Server Out of Date</h3>
+            </div>
+
+            <p>
+              Your local backend is behind the required version. Pull the latest
+              code to continue.
+            </p>
+            <div className={style.bash3}>
+              <span className={style.textType}>bash</span>
+              <motion.div
+                className={style.copyBtn}
+                whileTap={{
+                  scale: 1.2
+                }}
+                transition={{
+                  type: 'spring'
+                }}
+                onClick={e => {
+                  console.log(e);
+                  handleCopy(e.target.parentNode.lastElementChild.innerText);
+                  setBash3Copied(true);
+                }}
+              >
+                {bash3Copied ? (
+                  <Check size={20} color='lime' />
+                ) : (
+                  <Copy size={20} />
+                )}
+              </motion.div>
+
+              <code>
+                cd ~/zenith-backend && git pull origin main && go build -o
+                server main.go && ./server
+              </code>
             </div>
           </motion.div>
         )}

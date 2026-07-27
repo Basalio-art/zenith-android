@@ -87,7 +87,8 @@
 }
 
 .invalidAppVersion,
-.noBackend {
+.noBackend,
+.backendChanges {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -127,13 +128,15 @@
   }
 }
 
-.noBackend {
+.noBackend,
+.backendChanges {
   h4 {
     margin-bottom: -0.5rem;
   }
-  
+
   .bash1,
-  .bash2 {
+  .bash2,
+  .bash3 {
     position: relative;
     font-size: 0.9rem;
     width: 100%;
