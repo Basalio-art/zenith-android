@@ -485,7 +485,7 @@ function App() {
             {loadingInfo.msg && (
               <motion.div
                 className={style.loadingInfo}
-                key={`loading-id${loadingInfo.loaded * Math.random()}`}
+                key={`loading-id${loadingInfo.loaded}`}
                 initial={{
                   opacity: 0,
                   y: 10
