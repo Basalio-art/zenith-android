@@ -373,9 +373,14 @@ function App() {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      // hideSystemBars();
-      StatusBar.addListener('statusBarVisibilityChanged', e => {
-        console.log(e);
+    let hideTimeout;
+      StatusBar.addListener('statusBarVisibilityChanged', info => {
+        if (info.visible) {
+          clearTimeout(hideTimeout)
+          hideTimeout = setTimeout(() => {
+            hideSystemBars()
+          }, 3000);
+        }
       });
     }
   }, []);
