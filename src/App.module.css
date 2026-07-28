@@ -21,7 +21,7 @@
   gap: 0.5rem;
   position: fixed;
   align-items: start;
-  top: 0;
+  top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   left: 0;
   z-index: 1000;
   padding: 0.5rem;

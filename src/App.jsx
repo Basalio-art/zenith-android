@@ -215,9 +215,8 @@ function App() {
           method: 'HEAD'
         });
         return true;
-      } catch (e) {
-        return false;
-      }
+      } catch {}
+      return false;
     };
 
     return new Promise(async resolve => {
@@ -234,7 +233,7 @@ function App() {
         } else {
           setValid(prev => ({ ...prev, backendRun: false }));
         }
-      }, 1000);
+      }, 2000);
     });
   };
 
@@ -257,7 +256,7 @@ function App() {
         });
         return JSON.parse(data)['backend-version'];
       } catch {
-        if (!hasInternet) return await CURRENT_VERSION;
+        return await CURRENT_VERSION();
       }
     };
 
@@ -266,6 +265,8 @@ function App() {
 
       let intervalId = setTimeout(async () => {
         const currentVersion = await CURRENT_VERSION();
+
+        console.log(currentVersion, version);
 
         if (version !== currentVersion) {
           setValid(prev => ({
@@ -283,7 +284,7 @@ function App() {
             resolve(version);
           }, 500);
         }
-      }, 1000);
+      }, 2500);
     });
   };
 
@@ -329,6 +330,11 @@ function App() {
   }, [searchQuery]);
 
   useEffect(() => {
+    const reChecking = async () => {
+      await checkVersion();
+      await checkBackendV();
+    };
+    
     if (isInitialInternetMount.current) {
       isInitialInternetMount.current = false;
       return;
@@ -343,6 +349,8 @@ function App() {
       intervalFetch = setInterval(fetchAnimeData, 360000);
 
       newMessage('Connection restored', 'alert');
+
+      reChecking()
     }
     return () => {
       clearInterval(intervalFetch);
@@ -508,51 +516,59 @@ function App() {
           </AppContext.Provider>
         </div>
       )}
-      {isLoading && (
-        <div className={style.loadingPage}>
-          <div className={style.loadingIndicator}>
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{
-                scaleX: (() => {
-                  const loaded = loadingInfo.loaded;
-                  const loadLength = loadingInfo.loadLength;
-
-                  return 0.8 + (loaded / loadLength) * 0.2;
-                })()
-              }}
-              transition={{
-                duration: 1.5
-              }}
-            ></motion.div>
-          </div>
-          <AnimatePresence mode='popLayout'>
-            {loadingInfo.msg && (
+      <AnimatePresence mode='popLayout'>
+        {isLoading && (
+          <motion.div
+            key='loading-page'
+            initial={false}
+            animate={false}
+            exit={{ y: '-100%', transition: { duration: 0.5 } }}
+            className={style.loadingPage}
+          >
+            <div className={style.loadingIndicator}>
               <motion.div
-                className={style.loadingInfo}
-                key={`loading-id${loadingInfo.loaded}`}
-                initial={{
-                  opacity: 0,
-                  y: 10
-                }}
+                initial={{ scaleX: 0 }}
                 animate={{
-                  opacity: 1,
-                  y: 0
-                }}
-                exit={{
-                  opacity: 0,
-                  y: -10
+                  scaleX: (() => {
+                    const loaded = loadingInfo.loaded;
+                    const loadLength = loadingInfo.loadLength;
+
+                    return 0.8 + (loaded / loadLength) * 0.2;
+                  })()
                 }}
                 transition={{
-                  duration: 0.25
+                  duration: 1.5
                 }}
-              >
-                {loadingInfo.msg}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+              ></motion.div>
+            </div>
+            <AnimatePresence mode='popLayout'>
+              {loadingInfo.msg && (
+                <motion.div
+                  className={style.loadingInfo}
+                  key={`loading-id${loadingInfo.loaded}`}
+                  initial={{
+                    opacity: 0,
+                    y: 10
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -10
+                  }}
+                  transition={{
+                    duration: 0.25
+                  }}
+                >
+                  {loadingInfo.msg}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {!valid.appVersion.ok && (
           <motion.div
