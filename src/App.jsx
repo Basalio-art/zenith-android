@@ -18,7 +18,7 @@ import ViewAnime from './ViewAnime.jsx';
 
 const hideSystemBars = async () => {
   await SystemBars.hide();
-  await StatusBar.hide()
+  await StatusBar.hide();
 };
 
 export const AppContext = createContext(null);
@@ -374,16 +374,16 @@ function App() {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      hideSystemBars()
-      let hideTimeout;
-      StatusBar.addListener('statusBarVisibilityChanged', info => {
-        alert(info)
-        // if (info.visible) {
-        //   clearTimeout(hideTimeout);
-        //   hideTimeout = setTimeout(() => {
-        //     hideSystemBars();
-        //   }, 3000);
-        // }
+      let hideTimeout = null;
+      window.addEventListener('touchmove', async () => {
+        const info = await StatusBar.getInfo();
+
+        if (info.visible && !hideTimeout) {
+          hideTimeout = setTimeout(() => {
+            hideSystemBars();
+            hideTimeout = null;
+          }, 3000);
+        }
       });
     }
   }, []);
