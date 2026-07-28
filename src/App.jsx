@@ -18,6 +18,7 @@ import ViewAnime from './ViewAnime.jsx';
 
 const hideSystemBars = async () => {
   await SystemBars.hide();
+  await StatusBar.hide()
 };
 
 export const AppContext = createContext(null);
@@ -373,6 +374,7 @@ function App() {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
+      hideSystemBars()
       let hideTimeout;
       StatusBar.addListener('statusBarVisibilityChanged', info => {
         alert(info)
