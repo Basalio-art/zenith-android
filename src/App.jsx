@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import { Capacitor, CapacitorHttp, SystemBars } from '@capacitor/core';
-import { SplashScreen } from '@capacitor/splash-screen';
 import { Clipboard } from '@capacitor/clipboard';
 import { StatusBar } from '@capacitor/status-bar';
 import Navigator from './Navigator.jsx';
@@ -21,13 +20,6 @@ const hideSystemBars = async () => {
   await SystemBars.hide();
   await StatusBar.hide();
 };
-
-if (Capacitor.isNativePlatform()) {
-  SplashScreen.show({
-    autoHide: false,
-    showDuration: 2000
-  });
-}
 
 export const AppContext = createContext(null);
 
