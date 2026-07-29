@@ -1,5 +1,13 @@
-import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App.jsx";
+import { createRoot } from 'react-dom/client';
+import { SplashScreen } from '@capacitor/spash-screen';
+import { Capacitor } from '@capacitor/core';
+import './index.css';
+import App from './App.jsx';
 
-createRoot(document.getElementById("root")).render(<App />);
+if (Capacitor.isNativePlatform()) {
+  SplashScreen.show({
+    autoHide: false
+  });
+}
+
+createRoot(document.getElementById('root')).render(<App />);

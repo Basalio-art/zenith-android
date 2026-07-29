@@ -631,7 +631,11 @@ function App() {
             </div>
             <div>
               Zenith requires a local backend server running in{' '}
-              <a href='https://github.com/termux/termux-app/releases/latest'>
+              <a
+                target='_blank'
+                rel='noreferrer noopener'
+                href='https://github.com/termux/termux-app/releases/latest'
+              >
                 Termux
               </a>{' '}
               to fetch data.
