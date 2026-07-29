@@ -14,7 +14,6 @@
     "@capacitor/cli": "^8.4.0",
     "@capacitor/clipboard": "^8.0.1",
     "@capacitor/core": "^8.4.0",
-    "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",
     "@videojs/react": "^10.0.0-beta.24",
     "cors": "^2.8.6",
