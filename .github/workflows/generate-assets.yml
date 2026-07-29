@@ -28,7 +28,7 @@ jobs:
         run: npm ci
 
       - name: Generate Capacitor Assets 
-        run: npx @capacitor/assets generate --android --iconBackgroundColor '#000000' --splashBackgroundColor '#000000'
+        run: npx @capacitor/assets generate --android
 
       - name: Commit generated Android assets back to Git
         uses: stefanzweifel/git-auto-commit-action@v5
