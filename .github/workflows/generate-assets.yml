@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Capacitor Assets
+      - name: Generate Capacitor Assets 
         run: npx @capacitor/assets generate --android --iconBackgroundColor '#000000' --splashBackgroundColor '#000000'
 
       - name: Commit generated Android assets back to Git
