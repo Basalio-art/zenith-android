@@ -134,6 +134,10 @@
     margin-bottom: -0.5rem;
   }
 
+  a {
+    color: var(--color-1);
+  }
+
   .bash1,
   .bash2,
   .bash3 {

@@ -334,7 +334,7 @@ function App() {
       await checkVersion();
       await checkBackendV();
     };
-    
+
     if (isInitialInternetMount.current) {
       isInitialInternetMount.current = false;
       return;
@@ -350,7 +350,7 @@ function App() {
 
       newMessage('Connection restored', 'alert');
 
-      reChecking()
+      reChecking();
     }
     return () => {
       clearInterval(intervalFetch);
@@ -630,8 +630,11 @@ function App() {
               <h3>Local Server Required</h3>
             </div>
             <div>
-              Zenith requires a local backend server running in Termux to fetch
-              data.
+              Zenith requires a local backend server running in{' '}
+              <a href='https://github.com/termux/termux-app/releases/latest'>
+                Termux
+              </a>{' '}
+              to fetch data.
             </div>
             <h4>◈ First-time setup & start</h4>
             <div className={style.bash1}>
