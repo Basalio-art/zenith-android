@@ -294,7 +294,10 @@ function App() {
   };
 
   const loadingStartup = async () => {
-    await SplashScreen.hide()
+    await SplashScreen.show({
+      showDuration: 2000,
+      autoHide: true
+    })
     
     setLoadingInfo(prev => ({ ...prev, msg: 'Verifying app version . . .' }));
     await checkVersion();
