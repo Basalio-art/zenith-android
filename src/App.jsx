@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import { Capacitor, CapacitorHttp, SystemBars } from '@capacitor/core';
-import { SplashScreen } from '@capacitor/splash-screen';
 import { Clipboard } from '@capacitor/clipboard';
 import { StatusBar } from '@capacitor/status-bar';
 import Navigator from './Navigator.jsx';
@@ -294,11 +293,6 @@ function App() {
   };
 
   const loadingStartup = async () => {
-    await SplashScreen.show({
-      showDuration: 2000,
-      autoHide: true
-    })
-    
     setLoadingInfo(prev => ({ ...prev, msg: 'Verifying app version . . .' }));
     await checkVersion();
     setLoadingInfo(prev => ({
