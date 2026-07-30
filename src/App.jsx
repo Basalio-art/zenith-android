@@ -15,6 +15,7 @@ import { StatusBar } from '@capacitor/status-bar';
 import Navigator from './Navigator.jsx';
 import SearchResult from './Search.jsx';
 import ViewAnime from './ViewAnime.jsx';
+import Stream from './Stream.jsx';
 
 const hideSystemBars = async () => {
   await SystemBars.hide();
@@ -54,11 +55,12 @@ function App() {
   const [searchIsLoading, setSearchIsLoading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewAnimeData, setViewAnimeData] = useState(null);
-  const [openPlayer, setOpenPlayer] = useState(false);
+  const [openStream, setOpenStream] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [bash1Copied, setBash1Copied] = useState(false);
   const [bash2Copied, setBash2Copied] = useState(false);
   const [bash3Copied, setBash3Copied] = useState(false);
+  const [providers, setProviders] = useState(null);
   const [valid, setValid] = useState({
     appVersion: {
       required: APP_VERSION,
@@ -71,7 +73,7 @@ function App() {
     }
   });
   const [loadingInfo, setLoadingInfo] = useState({
-    msg: null,
+    msg: "Loading . . .",
     loaded: 0,
     loadLength: 3
   });
@@ -227,9 +229,7 @@ function App() {
 
         if (isRunning) {
           setValid(prev => ({ ...prev, backendRun: true }));
-          setTimeout(() => {
             resolve(isRunning);
-          }, 500);
         } else {
           setValid(prev => ({ ...prev, backendRun: false }));
         }
@@ -266,8 +266,6 @@ function App() {
       let intervalId = setTimeout(async () => {
         const currentVersion = await CURRENT_VERSION();
 
-        console.log(currentVersion, version);
-
         if (version !== currentVersion) {
           setValid(prev => ({
             ...prev,
@@ -280,9 +278,7 @@ function App() {
             backendVersion: { ok: true, required: version }
           }));
 
-          setTimeout(() => {
             resolve(version);
-          }, 500);
         }
       }, 2500);
     });
@@ -474,8 +470,10 @@ function App() {
               hasInternet,
               setViewAnimeData,
               viewAnimeData,
-              setOpenPlayer,
-              openPlayer
+              setOpenStream,
+              openStream,
+              providers,
+              setProviders
             }}
           >
             <div className={style.wrapper}>
@@ -510,6 +508,8 @@ function App() {
               </LayoutGroup>
 
               <ViewAnime />
+
+              <Stream />
             </div>
 
             <Navigator />
@@ -522,7 +522,7 @@ function App() {
             key='loading-page'
             initial={false}
             animate={false}
-            exit={{ y: '-100%', transition: { duration: 0.5 } }}
+            exit={{ opacity: 0, transition: { duration: 0.5 } }}
             className={style.loadingPage}
           >
             <div className={style.loadingIndicator}>
@@ -542,7 +542,6 @@ function App() {
               ></motion.div>
             </div>
             <AnimatePresence mode='popLayout'>
-              {loadingInfo.msg && (
                 <motion.div
                   className={style.loadingInfo}
                   key={`loading-id${loadingInfo.loaded}`}
@@ -564,7 +563,6 @@ function App() {
                 >
                   {loadingInfo.msg}
                 </motion.div>
-              )}
             </AnimatePresence>
           </motion.div>
         )}

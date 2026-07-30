@@ -1,4 +1,4 @@
-import { useEffect, useRef, useContext } from "react";
+import { useRef, useContext, useLayoutEffect } from "react";
 import { AppContext } from "./App.jsx";
 import { motion, AnimatePresence } from "motion/react";
 import style from "./Home.module.css";
@@ -80,17 +80,19 @@ function Home() {
     }
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const containersObserve = () => {
       calculateCardsWidth(trendingRef.current);
       calculateCardsWidth(popularRef.current);
       calculateCardsWidth(latestRef.current);
     };
     containersObserve();
-    window.addEventListener("resize", containersObserve);
+    const observer = new ResizeObserver(containersObserve)
+
+    observer.observe(trendingRef.current)
 
     return () => {
-      window.removeEventListener("resize", containersObserve);
+      observer.disconnect()
     };
   }, []);
 
