@@ -2,29 +2,38 @@ import style from './Stream.module.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { useContext, useState, useEffect } from 'react';
 import { AppContext } from './App.jsx';
-import { CapacitorHttp } from '@capacitor/core'
+import { CapacitorHttp } from '@capacitor/core';
 
 export default function Stream() {
   const { providers, openStream, ZENITH_HEADERS } = useContext(AppContext);
-  const [videoSource, setVideoSource] = useState(null)
+  const [videoSource, setVideoSource] = useState(null);
 
   const getEpisode = async () => {
-    const {data} = await CapacitorHttp.get({
-      url: `http://localhost:9189/${providers.hop.episodes.sub[0].id}`,
-      header: ZENITH_HEADERS
-    })
+    try {
+      const { data } = await CapacitorHttp.get({
+        url: `http://localhost:9189/${providers.ally.episodes.sub[0].id}`,
+        headers: ZENITH_HEADERS
+      });
 
-    console.log(`http://localhost:9189/${providers.hop.episodes.sub[0].id}`)
-    console.log(data)
-  }
+      const { data: text } = await CapacitorHttp.get({
+        url: data.streams[0].url,
+        headers: {
+          Origin: data.streams[0].referer,
+          Referer: data.streams[0].referer
+        }
+      });
+      alert(text);
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   useEffect(() => {
-    if (!openStream) return
-    console.log(providers)
+    if (!openStream) return;
+    console.log(providers);
 
-    getEpisode()
-    
-  }, [openStream])
+    getEpisode();
+  }, [openStream]);
 
   return (
     <>
