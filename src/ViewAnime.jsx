@@ -72,6 +72,8 @@ function ViewAnime() {
 
       setProviders(data.providers);
 
+      console.log(data.providers)
+
     } catch (err) {
       setProviders(null);
     }

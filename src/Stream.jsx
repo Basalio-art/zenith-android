@@ -27,13 +27,22 @@ export default function Stream() {
     try {
       const { data } = await CapacitorHttp.get(options);
 
-      const stream = data.streams[0]
+      const group = data.streams.reduce((acc, stream) => {
+        if(!acc[stream.type]) acc[stream.type] = {}
+        acc[stream.type][stream.quality] = {
+          url: stream.url,
+          type: stream.type,
+          referer: stream.referer
+        }
+        return acc;
+      }, {});
+      
+      const stream = group['hls']['360p'];
       setVideoSource({
         src: `http://localhost:9189/proxy/stream?url=${stream.url}&referer=${stream.referer}`,
         type: stream.type,
         thumbnail: path.image
-      })
-      console.log(stream)
+      });
     } catch (e) {
       console.log(e);
     }
