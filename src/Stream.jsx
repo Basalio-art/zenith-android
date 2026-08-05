@@ -3,60 +3,93 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useContext, useState, useEffect } from 'react';
 import { AppContext } from './App.jsx';
 import { CapacitorHttp } from '@capacitor/core';
-import { MyPlayer } from './VideoJs.jsx';
+import { MyPlayer } from './Video.jsx';
 
 export default function Stream() {
   const { providers, openStream, ZENITH_HEADERS, selProvider, selAudio } =
     useContext(AppContext);
+
+  const [tempProvider, setTempProvider] = useState(null);
+  const [tempAudio, setTempAudio] = useState(null);
   const [videoSource, setVideoSource] = useState({
     src: null,
-    type: null
+    type: null,
+    thumbnail: null
   });
 
   const getEpisode = async () => {
-    try {
-      const { data } = await CapacitorHttp.get({
-        url: `http://localhost:9189/${providers[selProvider].episodes[selAudio][0].id}`,
-        headers: ZENITH_HEADERS
-      });
+    const path = providers[tempProvider].episodes[tempAudio][0];
+    const options = {
+      url: `http://localhost:9189/${path.id}`,
+      headers: ZENITH_HEADERS
+    };
 
-      console.log(data)
+    try {
+      const { data } = await CapacitorHttp.get(options);
+
+      const stream = data.streams[0]
       setVideoSource({
-        src: `http://localhost:9189/proxy/stream?url=${encodeURIComponent(data.streams[0].url)}&referer=${encodeURIComponent(data.streams[0].referer)}`,
-        type: data.streams[0].type
-      });
+        src: `http://localhost:9189/proxy/stream?url=${stream.url}&referer=${stream.referer}`,
+        type: stream.type,
+        thumbnail: path.image
+      })
+      console.log(stream)
     } catch (e) {
       console.log(e);
     }
   };
 
   useEffect(() => {
-    if (!openStream) return;
+    if (!tempProvider || !tempAudio) return;
     getEpisode();
+  }, [tempProvider, tempAudio]);
+
+  useEffect(() => {
+    if (!openStream) return;
+    let PROVIDER = selProvider;
+    let AUDIO = selAudio;
+
+    if (!(selProvider in providers)) {
+      PROVIDER = Object.keys(providers)[0];
+    }
+
+    const audios = providers[PROVIDER].episodes;
+    if (!(selAudio in audios)) {
+      AUDIO = Object.keys(audios)[0];
+    }
+
+    setTempProvider(PROVIDER);
+    setTempAudio(AUDIO);
   }, [openStream]);
 
   return (
-    <>
-      <AnimatePresence>
-        {openStream && (
-          <motion.div
-            className={style.container}
-            key='stream-container'
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className={style.videoWrapper}>
-              <MyPlayer
-                videoType={videoSource.type}
-                src={videoSource.src}
-                poster={providers.kiwi.episodes.sub[0].image}
-              ></MyPlayer>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+    <AnimatePresence>
+      {openStream && (
+        <motion.div
+          className={style.container}
+          key='stream-container'
+          initial={{ y: '100%' }}
+          animate={{ y: 0 }}
+          exit={{ y: '100%' }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className={style.videoWrapper}>
+            <MyPlayer
+              videoType={videoSource.type}
+              src={videoSource.src}
+              poster={videoSource.thumbnail}
+            ></MyPlayer>
+          </div>
+
+          {tempAudio && tempProvider && (
+            <>
+              <div>{providers[tempProvider].episodes[tempAudio][0].title}</div>
+              <div>{tempProvider}</div>
+              <div>{tempAudio}</div>
+            </>
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
