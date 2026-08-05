@@ -3,26 +3,28 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useContext, useState, useEffect } from 'react';
 import { AppContext } from './App.jsx';
 import { CapacitorHttp } from '@capacitor/core';
+import { MyPlayer } from './VideoJs.jsx';
 
 export default function Stream() {
-  const { providers, openStream, ZENITH_HEADERS } = useContext(AppContext);
-  const [videoSource, setVideoSource] = useState(null);
+  const { providers, openStream, ZENITH_HEADERS, selProvider, selAudio } =
+    useContext(AppContext);
+  const [videoSource, setVideoSource] = useState({
+    src: null,
+    type: null
+  });
 
   const getEpisode = async () => {
     try {
       const { data } = await CapacitorHttp.get({
-        url: `http://localhost:9189/${providers.ally.episodes.sub[0].id}`,
+        url: `http://localhost:9189/${providers[selProvider].episodes[selAudio][0].id}`,
         headers: ZENITH_HEADERS
       });
 
-      const { data: text } = await CapacitorHttp.get({
-        url: data.streams[0].url,
-        headers: {
-          Origin: data.streams[0].referer,
-          Referer: data.streams[0].referer
-        }
+      console.log(data)
+      setVideoSource({
+        src: `http://localhost:9189/proxy/stream?url=${encodeURIComponent(data.streams[0].url)}&referer=${encodeURIComponent(data.streams[0].referer)}`,
+        type: data.streams[0].type
       });
-      alert(text);
     } catch (e) {
       console.log(e);
     }
@@ -30,8 +32,6 @@ export default function Stream() {
 
   useEffect(() => {
     if (!openStream) return;
-    console.log(providers);
-
     getEpisode();
   }, [openStream]);
 
@@ -47,7 +47,13 @@ export default function Stream() {
             exit={{ y: '100%' }}
             transition={{ duration: 0.5 }}
           >
-            <video src={videoSource} controls></video>
+            <div className={style.videoWrapper}>
+              <MyPlayer
+                videoType={videoSource.type}
+                src={videoSource.src}
+                poster={providers.kiwi.episodes.sub[0].image}
+              ></MyPlayer>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

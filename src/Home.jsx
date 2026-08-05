@@ -1,7 +1,7 @@
-import { useRef, useContext, useLayoutEffect } from "react";
-import { AppContext } from "./App.jsx";
-import { motion, AnimatePresence } from "motion/react";
-import style from "./Home.module.css";
+import { useRef, useContext, useLayoutEffect } from 'react';
+import { AppContext } from './App.jsx';
+import { motion, AnimatePresence } from 'motion/react';
+import style from './Home.module.css';
 import {
   ScanLine,
   Search,
@@ -10,8 +10,8 @@ import {
   ChevronRight,
   Flame,
   Sparkles,
-  Star,
-} from "lucide-react";
+  Star
+} from 'lucide-react';
 
 function Home() {
   const {
@@ -21,7 +21,7 @@ function Home() {
     setSearchQuery,
     setPage,
     setViewAnimeData,
-    setViewerOpen,
+    setViewerOpen
   } = useContext(AppContext);
 
   const trendingRef = useRef(null);
@@ -29,7 +29,7 @@ function Home() {
   const latestRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  const calculateCardsWidth = (container) => {
+  const calculateCardsWidth = container => {
     if (!container) return;
 
     const containerStyle = getComputedStyle(container);
@@ -44,8 +44,8 @@ function Home() {
       width = totalSpace / cardCount;
     }
 
-    Array.from(container.children).forEach((card) => {
-      card.parentNode.style.setProperty("--flex-basis", width + "px");
+    Array.from(container.children).forEach(card => {
+      card.parentNode.style.setProperty('--flex-basis', width + 'px');
     });
   };
 
@@ -60,23 +60,23 @@ function Home() {
     container.scrollTo({
       left:
         container.scrollLeft +
-        (direction === "right" ? scrollAmount : -scrollAmount),
-      behavior: "smooth",
+        (direction === 'right' ? scrollAmount : -scrollAmount),
+      behavior: 'smooth'
     });
   };
 
-  const scrollDataset = (container) => {
+  const scrollDataset = container => {
     if (!container) return;
 
     const scrollStart = 10;
     const scrollEnd = container.scrollWidth - container.clientWidth - 10;
 
     if (container.scrollLeft <= scrollStart) {
-      container.parentNode.dataset.scroll = "start";
+      container.parentNode.dataset.scroll = 'start';
     } else if (container.scrollLeft >= scrollEnd) {
-      container.parentNode.dataset.scroll = "end";
+      container.parentNode.dataset.scroll = 'end';
     } else {
-      container.parentNode.dataset.scroll = "between";
+      container.parentNode.dataset.scroll = 'between';
     }
   };
 
@@ -87,12 +87,12 @@ function Home() {
       calculateCardsWidth(latestRef.current);
     };
     containersObserve();
-    const observer = new ResizeObserver(containersObserve)
+    const observer = new ResizeObserver(containersObserve);
 
-    observer.observe(trendingRef.current)
+    observer.observe(trendingRef.current);
 
     return () => {
-      observer.disconnect()
+      observer.disconnect();
     };
   }, []);
 
@@ -112,15 +112,15 @@ function Home() {
       <div className={style.searchBar}>
         <Search className={style.searchIcon} />
         <input
-          type="text"
-          autoComplete="off"
-          placeholder="Search"
+          type='text'
+          autoComplete='off'
+          placeholder='Search'
           ref={searchInputRef}
-          onKeyUp={(e) => {
-            if (e.key === "Enter") {
-              if (e.target.value.trim() === "") return;
+          onKeyUp={e => {
+            if (e.key === 'Enter') {
+              if (e.target.value.trim() === '') return;
               setSearchQuery(e.target.value.trim());
-              setPage("search");
+              setPage('search');
             }
           }}
         />
@@ -130,17 +130,17 @@ function Home() {
           onClick={() => {
             if (
               !searchInputRef.current ||
-              searchInputRef.current.value.trim() === ""
+              searchInputRef.current.value.trim() === ''
             )
               return;
 
             setSearchQuery(searchInputRef.current.value.trim());
-            setPage("search");
+            setPage('search');
           }}
         />
       </div>
 
-      <div className={style.latest} data-scroll="start">
+      <div className={style.latest} data-scroll='start'>
         <div className={style.top}>
           <div className={style.left}>
             <Sparkles className={style.sparkles} />
@@ -150,13 +150,13 @@ function Home() {
           <div className={style.right}>
             <ChevronLeft
               className={style.chevronLeft}
-              role="button"
-              onClick={() => handleScroll(latestRef.current, "left")}
+              role='button'
+              onClick={() => handleScroll(latestRef.current, 'left')}
             />
             <ChevronRight
               className={style.chevronRight}
-              role="button"
-              onClick={() => handleScroll(latestRef.current, "right")}
+              role='button'
+              onClick={() => handleScroll(latestRef.current, 'right')}
             />
           </div>
         </div>
@@ -177,7 +177,7 @@ function Home() {
                     className={`${style.card} ${style.loading}`}
                   ></div>
                 ))
-              : latestAnime.map((anime) => (
+              : latestAnime.map(anime => (
                   <div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -191,7 +191,7 @@ function Home() {
                   >
                     <img
                       className={style.loading}
-                      onLoad={(e) => {
+                      onLoad={e => {
                         e.target.classList.remove(style.loading);
                       }}
                       src={anime.coverImage.extraLarge}
@@ -200,11 +200,11 @@ function Home() {
 
                     {anime.averageScore && (
                       <motion.div
-                        initial={{ opacity: 0, y: "-100%" }}
+                        initial={{ opacity: 0, y: '-100%' }}
                         animate={{
                           opacity: 1,
                           y: 0,
-                          transition: { duration: 1 },
+                          transition: { duration: 1 }
                         }}
                         className={style.rate}
                       >
@@ -216,14 +216,14 @@ function Home() {
                     {(() => {
                       let txt;
                       switch (anime.status) {
-                        case "FINISHED":
+                        case 'FINISHED':
                           if (anime.episodes) {
                             txt = `${anime.episodes} EP`;
                           } else {
                             txt = anime.countryOfOrigin;
                           }
                           break;
-                        case "RELEASING":
+                        case 'RELEASING':
                           if (anime.nextAiringEpisode) {
                             txt = `${anime.nextAiringEpisode.episode - 1} EP`;
                           } else {
@@ -234,21 +234,23 @@ function Home() {
 
                       return (
                         <motion.div
-                          initial={{ opacity: 0, y: "-100%" }}
+                          initial={{ opacity: 0, y: '-100%' }}
                           animate={{
                             opacity: 1,
                             y: 0,
-                            transition: { duration: 1 },
+                            transition: { duration: 1 }
                           }}
                           className={style.eps}
                         >
-                          {txt}{" "}
+                          {txt}{' '}
                           <span
                             style={{
                               color:
-                                anime.status !== "RELEASING"
-                                  ? "lime"
-                                  : "orange",
+                                anime.status === 'RELEASING'
+                                  ? 'orange'
+                                  : anime.status === 'FINISHED'
+                                    ? 'lime'
+                                    : 'red'
                             }}
                           >
                             &bull;
@@ -263,12 +265,12 @@ function Home() {
                       className={style.titleWrapper}
                     >
                       <span className={style.seasonYear}>
-                        {anime.format.replace("_", " ")}{" "}
-                        {(anime.format && anime.seasonYear) ? (
+                        {anime.format?.replace('_', ' ')}{' '}
+                        {anime.format && anime.seasonYear ? (
                           <span>&bull;</span>
                         ) : (
-                          ""
-                        )}{" "}
+                          ''
+                        )}{' '}
                         {anime.seasonYear}
                       </span>
                       <span className={style.title}>
@@ -281,7 +283,7 @@ function Home() {
         </div>
       </div>
 
-      <div className={style.trending} data-scroll="start">
+      <div className={style.trending} data-scroll='start'>
         <div className={style.top}>
           <div className={style.left}>
             <Zap className={style.zap} />
@@ -291,13 +293,13 @@ function Home() {
           <div className={style.right}>
             <ChevronLeft
               className={style.chevronLeft}
-              role="button"
-              onClick={() => handleScroll(trendingRef.current, "left")}
+              role='button'
+              onClick={() => handleScroll(trendingRef.current, 'left')}
             />
             <ChevronRight
               className={style.chevronRight}
-              role="button"
-              onClick={() => handleScroll(trendingRef.current, "right")}
+              role='button'
+              onClick={() => handleScroll(trendingRef.current, 'right')}
             />
           </div>
         </div>
@@ -318,7 +320,7 @@ function Home() {
                     className={`${style.card} ${style.loading}`}
                   ></div>
                 ))
-              : trendingAnime.map((anime) => (
+              : trendingAnime.map(anime => (
                   <div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -332,7 +334,7 @@ function Home() {
                   >
                     <img
                       className={style.loading}
-                      onLoad={(e) => {
+                      onLoad={e => {
                         e.target.classList.remove(style.loading);
                       }}
                       src={anime.coverImage.extraLarge}
@@ -340,11 +342,11 @@ function Home() {
                     />
                     {anime.averageScore && (
                       <motion.div
-                        initial={{ opacity: 0, y: "-100%" }}
+                        initial={{ opacity: 0, y: '-100%' }}
                         animate={{
                           opacity: 1,
                           y: 0,
-                          transition: { duration: 1 },
+                          transition: { duration: 1 }
                         }}
                         className={style.rate}
                       >
@@ -356,14 +358,14 @@ function Home() {
                     {(() => {
                       let txt;
                       switch (anime.status) {
-                        case "FINISHED":
+                        case 'FINISHED':
                           if (anime.episodes) {
                             txt = `${anime.episodes} EP`;
                           } else {
                             txt = anime.countryOfOrigin;
                           }
                           break;
-                        case "RELEASING":
+                        case 'RELEASING':
                           if (anime.nextAiringEpisode) {
                             txt = `${anime.nextAiringEpisode.episode - 1} EP`;
                           } else {
@@ -374,21 +376,23 @@ function Home() {
 
                       return (
                         <motion.div
-                          initial={{ opacity: 0, y: "-100%" }}
+                          initial={{ opacity: 0, y: '-100%' }}
                           animate={{
                             opacity: 1,
                             y: 0,
-                            transition: { duration: 1 },
+                            transition: { duration: 1 }
                           }}
                           className={style.eps}
                         >
-                          {txt}{" "}
+                          {txt}{' '}
                           <span
                             style={{
                               color:
-                                anime.status !== "RELEASING"
-                                  ? "lime"
-                                  : "orange",
+                                anime.status === 'RELEASING'
+                                  ? 'orange'
+                                  : anime.status === 'FINISHED'
+                                    ? 'lime'
+                                    : 'red'
                             }}
                           >
                             &bull;
@@ -402,14 +406,13 @@ function Home() {
                       animate={{ y: 0, transition: { duration: 1 } }}
                       className={style.titleWrapper}
                     >
-                      
                       <span className={style.seasonYear}>
-                        {anime.format.replace("_", " ")}{" "}
-                        {(anime.format && anime.seasonYear) ? (
+                        {anime.format?.replace('_', ' ')}{' '}
+                        {anime.format && anime.seasonYear ? (
                           <span>&bull;</span>
                         ) : (
-                          ""
-                        )}{" "}
+                          ''
+                        )}{' '}
                         {anime.seasonYear}
                       </span>
                       <span className={style.title}>
@@ -422,7 +425,7 @@ function Home() {
         </div>
       </div>
 
-      <div className={style.popular} data-scroll="start">
+      <div className={style.popular} data-scroll='start'>
         <div className={style.top}>
           <div className={style.left}>
             <Flame className={style.flame} />
@@ -432,13 +435,13 @@ function Home() {
           <div className={style.right}>
             <ChevronLeft
               className={style.chevronLeft}
-              role="button"
-              onClick={() => handleScroll(popularRef.current, "left")}
+              role='button'
+              onClick={() => handleScroll(popularRef.current, 'left')}
             />
             <ChevronRight
               className={style.chevronRight}
-              role="button"
-              onClick={() => handleScroll(popularRef.current, "right")}
+              role='button'
+              onClick={() => handleScroll(popularRef.current, 'right')}
             />
           </div>
         </div>
@@ -459,7 +462,7 @@ function Home() {
                     className={`${style.card} ${style.loading}`}
                   ></div>
                 ))
-              : popularAnime.map((anime) => (
+              : popularAnime.map(anime => (
                   <div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -473,7 +476,7 @@ function Home() {
                   >
                     <img
                       className={style.loading}
-                      onLoad={(e) => {
+                      onLoad={e => {
                         e.target.classList.remove(style.loading);
                       }}
                       src={anime.coverImage.extraLarge}
@@ -481,11 +484,11 @@ function Home() {
                     />
                     {anime.averageScore && (
                       <motion.div
-                        initial={{ opacity: 0, y: "-100%" }}
+                        initial={{ opacity: 0, y: '-100%' }}
                         animate={{
                           opacity: 1,
                           y: 0,
-                          transition: { duration: 1 },
+                          transition: { duration: 1 }
                         }}
                         className={style.rate}
                       >
@@ -497,14 +500,14 @@ function Home() {
                     {(() => {
                       let txt;
                       switch (anime.status) {
-                        case "FINISHED":
+                        case 'FINISHED':
                           if (anime.episodes) {
                             txt = `${anime.episodes} EP`;
                           } else {
                             txt = anime.countryOfOrigin;
                           }
                           break;
-                        case "RELEASING":
+                        case 'RELEASING':
                           if (anime.nextAiringEpisode) {
                             txt = `${anime.nextAiringEpisode.episode - 1} EP`;
                           } else {
@@ -515,21 +518,23 @@ function Home() {
 
                       return (
                         <motion.div
-                          initial={{ opacity: 0, y: "-100%" }}
+                          initial={{ opacity: 0, y: '-100%' }}
                           animate={{
                             opacity: 1,
                             y: 0,
-                            transition: { duration: 1 },
+                            transition: { duration: 1 }
                           }}
                           className={style.eps}
                         >
-                          {txt}{" "}
+                          {txt}{' '}
                           <span
                             style={{
                               color:
-                                anime.status !== "RELEASING"
-                                  ? "lime"
-                                  : "orange",
+                                anime.status === 'RELEASING'
+                                  ? 'orange'
+                                  : anime.status === 'FINISHED'
+                                    ? 'lime'
+                                    : 'red'
                             }}
                           >
                             &bull;
@@ -544,7 +549,7 @@ function Home() {
                       className={style.titleWrapper}
                     >
                       <span className={style.seasonYear}>
-                        {anime.format.replace("_", " ")} &bull;{" "}
+                        {anime.format?.replace('_', ' ')} &bull;{' '}
                         {anime.seasonYear}
                       </span>
                       <span className={style.title}>

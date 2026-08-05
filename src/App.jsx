@@ -61,6 +61,8 @@ function App() {
   const [bash2Copied, setBash2Copied] = useState(false);
   const [bash3Copied, setBash3Copied] = useState(false);
   const [providers, setProviders] = useState(null);
+  const [selProvider, setSelProvider] = useState('kiwi');
+  const [selAudio, setSelAudio] = useState('sub');
   const [valid, setValid] = useState({
     appVersion: {
       required: APP_VERSION,
@@ -73,13 +75,14 @@ function App() {
     }
   });
   const [loadingInfo, setLoadingInfo] = useState({
-    msg: "Loading . . .",
+    msg: 'Loading . . .',
     loaded: 0,
     loadLength: 3
   });
   const [page, setPage] = useState('home');
 
   const isInitialInternetMount = useRef(true);
+  const bodyRef = useRef(null);
 
   const internetCheck = async () => {
     if (!navigator.onLine) {
@@ -224,12 +227,18 @@ function App() {
     return new Promise(async resolve => {
       let isRunning = false;
 
-      setInterval(async () => {
+      let intervalId = setInterval(async () => {
         isRunning = await hasBackend();
+
+        if (!isLoading) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
 
         if (isRunning) {
           setValid(prev => ({ ...prev, backendRun: true }));
-            resolve(isRunning);
+          if (intervalId) clearInterval(intervalId);
+          resolve(isRunning);
         } else {
           setValid(prev => ({ ...prev, backendRun: false }));
         }
@@ -261,9 +270,10 @@ function App() {
     };
 
     return new Promise(async resolve => {
+      let timeoutId;
       const version = await ONLINE_VERSION();
 
-      let intervalId = setTimeout(async () => {
+      timeoutId = setTimeout(async () => {
         const currentVersion = await CURRENT_VERSION();
 
         if (version !== currentVersion) {
@@ -272,13 +282,13 @@ function App() {
             backendVersion: { ok: false, required: version }
           }));
         } else {
-          clearInterval(intervalId);
+          clearTimeout(timeoutId);
           setValid(prev => ({
             ...prev,
             backendVersion: { ok: true, required: version }
           }));
 
-            resolve(version);
+          resolve(version);
         }
       }, 2500);
     });
@@ -361,18 +371,24 @@ function App() {
       return;
     }
 
+    const backendCheck = async () => {
+      await checkBackendR();
+    };
+
     fetchAnimeData();
 
     const intervalChecker = setInterval(internetCheck, 10000);
 
     window.addEventListener('online', internetCheck);
     window.addEventListener('offline', internetCheck);
+    window.addEventListener('touchend', backendCheck);
 
     return () => {
       clearInterval(intervalChecker);
 
       window.removeEventListener('online', internetCheck);
       window.removeEventListener('offline', internetCheck);
+      window.removeEventListener('touchend', backendCheck);
     };
   }, [isLoading]);
 
@@ -395,7 +411,7 @@ function App() {
   return (
     <>
       {!isLoading && (
-        <div className={style.body}>
+        <div className={style.body} ref={bodyRef}>
           <AnimatePresence>
             {!hasInternet && (
               <motion.div
@@ -473,7 +489,11 @@ function App() {
               setOpenStream,
               openStream,
               providers,
-              setProviders
+              setProviders,
+              setSelProvider,
+              selProvider,
+              setSelAudio,
+              selAudio
             }}
           >
             <div className={style.wrapper}>
@@ -542,27 +562,27 @@ function App() {
               ></motion.div>
             </div>
             <AnimatePresence mode='popLayout'>
-                <motion.div
-                  className={style.loadingInfo}
-                  key={`loading-id${loadingInfo.loaded}`}
-                  initial={{
-                    opacity: 0,
-                    y: 10
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0
-                  }}
-                  exit={{
-                    opacity: 0,
-                    y: -10
-                  }}
-                  transition={{
-                    duration: 0.25
-                  }}
-                >
-                  {loadingInfo.msg}
-                </motion.div>
+              <motion.div
+                className={style.loadingInfo}
+                key={`loading-id${loadingInfo.loaded}`}
+                initial={{
+                  opacity: 0,
+                  y: 10
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0
+                }}
+                exit={{
+                  opacity: 0,
+                  y: -10
+                }}
+                transition={{
+                  duration: 0.25
+                }}
+              >
+                {loadingInfo.msg}
+              </motion.div>
             </AnimatePresence>
           </motion.div>
         )}
