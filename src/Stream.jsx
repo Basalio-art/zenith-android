@@ -28,18 +28,18 @@ export default function Stream() {
       const { data } = await CapacitorHttp.get(options);
 
       const group = data.streams.reduce((acc, stream) => {
-        if(!acc[stream.type]) acc[stream.type] = {}
+        if (!acc[stream.type]) acc[stream.type] = {};
         acc[stream.type][stream.quality] = {
           url: stream.url,
           type: stream.type,
           referer: stream.referer
-        }
+        };
         return acc;
       }, {});
-      
+
       const stream = group['hls']['360p'];
       setVideoSource({
-        src: `http://localhost:9189/proxy/stream?url=${stream.url}&referer=${stream.referer}`,
+        src: `http://localhost:9189/proxy/stream?url=${encodeURIComponent(stream.url)}&referer=${encodeURIComponent(stream.referer)}`,
         type: stream.type,
         thumbnail: path.image
       });
@@ -93,8 +93,10 @@ export default function Stream() {
           {tempAudio && tempProvider && (
             <>
               <div>{providers[tempProvider].episodes[tempAudio][0].title}</div>
-              <div>{tempProvider}</div>
-              <div>{tempAudio}</div>
+              <div className={style.streamTypes}>
+                <div className={style.providers}>{tempProvider}</div>
+                <div className={style.audios}>{tempAudio}</div>
+              </div>
             </>
           )}
         </motion.div>

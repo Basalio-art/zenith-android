@@ -17,6 +17,7 @@ function ViewAnime() {
   } = useContext(AppContext);
 
   const descriptionRef = useRef(null);
+  const animeIDRef = useRef(null);
 
   const [mainStudio, setMainStudio] = useState(null);
   const [officialSiteUrl, setOfficialSiteUrl] = useState(null);
@@ -70,10 +71,9 @@ function ViewAnime() {
         headers: ZENITH_HEADERS
       });
 
-      setProviders(data.providers);
-
-      console.log(data.providers)
-
+      if (animeIDRef.current === id) {
+        setProviders(data.providers);
+      }
     } catch (err) {
       setProviders(null);
     }
@@ -104,6 +104,7 @@ function ViewAnime() {
     setOfficialSiteUrl(officialSite?.url || 'Unknown');
 
     getProviders(anime.id);
+    animeIDRef.current = anime.id;
 
     const descriptionHeight = () => {
       if (!descriptionRef.current) return;

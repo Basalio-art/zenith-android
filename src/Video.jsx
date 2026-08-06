@@ -12,12 +12,43 @@ export const MyPlayer = ({ src, videoType, poster }) => {
     if (!video) return;
 
     if (Hls.isSupported()) {
-      var hls = new Hls();
+      const hls = new Hls();
+
       hls.loadSource(src);
       hls.attachMedia(video);
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              console.log(data.error);
+              hls.swapAudioCodec();
+          }
+        }
+      });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = src;
     }
+    // if (
+    //   video.canPlayType('application/vnd.apple.mpegurl') ||
+    //   video.canPlayType('application/x-mpegURL')
+    // ) {
+    //   video.src = src;
+    //   return () => {
+    //     videoRef.current.src = '';
+    //   };
+    // } else if (Hls.isSupported()) {
+    //   var hls = new Hls();
+    //   hls.loadSource(src);
+    //   hls.attachMedia(video);
+
+    //   return () => {
+    //     hls.destroy()
+    //   }
+    // }
   }, [src, videoType]);
 
   return (
@@ -28,6 +59,7 @@ export const MyPlayer = ({ src, videoType, poster }) => {
       playsInline
       preload='auto'
       poster={poster}
+      type={'application/x-mpegURL'}
     />
   );
 };

@@ -155,7 +155,6 @@ function App() {
       setLatestAnime(prev => (recentStatus === 200 ? recent.results : prev));
     } catch (error) {
       console.log('Error', error);
-      // newMessage(`Failed syncing dashboards from AniList`, "alert");
     }
   };
 
@@ -287,6 +286,7 @@ function App() {
             ...prev,
             backendVersion: { ok: true, required: version }
           }));
+
 
           resolve(version);
         }
