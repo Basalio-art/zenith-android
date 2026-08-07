@@ -11,8 +11,23 @@ export const MyPlayer = ({ src, videoType, poster }) => {
     const video = videoRef.current;
     if (!video) return;
 
+    let mediaErrorRetries = 0;
+    let hls = null;
+    let isNative = false;
+
+    const useNative = () => {
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+
+      video.src = src;
+      video.load();
+      isNative = true;
+    };
+
     if (Hls.isSupported()) {
-      const hls = new Hls();
+      hls = new Hls();
 
       hls.loadSource(src);
       hls.attachMedia(video);
@@ -24,31 +39,35 @@ export const MyPlayer = ({ src, videoType, poster }) => {
               hls.startLoad();
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
-              console.log(data.error);
+              mediaErrorRetries++;
+              if (mediaErrorRetries === 5) {
+                useNative();
+                break;
+              }
               hls.swapAudioCodec();
+              hls.recoverMediaError();
+              break;
+            case Hls.ErrorTypes.OTHER_ERROR:
+              useNative();
+              break;
           }
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = src;
+      useNative();
     }
-    // if (
-    //   video.canPlayType('application/vnd.apple.mpegurl') ||
-    //   video.canPlayType('application/x-mpegURL')
-    // ) {
-    //   video.src = src;
-    //   return () => {
-    //     videoRef.current.src = '';
-    //   };
-    // } else if (Hls.isSupported()) {
-    //   var hls = new Hls();
-    //   hls.loadSource(src);
-    //   hls.attachMedia(video);
 
-    //   return () => {
-    //     hls.destroy()
-    //   }
-    // }
+    return () => {
+      if (isNative) {
+        video.removeAttribute('src');
+        video.load();
+      }
+
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+    };
   }, [src, videoType]);
 
   return (
@@ -56,10 +75,8 @@ export const MyPlayer = ({ src, videoType, poster }) => {
       ref={videoRef}
       className={style.videoElement}
       controls
-      playsInline
-      preload='auto'
+      preload='metadata'
       poster={poster}
-      type={'application/x-mpegURL'}
     />
   );
 };

@@ -13,7 +13,8 @@ function ViewAnime() {
     setOpenStream,
     providers,
     setProviders,
-    ZENITH_HEADERS
+    ZENITH_HEADERS,
+    setNavigatorOpen
   } = useContext(AppContext);
 
   const descriptionRef = useRef(null);
@@ -121,6 +122,14 @@ function ViewAnime() {
 
     descriptionHeight();
   }, [anime]);
+
+  useEffect(() => {
+    if (viewerOpen) {
+      setNavigatorOpen(false);
+    } else {
+      setNavigatorOpen(true);
+    }
+  }, [viewerOpen]);
 
   return (
     <>

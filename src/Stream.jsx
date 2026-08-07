@@ -4,17 +4,24 @@ import { useContext, useState, useEffect } from 'react';
 import { AppContext } from './App.jsx';
 import { CapacitorHttp } from '@capacitor/core';
 import { MyPlayer } from './Video.jsx';
+import { ArrowLeft } from "lucide-react"
 
 export default function Stream() {
-  const { providers, openStream, ZENITH_HEADERS, selProvider, selAudio } =
-    useContext(AppContext);
+  const {
+    setNavigatorOpen,
+    providers,
+    openStream,
+    ZENITH_HEADERS,
+    selProvider,
+    selAudio
+  } = useContext(AppContext);
 
   const [tempProvider, setTempProvider] = useState(null);
   const [tempAudio, setTempAudio] = useState(null);
+  const [thumbnail, setThumbnail] = useState(null);
   const [videoSource, setVideoSource] = useState({
     src: null,
-    type: null,
-    thumbnail: null
+    type: null
   });
 
   const getEpisode = async () => {
@@ -27,21 +34,21 @@ export default function Stream() {
     try {
       const { data } = await CapacitorHttp.get(options);
 
+      console.log(data)
+
       const group = data.streams.reduce((acc, stream) => {
-        if (!acc[stream.type]) acc[stream.type] = {};
-        acc[stream.type][stream.quality] = {
-          url: stream.url,
-          type: stream.type,
-          referer: stream.referer
-        };
+        if (!acc[stream.type]) acc[stream.type] = [];
+        acc[stream.type].push(stream);
+
         return acc;
       }, {});
 
-      const stream = group['hls']['360p'];
+      console.log(tempProvider,group);
+
+      const stream = group['hls'].at(-1);
       setVideoSource({
         src: `http://localhost:9189/proxy/stream?url=${encodeURIComponent(stream.url)}&referer=${encodeURIComponent(stream.referer)}`,
-        type: stream.type,
-        thumbnail: path.image
+        type: stream.type
       });
     } catch (e) {
       console.log(e);
@@ -54,7 +61,12 @@ export default function Stream() {
   }, [tempProvider, tempAudio]);
 
   useEffect(() => {
-    if (!openStream) return;
+    if (!openStream) {
+      setNavigatorOpen(true);
+      return;
+    }
+    console.log(providers);
+    setNavigatorOpen(false);
     let PROVIDER = selProvider;
     let AUDIO = selAudio;
 
@@ -69,6 +81,7 @@ export default function Stream() {
 
     setTempProvider(PROVIDER);
     setTempAudio(AUDIO);
+    setThumbnail(providers[PROVIDER].episodes[AUDIO][0].image);
   }, [openStream]);
 
   return (
@@ -82,11 +95,14 @@ export default function Stream() {
           exit={{ y: '100%' }}
           transition={{ duration: 0.5 }}
         >
+          <div className={style.animeTitle}>
+            <ArrowLeft />
+          </div>
           <div className={style.videoWrapper}>
             <MyPlayer
               videoType={videoSource.type}
               src={videoSource.src}
-              poster={videoSource.thumbnail}
+              poster={thumbnail}
             ></MyPlayer>
           </div>
 

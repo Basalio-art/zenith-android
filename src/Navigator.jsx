@@ -1,12 +1,15 @@
 import style from './Navigator.module.css';
 import { House, Settings, BookOpen, Download, Search } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect, useContext } from 'react';
 import { AppContext } from './App.jsx';
 
 const parentVariant = {
   hidden: {
-    y: '100%'
+    y: '100%',
+    transition: {
+      duration: 0.25
+    }
   },
   visible: {
     y: 0,
@@ -61,18 +64,13 @@ const labelVariants = {
 };
 
 function Navigator() {
-  const { page, setPage, setViewerOpen } = useContext(AppContext);
+  const { page, setPage, setViewerOpen, setNavigatorOpen, navigatorOpen } =
+    useContext(AppContext);
   const [activeTab, setActiveTab] = useState(page);
   const [introFinished, setIntroFinished] = useState(false);
 
   const closeViewer = page => {
-    if (location.hash.includes('viewer')) {
-      history.replaceState(null, "", `#${page}`);
-      dispatchEvent(new Event("hashchange"))
-    } else {
-      setViewerOpen(false);
-      setPage(page);
-    }
+    setPage(page);
   };
 
   useEffect(() => {
@@ -89,187 +87,232 @@ function Navigator() {
   }, [page]);
 
   return (
-    <motion.section
-      variants={parentVariant}
-      initial='hidden'
-      animate='visible'
-      className={style.navigationSection}
-    >
-      <motion.div
-        variants={childVariant}
-        className={`${style.home} ${introFinished && activeTab === 'home' ? style.active : ''}`}
-        onClick={() => {
-          closeViewer('home');
-        }}
-      >
-        <motion.div variants={iconVariant} initial='normal' animate='resize'>
-          <House />
-        </motion.div>
-        <motion.span variants={labelVariants} initial='hidden' animate='show'>
-          Home
-        </motion.span>
-        {activeTab === 'home' && (
+    <AnimatePresence mode='popLayout'>
+      {navigatorOpen && (
+        <motion.section
+          variants={parentVariant}
+          initial='hidden'
+          animate='visible'
+          exit='hidden'
+          className={style.navigationSection}
+        >
           <motion.div
-            initial={{
-              x: introFinished ? 0 : '-100%',
-              opacity: introFinished ? 1 : 0
+            variants={childVariant}
+            className={`${style.home} ${introFinished && activeTab === 'home' ? style.active : ''}`}
+            onClick={() => {
+              closeViewer('home');
             }}
-            animate={{
-              x: introFinished ? 0 : '-100%',
-              opacity: introFinished ? 1 : 0,
-              transition: {
-                type: 'spring',
-                stiffness: 300,
-                damping: 20
-              }
-            }}
-            layoutId='underline'
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
-          />
-        )}
-      </motion.div>
+          >
+            <motion.div
+              variants={iconVariant}
+              initial='normal'
+              animate='resize'
+            >
+              <House />
+            </motion.div>
+            <motion.span
+              variants={labelVariants}
+              initial='hidden'
+              animate='show'
+            >
+              Home
+            </motion.span>
+            {activeTab === 'home' && (
+              <motion.div
+                initial={{
+                  x: introFinished ? 0 : '-100%',
+                  opacity: introFinished ? 1 : 0
+                }}
+                animate={{
+                  x: introFinished ? 0 : '-100%',
+                  opacity: introFinished ? 1 : 0,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 20
+                  }
+                }}
+                layoutId='underline'
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className={`${style.underline} ${!introFinished ? style.intro : ''}`}
+              />
+            )}
+          </motion.div>
 
-      <motion.div
-        variants={childVariant}
-        className={`${style.search} ${introFinished && activeTab === 'search' ? style.active : ''}`}
-        onClick={() => {
-          closeViewer('search');
-        }}
-      >
-        <motion.div variants={iconVariant} initial='normal' animate='resize'>
-          <Search />
-        </motion.div>
-        <motion.span variants={labelVariants} initial='hidden' animate='show'>
-          Search
-        </motion.span>
-        {activeTab === 'search' && (
           <motion.div
-            initial={{
-              x: introFinished ? 0 : '-200%',
-              opacity: introFinished ? 1 : 0
+            variants={childVariant}
+            className={`${style.search} ${introFinished && activeTab === 'search' ? style.active : ''}`}
+            onClick={() => {
+              closeViewer('search');
             }}
-            animate={{
-              x: introFinished ? 0 : '-200%',
-              opacity: introFinished ? 1 : 0,
-              transition: {
-                type: 'spring',
-                stiffness: 300,
-                damping: 20
-              }
-            }}
-            layoutId='underline'
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
-          />
-        )}
-      </motion.div>
+          >
+            <motion.div
+              variants={iconVariant}
+              initial='normal'
+              animate='resize'
+            >
+              <Search />
+            </motion.div>
+            <motion.span
+              variants={labelVariants}
+              initial='hidden'
+              animate='show'
+            >
+              Search
+            </motion.span>
+            {activeTab === 'search' && (
+              <motion.div
+                initial={{
+                  x: introFinished ? 0 : '-200%',
+                  opacity: introFinished ? 1 : 0
+                }}
+                animate={{
+                  x: introFinished ? 0 : '-200%',
+                  opacity: introFinished ? 1 : 0,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 20
+                  }
+                }}
+                layoutId='underline'
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className={`${style.underline} ${!introFinished ? style.intro : ''}`}
+              />
+            )}
+          </motion.div>
 
-      <motion.div
-        variants={childVariant}
-        className={`${style.downloads} ${introFinished && activeTab === 'downloads' ? style.active : ''}`}
-        onClick={() => {
-          closeViewer('downloads');
-        }}
-      >
-        <motion.div variants={iconVariant} initial='normal' animate='resize'>
-          <Download />
-        </motion.div>
-        <motion.span variants={labelVariants} initial='hidden' animate='show'>
-          Downloads
-        </motion.span>
-        {activeTab === 'downloads' && (
           <motion.div
-            initial={{
-              x: introFinished ? 0 : '-300%',
-              opacity: introFinished ? 1 : 0
+            variants={childVariant}
+            className={`${style.downloads} ${introFinished && activeTab === 'downloads' ? style.active : ''}`}
+            onClick={() => {
+              closeViewer('downloads');
             }}
-            animate={{
-              x: introFinished ? 0 : '-300%',
-              opacity: introFinished ? 1 : 0,
-              transition: {
-                type: 'spring',
-                stiffness: 300,
-                damping: 20
-              }
-            }}
-            layoutId='underline'
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
-          />
-        )}
-      </motion.div>
+          >
+            <motion.div
+              variants={iconVariant}
+              initial='normal'
+              animate='resize'
+            >
+              <Download />
+            </motion.div>
+            <motion.span
+              variants={labelVariants}
+              initial='hidden'
+              animate='show'
+            >
+              Downloads
+            </motion.span>
+            {activeTab === 'downloads' && (
+              <motion.div
+                initial={{
+                  x: introFinished ? 0 : '-300%',
+                  opacity: introFinished ? 1 : 0
+                }}
+                animate={{
+                  x: introFinished ? 0 : '-300%',
+                  opacity: introFinished ? 1 : 0,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 20
+                  }
+                }}
+                layoutId='underline'
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className={`${style.underline} ${!introFinished ? style.intro : ''}`}
+              />
+            )}
+          </motion.div>
 
-      <motion.div
-        variants={childVariant}
-        className={`${style.library} ${introFinished && activeTab === 'library' ? style.active : ''}`}
-        onClick={() => {
-          closeViewer('library');
-        }}
-      >
-        <motion.div variants={iconVariant} initial='normal' animate='resize'>
-          <BookOpen />
-        </motion.div>
-        <motion.span variants={labelVariants} initial='hidden' animate='show'>
-          Library
-        </motion.span>
-        {activeTab === 'library' && (
           <motion.div
-            initial={{
-              x: introFinished ? 0 : '200%',
-              opacity: introFinished ? 1 : 0
+            variants={childVariant}
+            className={`${style.library} ${introFinished && activeTab === 'library' ? style.active : ''}`}
+            onClick={() => {
+              closeViewer('library');
             }}
-            animate={{
-              x: introFinished ? 0 : '200%',
-              opacity: introFinished ? 1 : 0,
-              transition: {
-                type: 'spring',
-                stiffness: 300,
-                damping: 20
-              }
-            }}
-            layoutId='underline'
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
-          />
-        )}
-      </motion.div>
+          >
+            <motion.div
+              variants={iconVariant}
+              initial='normal'
+              animate='resize'
+            >
+              <BookOpen />
+            </motion.div>
+            <motion.span
+              variants={labelVariants}
+              initial='hidden'
+              animate='show'
+            >
+              Library
+            </motion.span>
+            {activeTab === 'library' && (
+              <motion.div
+                initial={{
+                  x: introFinished ? 0 : '200%',
+                  opacity: introFinished ? 1 : 0
+                }}
+                animate={{
+                  x: introFinished ? 0 : '200%',
+                  opacity: introFinished ? 1 : 0,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 20
+                  }
+                }}
+                layoutId='underline'
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className={`${style.underline} ${!introFinished ? style.intro : ''}`}
+              />
+            )}
+          </motion.div>
 
-      <motion.div
-        variants={childVariant}
-        className={`${style.settings} ${introFinished && activeTab === 'settings' ? style.active : ''}`}
-        onClick={() => {
-          closeViewer('settings');
-        }}
-      >
-        <motion.div variants={iconVariant} initial='normal' animate='resize'>
-          <Settings />
-        </motion.div>
-        <motion.span variants={labelVariants} initial='hidden' animate='show'>
-          Settings
-        </motion.span>
-        {activeTab === 'settings' && (
           <motion.div
-            initial={{
-              x: introFinished ? 0 : '100%',
-              opacity: introFinished ? 1 : 0
+            variants={childVariant}
+            className={`${style.settings} ${introFinished && activeTab === 'settings' ? style.active : ''}`}
+            onClick={() => {
+              closeViewer('settings');
             }}
-            animate={{
-              x: introFinished ? 0 : '100%',
-              opacity: introFinished ? 1 : 0,
-              transition: {
-                type: 'spring',
-                stiffness: 300,
-                damping: 20
-              }
-            }}
-            layoutId='underline'
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className={`${style.underline} ${!introFinished ? style.intro : ''}`}
-          />
-        )}
-      </motion.div>
-    </motion.section>
+          >
+            <motion.div
+              variants={iconVariant}
+              initial='normal'
+              animate='resize'
+            >
+              <Settings />
+            </motion.div>
+            <motion.span
+              variants={labelVariants}
+              initial='hidden'
+              animate='show'
+            >
+              Settings
+            </motion.span>
+            {activeTab === 'settings' && (
+              <motion.div
+                initial={{
+                  x: introFinished ? 0 : '100%',
+                  opacity: introFinished ? 1 : 0
+                }}
+                animate={{
+                  x: introFinished ? 0 : '100%',
+                  opacity: introFinished ? 1 : 0,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 20
+                  }
+                }}
+                layoutId='underline'
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className={`${style.underline} ${!introFinished ? style.intro : ''}`}
+              />
+            )}
+          </motion.div>
+        </motion.section>
+      )}
+    </AnimatePresence>
   );
 }
 

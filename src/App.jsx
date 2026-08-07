@@ -45,6 +45,7 @@ const CONFIG_URL =
 
 function App() {
   const [hasInternet, setHasInternet] = useState(true);
+  const [navigatorOpen, setNavigatorOpen] = useState(true)
   const [message, setMessage] = useState([]);
   const [trendingAnime, setTrendingAnime] = useState([]);
   const [popularAnime, setPopularAnime] = useState([]);
@@ -61,8 +62,8 @@ function App() {
   const [bash2Copied, setBash2Copied] = useState(false);
   const [bash3Copied, setBash3Copied] = useState(false);
   const [providers, setProviders] = useState(null);
-  const [selProvider, setSelProvider] = useState('kiwi');
-  const [selAudio, setSelAudio] = useState('sub');
+  const [selProvider, setSelProvider] = useState('bee');
+  const [selAudio, setSelAudio] = useState('dub');
   const [valid, setValid] = useState({
     appVersion: {
       required: APP_VERSION,
@@ -493,7 +494,9 @@ function App() {
               setSelProvider,
               selProvider,
               setSelAudio,
-              selAudio
+              selAudio,
+              navigatorOpen,
+              setNavigatorOpen
             }}
           >
             <div className={style.wrapper}>
