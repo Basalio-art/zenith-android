@@ -355,8 +355,6 @@ function App() {
 
       intervalFetch = setInterval(fetchAnimeData, 360000);
 
-      newMessage('Connection restored', 'alert');
-
       reChecking();
     }
     return () => {

@@ -11,4 +11,40 @@
     aspect-ratio: 16 / 9;
     background: black;
   }
+
+  .animeTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+
+    .backBtn {
+      user-select: none;
+
+      > * {
+        display: block;
+      }
+    }
+
+    .title {
+      overflow: hidden;
+      
+      .wrapper {
+        display: flex;
+        text-wrap: nowrap;
+        gap: 50px;
+      }
+    }
+  }
+
+  > .wrapper {
+    padding: .5rem 1.5rem;
+
+    .episodeTitle {
+      font-size: 1.5rem;
+      font-family: 'Orbitron';
+      font-weight: 600;
+      line-height: 1.2;
+    }
+  }
 }

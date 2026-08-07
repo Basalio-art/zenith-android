@@ -1,19 +1,21 @@
 import style from './Stream.module.css';
 import { motion, AnimatePresence } from 'motion/react';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, useRef } from 'react';
 import { AppContext } from './App.jsx';
 import { CapacitorHttp } from '@capacitor/core';
 import { MyPlayer } from './Video.jsx';
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft } from 'lucide-react';
 
 export default function Stream() {
   const {
     setNavigatorOpen,
     providers,
     openStream,
+    setOpenStream,
     ZENITH_HEADERS,
     selProvider,
-    selAudio
+    selAudio,
+    viewAnimeData: anime
   } = useContext(AppContext);
 
   const [tempProvider, setTempProvider] = useState(null);
@@ -23,6 +25,8 @@ export default function Stream() {
     src: null,
     type: null
   });
+
+  const animeTitleRef = useRef(null);
 
   const getEpisode = async () => {
     const path = providers[tempProvider].episodes[tempAudio][0];
@@ -34,7 +38,7 @@ export default function Stream() {
     try {
       const { data } = await CapacitorHttp.get(options);
 
-      console.log(data)
+      console.log(data);
 
       const group = data.streams.reduce((acc, stream) => {
         if (!acc[stream.type]) acc[stream.type] = [];
@@ -43,7 +47,7 @@ export default function Stream() {
         return acc;
       }, {});
 
-      console.log(tempProvider,group);
+      console.log(tempProvider, group);
 
       const stream = group['hls'].at(-1);
       setVideoSource({
@@ -65,8 +69,11 @@ export default function Stream() {
       setNavigatorOpen(true);
       return;
     }
+
     console.log(providers);
+
     setNavigatorOpen(false);
+
     let PROVIDER = selProvider;
     let AUDIO = selAudio;
 
@@ -75,6 +82,7 @@ export default function Stream() {
     }
 
     const audios = providers[PROVIDER].episodes;
+
     if (!(selAudio in audios)) {
       AUDIO = Object.keys(audios)[0];
     }
@@ -82,6 +90,41 @@ export default function Stream() {
     setTempProvider(PROVIDER);
     setTempAudio(AUDIO);
     setThumbnail(providers[PROVIDER].episodes[AUDIO][0].image);
+
+    const animeTitleDisplay = () => {
+      const animeTitle = animeTitleRef.current;
+
+      if (!animeTitle) return;
+
+      const firstChild = animeTitle.children[0];
+
+      console.log(animeTitle.clientWidth, animeTitle.scrollWidth);
+
+      if (animeTitle.clientWidth < firstChild.scrollWidth) {
+        animeTitle.children[0].appendChild(
+          firstChild.children[0].cloneNode(true)
+        );
+
+        animeTitle.children[0].animate(
+          [
+            {
+              transform: 'translateX(0)',
+              offset: .1
+            },
+            {
+              transform: `translateX(-${firstChild.children[0].clientWidth + 50}px)`
+            }
+          ],
+          {
+            duration: 10000,
+            easing: 'ease-in-out',
+            iterations: Infinity,
+          }
+        );
+      }
+    };
+
+    animeTitleDisplay();
   }, [openStream]);
 
   return (
@@ -96,7 +139,14 @@ export default function Stream() {
           transition={{ duration: 0.5 }}
         >
           <div className={style.animeTitle}>
-            <ArrowLeft />
+            <div className={style.backBtn} onClick={() => setOpenStream(false)}>
+              <ArrowLeft size={27.5} />
+            </div>
+            <div className={style.title} ref={animeTitleRef}>
+              <div className={style.wrapper}>
+                <span>{anime.title.english || anime.title.romaji}</span>
+              </div>
+            </div>
           </div>
           <div className={style.videoWrapper}>
             <MyPlayer
@@ -107,13 +157,13 @@ export default function Stream() {
           </div>
 
           {tempAudio && tempProvider && (
-            <>
-              <div>{providers[tempProvider].episodes[tempAudio][0].title}</div>
+            <div className={style.wrapper}>
+              <div className={style.episodeTitle}>{providers[tempProvider].episodes[tempAudio][0].title}</div>
               <div className={style.streamTypes}>
                 <div className={style.providers}>{tempProvider}</div>
                 <div className={style.audios}>{tempAudio}</div>
               </div>
-            </>
+            </div>
           )}
         </motion.div>
       )}
