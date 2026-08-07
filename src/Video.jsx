@@ -70,11 +70,13 @@ export const MyPlayer = ({ src, videoType, poster }) => {
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
-        console.log('[HLS] ERROR', {
+        console.log('[HLS ERROR]', {
           type: data.type,
           details: data.details,
           fatal: data.fatal,
-          url: data.url
+          url: data.url,
+          response: data.response,
+          networkDetails: data.networkDetails
         });
       });
 
