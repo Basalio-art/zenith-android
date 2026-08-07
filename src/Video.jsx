@@ -1,8 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useContext } from 'react';
 import Hls from 'hls.js';
 import style from './Video.module.css';
+import { AppContext } from './App.jsx';
 
 export const MyPlayer = ({ src, videoType, poster }) => {
+  const { ZENITH_HEADERS } = useContext(AppContext);
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -44,7 +46,12 @@ export const MyPlayer = ({ src, videoType, poster }) => {
     const canUseNative = video.canPlayType('application/vnd.apple.mpegurl');
 
     if (Hls.isSupported()) {
-      hls = new Hls();
+      hls = new Hls({
+        xhrSetup: (xhr, url) => {
+          xhr.setRequestHeader('Origin', ZENITH_HEADERS.Origin),
+          xhr.setRequestHeader('Referer', ZENITH_HEADERS.Referer)
+        }
+      });
 
       hls.loadSource(src);
       hls.attachMedia(video);
