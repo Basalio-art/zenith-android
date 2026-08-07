@@ -57,6 +57,7 @@ export const MyPlayer = ({ src, videoType, poster }) => {
       useNative();
     }
 
+    video.play()
     return () => {
       if (isNative) {
         video.removeAttribute('src');
@@ -68,14 +69,12 @@ export const MyPlayer = ({ src, videoType, poster }) => {
         hls = null;
       }
     };
-  }, [src, videoType]);
+  }, [src]);
 
   return (
     <video
       ref={videoRef}
       className={style.videoElement}
-      controls
-      preload='metadata'
       poster={poster}
     />
   );

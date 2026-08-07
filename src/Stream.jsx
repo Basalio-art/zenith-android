@@ -28,8 +28,9 @@ export default function Stream() {
 
   const animeTitleRef = useRef(null);
 
-  const getEpisode = async () => {
-    const path = providers[tempProvider].episodes[tempAudio][0];
+  const getEpisode = async (PROVIDER, AUDIO) => {
+    console.log(providers);
+    const path = providers[PROVIDER].episodes[AUDIO][0];
     const options = {
       url: `http://localhost:9189/${path.id}`,
       headers: ZENITH_HEADERS
@@ -38,16 +39,12 @@ export default function Stream() {
     try {
       const { data } = await CapacitorHttp.get(options);
 
-      console.log(data);
-
       const group = data.streams.reduce((acc, stream) => {
         if (!acc[stream.type]) acc[stream.type] = [];
         acc[stream.type].push(stream);
 
         return acc;
       }, {});
-
-      console.log(tempProvider, group);
 
       const stream = group['hls'].at(-1);
       setVideoSource({
@@ -60,17 +57,10 @@ export default function Stream() {
   };
 
   useEffect(() => {
-    if (!tempProvider || !tempAudio) return;
-    getEpisode();
-  }, [tempProvider, tempAudio]);
-
-  useEffect(() => {
     if (!openStream) {
       setNavigatorOpen(true);
       return;
     }
-
-    console.log(providers);
 
     setNavigatorOpen(false);
 
@@ -91,14 +81,14 @@ export default function Stream() {
     setTempAudio(AUDIO);
     setThumbnail(providers[PROVIDER].episodes[AUDIO][0].image);
 
+    getEpisode(PROVIDER, AUDIO);
+
     const animeTitleDisplay = () => {
       const animeTitle = animeTitleRef.current;
 
       if (!animeTitle) return;
 
       const firstChild = animeTitle.children[0];
-
-      console.log(animeTitle.clientWidth, animeTitle.scrollWidth);
 
       if (animeTitle.clientWidth < firstChild.scrollWidth) {
         animeTitle.children[0].appendChild(
@@ -109,7 +99,7 @@ export default function Stream() {
           [
             {
               transform: 'translateX(0)',
-              offset: .1
+              offset: 0.1
             },
             {
               transform: `translateX(-${firstChild.children[0].clientWidth + 50}px)`
@@ -118,13 +108,18 @@ export default function Stream() {
           {
             duration: 10000,
             easing: 'ease-in-out',
-            iterations: Infinity,
+            iterations: Infinity
           }
         );
       }
     };
 
     animeTitleDisplay();
+    return () => {
+      setTempProvider(null)
+      setTempAudio(null)
+      setThumbnail(null)
+    }
   }, [openStream]);
 
   return (
@@ -156,15 +151,17 @@ export default function Stream() {
             ></MyPlayer>
           </div>
 
-          {tempAudio && tempProvider && (
-            <div className={style.wrapper}>
-              <div className={style.episodeTitle}>{providers[tempProvider].episodes[tempAudio][0].title}</div>
-              <div className={style.streamTypes}>
-                <div className={style.providers}>{tempProvider}</div>
-                <div className={style.audios}>{tempAudio}</div>
+          {(() => {
+            if (!tempProvider || !tempAudio) return;
+
+            return (
+              <div className={style.wrapper}>
+                <div className={style.episodeTitle}>
+                  {providers[tempProvider].episodes[tempAudio][0].title}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </motion.div>
       )}
     </AnimatePresence>
