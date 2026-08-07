@@ -49,6 +49,35 @@ export const MyPlayer = ({ src, videoType, poster }) => {
       hls.loadSource(src);
       hls.attachMedia(video);
 
+      hls.on(Hls.Events.MANIFEST_LOADING, (_, data) => {
+        console.log('[HLS] MANIFEST_LOADING', data.url);
+      });
+
+      hls.on(Hls.Events.MANIFEST_LOADED, (_, data) => {
+        console.log('[HLS] MANIFEST_LOADED');
+      });
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        console.log('[HLS] MANIFEST_PARSED');
+      });
+
+      hls.on(Hls.Events.FRAG_LOADING, (_, data) => {
+        console.log('[HLS] FRAG_LOADING', data.frag?.url);
+      });
+
+      hls.on(Hls.Events.FRAG_LOADED, (_, data) => {
+        console.log('[HLS] FRAG_LOADED');
+      });
+
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        console.log('[HLS] ERROR', {
+          type: data.type,
+          details: data.details,
+          fatal: data.fatal,
+          url: data.url
+        });
+      });
+
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
           switch (data.type) {
@@ -84,6 +113,12 @@ export const MyPlayer = ({ src, videoType, poster }) => {
       useNative();
     }
 
+    const handleError = e => {
+      console.log(e);
+    };
+
+    video.addEventListener('error', handleError);
+
     return () => {
       if (isNative) {
         video.removeAttribute('src');
@@ -91,6 +126,8 @@ export const MyPlayer = ({ src, videoType, poster }) => {
       }
 
       if (hls) hlsDestroy();
+
+      video.removeEventListener('error', handleError);
     };
   }, [src]);
 
