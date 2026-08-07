@@ -29,7 +29,8 @@ export default function Stream() {
   const animeTitleRef = useRef(null);
 
   const getEpisode = async (PROVIDER, AUDIO) => {
-    console.log(providers);
+    console.log(providers); 
+    
     const path = providers[PROVIDER].episodes[AUDIO][0];
     const options = {
       url: `http://localhost:9189/${path.id}`,
@@ -79,7 +80,7 @@ export default function Stream() {
 
     setTempProvider(PROVIDER);
     setTempAudio(AUDIO);
-    setThumbnail(providers[PROVIDER].episodes[AUDIO][0].image);
+    setThumbnail(providers[PROVIDER].episodes[AUDIO][0].image ?? anime.bannerImage ?? anime.coverImage.extraLarge);
 
     getEpisode(PROVIDER, AUDIO);
 

@@ -6,6 +6,17 @@ export const MyPlayer = ({ src, videoType, poster }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (!poster) {
+      video.classList.add(style.hidden);
+    } else {
+      video.classList.remove(style.hidden);
+    }
+  }, [poster]);
+
+  useEffect(() => {
     if (!src || !videoType) return;
 
     const video = videoRef.current;
@@ -15,16 +26,22 @@ export const MyPlayer = ({ src, videoType, poster }) => {
     let hls = null;
     let isNative = false;
 
+    const hlsDestroy = () => {
+      hls.destroy();
+      hls = null;
+    };
+
     const useNative = () => {
       if (hls) {
-        hls.destroy();
-        hls = null;
+        hlsDestroy();
       }
 
       video.src = src;
       video.load();
       isNative = true;
     };
+
+    const canUseNative = video.canPlayType('application/vnd.apple.mpegurl');
 
     if (Hls.isSupported()) {
       hls = new Hls();
@@ -41,41 +58,43 @@ export const MyPlayer = ({ src, videoType, poster }) => {
             case Hls.ErrorTypes.MEDIA_ERROR:
               mediaErrorRetries++;
               if (mediaErrorRetries === 5) {
-                useNative();
+                if (canUseNative) useNative();
+                else hlsDestroy;
                 break;
               }
               hls.swapAudioCodec();
               hls.recoverMediaError();
               break;
             case Hls.ErrorTypes.OTHER_ERROR:
-              useNative();
+              if (canUseNative) {
+                useNative();
+              } else {
+                hls.destroy();
+                hls = null;
+              }
+              break;
+            default:
+              if (canUseNative) useNative();
+              else hlsDestroy();
               break;
           }
         }
       });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    } else if (canUseNative) {
       useNative();
     }
 
-    video.play()
     return () => {
       if (isNative) {
         video.removeAttribute('src');
         video.load();
       }
 
-      if (hls) {
-        hls.destroy();
-        hls = null;
-      }
+      if (hls) hlsDestroy();
     };
   }, [src]);
 
   return (
-    <video
-      ref={videoRef}
-      className={style.videoElement}
-      poster={poster}
-    />
+    <video ref={videoRef} className={style.hidden} controls poster={poster} />
   );
 };

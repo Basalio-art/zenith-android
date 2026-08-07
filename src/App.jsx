@@ -62,7 +62,7 @@ function App() {
   const [bash2Copied, setBash2Copied] = useState(false);
   const [bash3Copied, setBash3Copied] = useState(false);
   const [providers, setProviders] = useState(null);
-  const [selProvider, setSelProvider] = useState('bee');
+  const [selProvider, setSelProvider] = useState('bonk');
   const [selAudio, setSelAudio] = useState('dub');
   const [valid, setValid] = useState({
     appVersion: {

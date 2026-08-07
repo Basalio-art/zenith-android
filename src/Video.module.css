@@ -3,4 +3,10 @@ video {
   height: 100%;
   display: block;
   background: black;
+  opacity: 1;
+  transition: opacity 0.5s;
+
+  &.hidden {
+    opacity: 0;
+  }
 }
