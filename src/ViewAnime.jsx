@@ -13,7 +13,7 @@ function ViewAnime() {
     setOpenStream,
     providers,
     setProviders,
-    ZENITH_HEADERS,
+
     setNavigatorOpen
   } = useContext(AppContext);
 
@@ -68,8 +68,7 @@ function ViewAnime() {
     setLoadingProviders(true);
     try {
       const { data } = await CapacitorHttp.get({
-        url: `http://localhost:9189/episodes/${id}`,
-        headers: ZENITH_HEADERS
+        url: `http://localhost:9189/episodes/${id}`
       });
 
       if (animeIDRef.current === id) {
@@ -390,12 +389,12 @@ function ViewAnime() {
                     </p>
                   </div>
 
-                  <AnimatePresence mode='popLayout'>
+                  <AnimatePresence mode='wait'>
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ type: 'spring', duration: 1 }}
+                      transition={{ duration: .15 }}
                       key={`${loadingProviders ? 'loading' : 'loaded'}-anime-providers-${true ? 'true' : 'false'}`}
                       className={style.watchNDownload}
                     >

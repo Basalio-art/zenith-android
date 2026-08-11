@@ -33,11 +33,6 @@ const renderPage = page => {
   }
 };
 
-const ZENITH_HEADERS = {
-  Origin: 'http://zenith.app',
-  Referer: 'http://zenith.app'
-};
-
 const APP_VERSION = '1.4.0';
 
 const CONFIG_URL =
@@ -45,7 +40,7 @@ const CONFIG_URL =
 
 function App() {
   const [hasInternet, setHasInternet] = useState(true);
-  const [navigatorOpen, setNavigatorOpen] = useState(true)
+  const [navigatorOpen, setNavigatorOpen] = useState(true);
   const [message, setMessage] = useState([]);
   const [trendingAnime, setTrendingAnime] = useState([]);
   const [popularAnime, setPopularAnime] = useState([]);
@@ -62,8 +57,9 @@ function App() {
   const [bash2Copied, setBash2Copied] = useState(false);
   const [bash3Copied, setBash3Copied] = useState(false);
   const [providers, setProviders] = useState(null);
-  const [selProvider, setSelProvider] = useState('bonk');
-  const [selAudio, setSelAudio] = useState('dub');
+  const [selProvider, setSelProvider] = useState('pewe');
+  const [selAudio, setSelAudio] = useState('sub');
+  const [selStreamType, setSelStreamType] = useState('hls');
   const [valid, setValid] = useState({
     appVersion: {
       required: APP_VERSION,
@@ -137,16 +133,13 @@ function App() {
     try {
       const { data: trending, status: trendingStatus } =
         await CapacitorHttp.get({
-          url: 'http://localhost:9189/trending?page=1&per_page=20',
-          headers: ZENITH_HEADERS
+          url: 'http://localhost:9189/trending?page=1&per_page=20'
         });
       const { data: popular, status: popularStatus } = await CapacitorHttp.get({
-        url: 'http://localhost:9189/popular?page=1&per_page=20',
-        headers: ZENITH_HEADERS
+        url: 'http://localhost:9189/popular?page=1&per_page=20'
       });
       const { data: recent, status: recentStatus } = await CapacitorHttp.get({
-        url: 'http://localhost:9189/recent?page=1&per_page=20',
-        headers: ZENITH_HEADERS
+        url: 'http://localhost:9189/recent?page=1&per_page=20'
       });
 
       setTrendingAnime(prev =>
@@ -164,7 +157,6 @@ function App() {
     try {
       const { data } = await CapacitorHttp.get({
         url: `http://localhost:9189/search`,
-        headers: ZENITH_HEADERS,
         params: {
           query: query,
           page: page,
@@ -249,8 +241,7 @@ function App() {
   const checkBackendV = () => {
     const CURRENT_VERSION = async () => {
       const { data } = await CapacitorHttp.get({
-        url: 'http://localhost:9189/version',
-        headers: ZENITH_HEADERS
+        url: 'http://localhost:9189/version'
       });
 
       return data.version;
@@ -287,7 +278,6 @@ function App() {
             ...prev,
             backendVersion: { ok: true, required: version }
           }));
-
 
           resolve(version);
         }
@@ -468,7 +458,6 @@ function App() {
 
           <AppContext.Provider
             value={{
-              ZENITH_HEADERS,
               trendingAnime,
               popularAnime,
               latestAnime,
@@ -492,6 +481,8 @@ function App() {
               setSelProvider,
               selProvider,
               setSelAudio,
+              selStreamType,
+              setSelStreamType,
               selAudio,
               navigatorOpen,
               setNavigatorOpen

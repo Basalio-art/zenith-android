@@ -4,19 +4,7 @@ import style from './Video.module.css';
 import { AppContext } from './App.jsx';
 
 export const MyPlayer = ({ src, videoType, poster }) => {
-  const { ZENITH_HEADERS } = useContext(AppContext);
   const videoRef = useRef(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (!poster) {
-      video.classList.add(style.hidden);
-    } else {
-      video.classList.remove(style.hidden);
-    }
-  }, [poster]);
 
   useEffect(() => {
     if (!src || !videoType) return;
@@ -46,46 +34,10 @@ export const MyPlayer = ({ src, videoType, poster }) => {
     const canUseNative = video.canPlayType('application/vnd.apple.mpegurl');
 
     if (Hls.isSupported()) {
-      hls = new Hls({
-        xhrSetup: (xhr, url) => {
-          xhr.setRequestHeader('Origin', ZENITH_HEADERS.Origin),
-          xhr.setRequestHeader('Referer', ZENITH_HEADERS.Referer)
-        }
-      });
+      hls = new Hls();
 
       hls.loadSource(src);
       hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_LOADING, (_, data) => {
-        console.log('[HLS] MANIFEST_LOADING', data.url);
-      });
-
-      hls.on(Hls.Events.MANIFEST_LOADED, (_, data) => {
-        console.log('[HLS] MANIFEST_LOADED');
-      });
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('[HLS] MANIFEST_PARSED');
-      });
-
-      hls.on(Hls.Events.FRAG_LOADING, (_, data) => {
-        console.log('[HLS] FRAG_LOADING', data.frag?.url);
-      });
-
-      hls.on(Hls.Events.FRAG_LOADED, (_, data) => {
-        console.log('[HLS] FRAG_LOADED');
-      });
-
-      hls.on(Hls.Events.ERROR, (_, data) => {
-        console.log('[HLS ERROR]', {
-          type: data.type,
-          details: data.details,
-          fatal: data.fatal,
-          url: data.url,
-          response: data.response,
-          networkDetails: data.networkDetails
-        });
-      });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {
@@ -126,21 +78,24 @@ export const MyPlayer = ({ src, videoType, poster }) => {
       console.log(e);
     };
 
-    video.addEventListener('error', handleError);
-
     return () => {
-      if (isNative) {
-        video.removeAttribute('src');
-        video.load();
-      }
-
       if (hls) hlsDestroy();
+      if (isNative) video.removeAttribute('src');
 
       video.removeEventListener('error', handleError);
     };
   }, [src]);
 
   return (
-    <video ref={videoRef} className={style.hidden} controls poster={poster} />
+    <video
+      ref={videoRef}
+      className={style.hidden}
+      onCanPlay={e => {
+        e.target.classList.remove(style.hidden)
+      }}
+      controls
+      preload='auto'
+      poster={poster}
+    />
   );
 };

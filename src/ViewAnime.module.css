@@ -26,8 +26,8 @@
     background: var(--bg-color);
 
     svg {
+      display: block;
     }
-    display: block;
   }
 
   .container {
@@ -82,7 +82,7 @@
         mask-image: linear-gradient(to bottom, black, transparent);
       }
 
-      &[data-view-type="cover"] {
+      &[data-view-type='cover'] {
         width: min-content;
         float: left;
         background: color-mix(
@@ -94,7 +94,7 @@
         margin-right: 1rem;
       }
 
-      &[data-view-type="banner"] {
+      &[data-view-type='banner'] {
         aspect-ratio: 16 / 9;
         overflow: initial;
         background-position: center;
@@ -103,7 +103,7 @@
         margin-bottom: -75px;
       }
 
-      &[data-view-type="video"] {
+      &[data-view-type='video'] {
         z-index: 50;
       }
     }
@@ -115,7 +115,7 @@
       margin-bottom: 1rem;
 
       .main {
-        font-family: "Orbitron";
+        font-family: 'Orbitron';
         font-size: 1.25rem;
         font-weight: bold;
         line-height: 20px;
@@ -140,6 +140,7 @@
       display: -webkit-box;
       -webkit-box-orient: vertical;
       -webkit-line-clamp: 4;
+      line-clamp: 4;
       text-overflow: ellipsis;
     }
 
