@@ -34,14 +34,29 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
     const canUseNative = video.canPlayType('application/vnd.apple.mpegurl');
 
     if (Hls.isSupported() && videoType === 'hls') {
-      hls = new Hls();
+      const encodedReferer = src
+        .split('&')
+        .filter(i => i.includes('referer'))
+        .at(-1)
+        .split('=')
+        .at(-1);
 
-      console.log('hello')
+      const referer = decodeURIComponent(encodedReferer);
+
+      hls = new Hls({
+        xhrSetup: (xhr, url) => {
+          xhr.setRequestHeader('Referer', referer);
+        }
+      });
+
+      console.log('hello');
 
       hls.loadSource(src);
       hls.attachMedia(video);
 
       hls.on(Hls.Events.ERROR, (event, data) => {
+        console.log('HLS ERROR:', data.type, data.details, data.fatal, data);
+
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
@@ -98,7 +113,7 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
             e.target.classList.remove(style.hidden);
           }}
           controls
-          preload='auto'
+          playsInline
           poster={poster}
         />
       )}
