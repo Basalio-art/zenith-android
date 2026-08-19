@@ -13,6 +13,7 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
     if (!video) return;
 
     let mediaErrorRetries = 0;
+    let networkErrorRetries = 0;
     let hls = null;
     let isNative = false;
 
@@ -43,13 +44,7 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
 
       const referer = decodeURIComponent(encodedReferer);
 
-      hls = new Hls({
-        xhrSetup: (xhr, url) => {
-          xhr.setRequestHeader('Referer', referer);
-        }
-      });
-
-      console.log('hello');
+      hls = new Hls();
 
       hls.loadSource(src);
       hls.attachMedia(video);
@@ -60,13 +55,19 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
+              networkErrorRetries++
+              if (networkErrorRetries === 5) {
+                if (canUseNative) useNative()
+                else hlsDestroy()
+                break
+              }
               hls.startLoad();
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
               mediaErrorRetries++;
               if (mediaErrorRetries === 5) {
                 if (canUseNative) useNative();
-                else hlsDestroy;
+                else hlsDestroy();
                 break;
               }
               hls.swapAudioCodec();
