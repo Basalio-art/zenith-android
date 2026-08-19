@@ -4,7 +4,7 @@
   "webDir": "dist",
   "plugins": {
     "CapacitorHttp": {
-      "enabled": true
+      "enabled": false
     },
     "SystemBars": {
       "insetsHandling": "css",
