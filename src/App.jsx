@@ -1,6 +1,6 @@
 import Home from './Home.jsx';
 import style from './App.module.css';
-import { useState, useRef, useEffect, createContext } from 'react';
+import { useState, useRef, useEffect, createContext, useCallback } from 'react';
 import {
   WifiOff,
   TriangleAlert,
@@ -8,7 +8,13 @@ import {
   Copy,
   Check
 } from 'lucide-react';
-import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
+import {
+  motion,
+  AnimatePresence,
+  LayoutGroup,
+  useMotionValue,
+  animate
+} from 'motion/react';
 import { Capacitor, CapacitorHttp, SystemBars } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
 import { StatusBar } from '@capacitor/status-bar';
@@ -23,15 +29,6 @@ const hideSystemBars = async () => {
 };
 
 export const AppContext = createContext(null);
-
-const renderPage = page => {
-  switch (page) {
-    case 'search':
-      return <SearchResult />;
-    case 'home':
-      return <Home />;
-  }
-};
 
 const APP_VERSION = '1.4.0';
 
@@ -59,7 +56,7 @@ function App() {
   const [providers, setProviders] = useState(null);
   const [selProvider, setSelProvider] = useState('pewe');
   const [selAudio, setSelAudio] = useState('sub');
-  const [selStreamType, setSelStreamType] = useState('hls');
+  const [selVideoType, setSelVideoType] = useState('hls');
   const [valid, setValid] = useState({
     appVersion: {
       required: APP_VERSION,
@@ -77,6 +74,25 @@ function App() {
     loadLength: 3
   });
   const [page, setPage] = useState('home');
+
+  const renderPage = page => {
+    switch (page) {
+      case 'search':
+        return (
+          <SearchResult
+            searchData={searchData}
+            searchQuery={searchQuery}
+            searchInputClear={searchInputClear}
+            searchIsLoading={searchIsLoading}
+          />
+        );
+      case 'home':
+        return <Home />;
+    }
+  };
+
+  const percent = useMotionValue(0);
+  const loadingPercentRef = useRef(0);
 
   const isInitialInternetMount = useRef(true);
   const bodyRef = useRef(null);
@@ -321,6 +337,28 @@ function App() {
   };
 
   useEffect(() => {
+    const { loaded, loadLength } = loadingInfo;
+
+    const value = (0.8 + (loaded / loadLength) * 0.2) * 100;
+
+    const controls = animate(percent, value, {
+      duration: 1.5,
+      ease: 'easeOut'
+    });
+
+    percent.on('change', latest => {
+      const loadingPercent = loadingPercentRef.current;
+
+      if (!loadingPercent) return;
+      loadingPercent.innerText = Math.round(latest) + '%';
+    });
+
+    return () => {
+      controls.stop();
+    };
+  }, [loadingInfo]);
+
+  useEffect(() => {
     if (!searchQuery) return;
 
     fetchSearchQuery(searchQuery);
@@ -422,10 +460,11 @@ function App() {
             )}
           </AnimatePresence>
 
-          <motion.section layout className={style.messageSection}>
-            <AnimatePresence>
+          <section className={style.messageSection}>
+            <AnimatePresence initial={false}>
               {message.map(({ id, message, type }) => (
                 <motion.div
+                  layout
                   initial={{ x: '-100%', opacity: 0 }}
                   drag='x'
                   dragConstraints={{ left: 0, right: 0 }}
@@ -454,38 +493,26 @@ function App() {
                 </motion.div>
               ))}
             </AnimatePresence>
-          </motion.section>
+          </section>
 
           <AppContext.Provider
             value={{
               trendingAnime,
               popularAnime,
               latestAnime,
-              searchData,
               setSearchQuery,
-              searchQuery,
               setSearchInputClear,
-              searchInputClear,
               page,
               setPage,
-              searchIsLoading,
-              viewerOpen,
               setViewerOpen,
               hasInternet,
               setViewAnimeData,
-              viewAnimeData,
               setOpenStream,
-              openStream,
-              providers,
               setProviders,
               setSelProvider,
-              selProvider,
               setSelAudio,
-              selStreamType,
-              setSelStreamType,
-              selAudio,
-              navigatorOpen,
-              setNavigatorOpen
+              setNavigatorOpen,
+              setSelVideoType
             }}
           >
             <div className={style.wrapper}>
@@ -519,12 +546,23 @@ function App() {
                 </AnimatePresence>
               </LayoutGroup>
 
-              <ViewAnime />
+              <ViewAnime
+                anime={viewAnimeData}
+                viewerOpen={viewerOpen}
+                providers={providers}
+              />
 
-              <Stream />
+              <Stream
+                anime={viewAnimeData}
+                providers={providers}
+                selProvider={selProvider}
+                selAudio={selAudio}
+                selVideoType={selVideoType}
+                openStream={openStream}
+              />
             </div>
 
-            <Navigator />
+            <Navigator navigatorOpen={navigatorOpen} page={page} />
           </AppContext.Provider>
         </div>
       )}
@@ -537,45 +575,52 @@ function App() {
             exit={{ opacity: 0, transition: { duration: 0.5 } }}
             className={style.loadingPage}
           >
+            <img src='./icon/logo.png' type='image/png' />
             <div className={style.loadingIndicator}>
               <motion.div
                 initial={{ scaleX: 0 }}
                 animate={{
                   scaleX: (() => {
-                    const loaded = loadingInfo.loaded;
-                    const loadLength = loadingInfo.loadLength;
+                    const { loaded, loadLength } = loadingInfo;
 
                     return 0.8 + (loaded / loadLength) * 0.2;
                   })()
                 }}
                 transition={{
-                  duration: 1.5
+                  duration: 1.5,
+                  ease: 'easeOut'
                 }}
               ></motion.div>
             </div>
-            <AnimatePresence mode='popLayout'>
-              <motion.div
-                className={style.loadingInfo}
-                key={`loading-id${loadingInfo.loaded}`}
-                initial={{
-                  opacity: 0,
-                  y: 10
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0
-                }}
-                exit={{
-                  opacity: 0,
-                  y: -10
-                }}
-                transition={{
-                  duration: 0.25
-                }}
-              >
-                {loadingInfo.msg}
-              </motion.div>
-            </AnimatePresence>
+            <div className={style.infoWrapper}>
+              <AnimatePresence mode='popLayout'>
+                <motion.div
+                  className={style.loadingInfo}
+                  key={`loading-id${loadingInfo.loaded}`}
+                  initial={{
+                    opacity: 0,
+                    y: 10
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -10
+                  }}
+                  transition={{
+                    duration: 0.25
+                  }}
+                >
+                  {loadingInfo.msg}
+                </motion.div>
+              </AnimatePresence>
+
+              <div className={style.percent} ref={loadingPercentRef}>
+                0%
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -662,7 +707,6 @@ function App() {
                   type: 'spring'
                 }}
                 onClick={e => {
-                  console.log(e);
                   handleCopy(e.target.parentNode.lastElementChild.innerText);
                   setBash1Copied(true);
                 }}

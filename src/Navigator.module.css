@@ -5,6 +5,7 @@
   background: var(--bg-color);
   min-height: 0;
   padding: 1rem;
+  padding-bottom: calc(var(--safe-bottom) + 1rem);
   z-index: 10;
   display: flex;
 

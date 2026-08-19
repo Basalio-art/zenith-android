@@ -1,9 +1,9 @@
-import { useEffect, useRef, useContext } from 'react';
+import { memo, useEffect, useRef, useContext } from 'react';
 import Hls from 'hls.js';
 import style from './Video.module.css';
 import { AppContext } from './App.jsx';
 
-export const MyPlayer = ({ src, videoType, poster }) => {
+export const MyPlayer = memo(({ src, videoType, poster }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export const MyPlayer = ({ src, videoType, poster }) => {
 
     const canUseNative = video.canPlayType('application/vnd.apple.mpegurl');
 
-    if (Hls.isSupported()) {
+    if (Hls.isSupported() && videoType === 'hls') {
       hls = new Hls();
 
       hls.loadSource(src);
@@ -87,15 +87,26 @@ export const MyPlayer = ({ src, videoType, poster }) => {
   }, [src]);
 
   return (
-    <video
-      ref={videoRef}
-      className={style.hidden}
-      onCanPlay={e => {
-        e.target.classList.remove(style.hidden)
-      }}
-      controls
-      preload='auto'
-      poster={poster}
-    />
+    <>
+      {(videoType === 'hls' || videoType === 'mp4') && (
+        <video
+          ref={videoRef}
+          className={style.hidden}
+          onCanPlay={e => {
+            e.target.classList.remove(style.hidden);
+          }}
+          controls
+          preload='auto'
+          poster={poster}
+        />
+      )}
+      {videoType === 'embed' && (
+        <iframe
+          src={src}
+          style={{ border: 0 }}
+          allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;'
+        ></iframe>
+      )}
+    </>
   );
-};
+});

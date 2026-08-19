@@ -68,6 +68,10 @@
   align-items: center;
   justify-content: center;
 
+  img {
+    width: 200px;
+  }
+
   .loadingIndicator {
     width: 90%;
     max-width: 300px;
@@ -82,8 +86,16 @@
     }
   }
 
-  .loadingInfo {
-    font-size: 0.85rem;
+  .infoWrapper {
+    width: 90%;
+    max-width: 300px;
+    display: flex;
+    justify-content: space-between;
+    
+    .loadingInfo,
+    .percent{
+      font-size: 0.85rem;
+    }
   }
 }
 

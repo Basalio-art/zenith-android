@@ -1,5 +1,7 @@
 .viewAnimeSection {
   padding: 0 1rem;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -12,7 +14,7 @@
 
   .chevronUp {
     position: absolute;
-    top: 0;
+    top: var(--safe-top);
     right: 1rem;
     transform: translateY(-100%);
     padding-inline: 10px;
@@ -36,6 +38,7 @@
     overflow-y: auto;
     gap: 0.5rem;
     padding: 2.25rem 1rem;
+    margin-bottom: var(--safe-bottom);
 
     .trailerWrapper {
       width: 100%;

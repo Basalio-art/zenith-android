@@ -4,14 +4,10 @@ import { useState, useContext, useRef, memo, useEffect } from 'react';
 import { ChevronRight, Search, X, ScanLine, Star } from 'lucide-react';
 import { AppContext } from './App.jsx';
 
-function SearchResult() {
+function SearchResult({searchData, searchQuery, searchInputClear, searchIsLoading}) {
   const {
     setSearchQuery,
-    searchData,
-    searchQuery,
     setSearchInputClear,
-    searchInputClear,
-    searchIsLoading,
     setViewAnimeData,
     setViewerOpen,
   } = useContext(AppContext);
@@ -26,9 +22,7 @@ function SearchResult() {
     const height = target.clientHeight;
     const scrollHeight = target.scrollHeight;
     const bottomScroll = scrollHeight - (height + 10);
-
-    // console.log(bottomScroll, target.scrollTop)
-  };
+  }
 
   return (
     <>
@@ -75,7 +69,7 @@ function SearchResult() {
               transition: { duration: isSearching ? 0.5 : 0.15 },
             }}
           >
-            <AnimatePresence mode='wait'>
+            <AnimatePresence initial={false} mode='wait'>
               <motion.div
                 key={`isSearching-${isSearching}`}
                 initial={{ rotate: 0 }}
@@ -182,7 +176,6 @@ function SearchResult() {
 }
 
 const AnimeCard = memo(({ anime, setViewData, viewer }) => {
-  console.log(anime)
   return (
     <div
       className={style.card}
@@ -225,4 +218,4 @@ const AnimeCard = memo(({ anime, setViewData, viewer }) => {
   );
 });
 
-export default SearchResult;
+export default memo(SearchResult);

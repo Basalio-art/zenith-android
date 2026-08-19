@@ -1,7 +1,7 @@
 import style from './Navigator.module.css';
 import { House, Settings, BookOpen, Download, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, memo } from 'react';
 import { AppContext } from './App.jsx';
 
 const parentVariant = {
@@ -63,9 +63,8 @@ const labelVariants = {
   }
 };
 
-function Navigator() {
-  const { page, setPage, setViewerOpen, setNavigatorOpen, navigatorOpen } =
-    useContext(AppContext);
+function Navigator({ navigatorOpen, page }) {
+  const { setPage, setViewerOpen, setNavigatorOpen } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState(page);
   const [introFinished, setIntroFinished] = useState(false);
 
@@ -316,4 +315,4 @@ function Navigator() {
   );
 }
 
-export default Navigator;
+export default memo(Navigator);

@@ -1,19 +1,16 @@
 import style from './ViewAnime.module.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronUp } from 'lucide-react';
-import { useState, useContext, useEffect, useRef } from 'react';
+import { useState, useContext, useEffect, useRef, memo } from 'react';
 import { AppContext } from './App.jsx';
 import { CapacitorHttp } from '@capacitor/core';
 
-function ViewAnime() {
+function ViewAnime({anime, viewerOpen, providers}) {
   const {
-    viewerOpen,
-    setViewerOpen,
-    viewAnimeData: anime,
-    setOpenStream,
-    providers,
     setProviders,
-
+    setViewerOpen,
+    setOpenStream,
+    hasInternet,
     setNavigatorOpen
   } = useContext(AppContext);
 
@@ -81,19 +78,6 @@ function ViewAnime() {
   };
 
   useEffect(() => {
-    let timeout;
-    if (!viewerOpen) {
-      timeout = setTimeout(() => {
-        setTrailerLoaded(false);
-      }, 700);
-    }
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [viewerOpen]);
-
-  useEffect(() => {
     if (!viewerOpen) return;
     const mainStudio = anime.studios.edges.find(studio => studio.isMain);
     setMainStudio(mainStudio?.node.name || 'Unknown');
@@ -123,11 +107,22 @@ function ViewAnime() {
   }, [anime]);
 
   useEffect(() => {
+    let timeout;
+
     if (viewerOpen) {
       setNavigatorOpen(false);
     } else {
       setNavigatorOpen(true);
+      if (!viewerOpen) {
+        timeout = setTimeout(() => {
+          setTrailerLoaded(false);
+        }, 700);
+      }
     }
+    return () => {
+      clearTimeout(timeout);
+      setDescriptionHeight('auto');
+    };
   }, [viewerOpen]);
 
   return (
@@ -389,12 +384,11 @@ function ViewAnime() {
                     </p>
                   </div>
 
-                  <AnimatePresence mode='wait'>
+                  <AnimatePresence mode='popLayout'>
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: .15 }}
                       key={`${loadingProviders ? 'loading' : 'loaded'}-anime-providers-${true ? 'true' : 'false'}`}
                       className={style.watchNDownload}
                     >
@@ -425,7 +419,9 @@ function ViewAnime() {
                         </div>
                       ) : (
                         <div className={style.wrapper}>
-                          No avilable providers
+                          {hasInternet
+                            ? 'No avilable providers'
+                            : 'Check your internet conntection'}
                         </div>
                       )}
                     </motion.div>
@@ -440,4 +436,4 @@ function ViewAnime() {
   );
 }
 
-export default ViewAnime;
+export default memo(ViewAnime);
