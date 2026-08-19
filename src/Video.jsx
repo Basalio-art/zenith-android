@@ -36,6 +36,8 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
     if (Hls.isSupported() && videoType === 'hls') {
       hls = new Hls();
 
+      console.log('hello')
+
       hls.loadSource(src);
       hls.attachMedia(video);
 

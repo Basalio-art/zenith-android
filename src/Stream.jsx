@@ -45,13 +45,13 @@ function Stream({
     else setOpenDropDown(dr);
   };
 
-  const prevEpisodeData = useRef(null)
+  const prevEpisodeData = useRef(null);
   const getEpisodeData = async (PROVIDER, AUDIO, TYPE, EPISODE = 0) => {
-    const prevData = prevEpisodeData.current
-    const newData = [PROVIDER, AUDIO, TYPE, EPISODE]
-    if (prevData && prevData.every((data, i) => data === newData[i])) return
-    prevEpisodeData.current = newData
-    
+    const prevData = prevEpisodeData.current;
+    const newData = [PROVIDER, AUDIO, TYPE, EPISODE];
+    if (prevData && prevData.every((data, i) => data === newData[i])) return;
+    prevEpisodeData.current = newData;
+
     setAvailDropdown(prev => ({
       ...prev,
       audios: [],
@@ -64,7 +64,8 @@ function Stream({
     setThumbnail(
       providers[PROVIDER].episodes[AUDIO][EPISODE].image ??
         anime.bannerImage ??
-        anime.coverImage.extraLarge ?? undefined
+        anime.coverImage.extraLarge ??
+        undefined
     );
 
     setEpisodeList(providers[PROVIDER].episodes.sub);
@@ -92,7 +93,7 @@ function Stream({
         throw new Error('invalid data');
 
       const result = data.streams.reduce((acc, stream) => {
-        const key = `${stream.server} ${stream.type}`;
+        const key = `${stream.server ? stream.server : ''} ${stream.type}`;
         acc[key] = stream;
         return acc;
       }, {});
@@ -112,12 +113,13 @@ function Stream({
         ...prev,
         src:
           `http://localhost:9189/proxy/stream` +
-          `?url=${streamResult.url}` +
-          `&referer=${streamResult.referer}` +
-          `&origin=${streamResult.referer}`,
+          `?url=${encodeURIComponent(streamResult.url)}` +
+          `&referer=${encodeURIComponent(streamResult.referer)}` +
+          `&origin=${encodeURIComponent(streamResult.referer)}`,
         type: selectedItem
       }));
     } catch (e) {
+      setVideoSource(prev => ({ ...prev, src: null }));
       console.log(e);
     }
   };
@@ -220,8 +222,6 @@ function Stream({
       return;
     }
 
-    console.log(anime, providers)
-
     setNavigatorOpen(false);
 
     let PROVIDER = selProvider;
@@ -250,7 +250,7 @@ function Stream({
           date && `${date}d`,
           hours && `${hours}h`,
           minutes && `${minutes}m`,
-          seconds && `${seconds}s`
+          `${seconds}s`
         ]
           .filter(Boolean)
           .join(' ');
@@ -269,7 +269,7 @@ function Stream({
         audios: []
       });
       countDownRef.current = null;
-      prevEpisodeData.current = null
+      prevEpisodeData.current = null;
       setVideoSource({ src: null, type: null, provider: null, audio: null });
       setEpisodeList([]);
 
@@ -282,9 +282,6 @@ function Stream({
 
   return (
     <AnimatePresence>
-      {(() => {
-      console.log(thumbnail, providers, anime, videoSource, availDropdown)
-      })()}
       {openStream && (
         <motion.div
           className={style.container}
