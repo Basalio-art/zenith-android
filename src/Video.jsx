@@ -35,37 +35,26 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
     const canUseNative = video.canPlayType('application/vnd.apple.mpegurl');
 
     if (Hls.isSupported() && videoType === 'hls') {
-      const encodedReferer = src
-        .split('&')
-        .filter(i => i.includes('referer'))
-        .at(-1)
-        .split('=')
-        .at(-1);
-
-      const referer = decodeURIComponent(encodedReferer);
-
       hls = new Hls();
 
       hls.loadSource(src);
       hls.attachMedia(video);
 
       hls.on(Hls.Events.ERROR, (event, data) => {
-        console.log('HLS ERROR:', data.type, data.details, data.fatal, data);
-
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              networkErrorRetries++
-              if (networkErrorRetries === 5) {
-                if (canUseNative) useNative()
-                else hlsDestroy()
-                break
+              networkErrorRetries++;
+              if (networkErrorRetries === 3) {
+                if (canUseNative) useNative();
+                else hlsDestroy();
+                break;
               }
               hls.startLoad();
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
               mediaErrorRetries++;
-              if (mediaErrorRetries === 5) {
+              if (mediaErrorRetries === 3) {
                 if (canUseNative) useNative();
                 else hlsDestroy();
                 break;
