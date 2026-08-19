@@ -91,7 +91,7 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
       {(videoType === 'hls' || videoType === 'mp4') && (
         <video
           ref={videoRef}
-          className={style.hidden}
+          //className={style.hidden}
           onCanPlay={e => {
             e.target.classList.remove(style.hidden);
           }}

@@ -58,15 +58,13 @@ function Stream({
       videoTypes: []
     }));
 
-    console.log(newData)
-
     PROVIDER = autoSelectProvider(PROVIDER);
     AUDIO = autoSelectAudio(PROVIDER, AUDIO, EPISODE);
 
     setThumbnail(
       providers[PROVIDER].episodes[AUDIO][EPISODE].image ??
         anime.bannerImage ??
-        anime.coverImage.extraLarge
+        anime.coverImage.extraLarge ?? undefined
     );
 
     setEpisodeList(providers[PROVIDER].episodes.sub);
@@ -222,6 +220,8 @@ function Stream({
       return;
     }
 
+    console.log(anime, providers)
+
     setNavigatorOpen(false);
 
     let PROVIDER = selProvider;
@@ -269,6 +269,7 @@ function Stream({
         audios: []
       });
       countDownRef.current = null;
+      prevEpisodeData.current = null
       setVideoSource({ src: null, type: null, provider: null, audio: null });
       setEpisodeList([]);
 
@@ -281,6 +282,9 @@ function Stream({
 
   return (
     <AnimatePresence>
+      {(() => {
+      console.log(thumbnail, providers, anime, videoSource, availDropdown)
+      })()}
       {openStream && (
         <motion.div
           className={style.container}
