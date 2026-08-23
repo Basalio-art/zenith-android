@@ -94,4 +94,4 @@ jobs:
         with:
           name: zenith-release-apks
           path: release-apks/
-          if-no-files-found: error{
+          if-no-files-found: error
