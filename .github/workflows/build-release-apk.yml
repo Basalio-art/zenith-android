@@ -35,6 +35,13 @@ jobs:
       - name: Sync Code to Capacitor Android
         run: npx cap sync android
 
+      - name: Restore Release Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/zenith-release.jks
+
+          echo "Keystore restored:"
+          ls -lh android/zenith-release.jks
+
       - name: Verify Release Keystore
         env:
           RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -44,10 +51,6 @@ jobs:
             -keystore android/zenith-release.jks \
             -storepass "$RELEASE_STORE_PASSWORD" \
             -alias "$RELEASE_KEY_ALIAS"
-
-      - name: Restore Release Keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/zenith-release.jks
 
       - name: Build Release APKs
         env:
@@ -91,4 +94,4 @@ jobs:
         with:
           name: zenith-release-apks
           path: release-apks/
-          if-no-files-found: error
+          if-no-files-found: error{
