@@ -18,7 +18,7 @@ import {
 import { Capacitor, CapacitorHttp, SystemBars } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
 import { StatusBar } from '@capacitor/status-bar';
-import { App } from '@capacitor/app';
+import { App as CapApp } from '@capacitor/app';
 import Navigator from './Navigator.jsx';
 import SearchResult from './Search.jsx';
 import ViewAnime from './ViewAnime.jsx';
@@ -461,6 +461,14 @@ function App() {
           }, 3000);
         }
       });
+
+      const nativeListener = CapApp.addListener('backButton', () => {
+        handleBack();
+      });
+
+      return () => {
+        nativeListener.then(handle => handel.remove());
+      };
     }
   }, []);
 
