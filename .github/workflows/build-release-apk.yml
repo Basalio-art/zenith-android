@@ -35,26 +35,50 @@ jobs:
       - name: Sync Code to Capacitor Android
         run: npx cap sync android
 
-      - name: Make Gradle Executable
-        run: chmod +x android/gradlew
+      - name: Restore Release Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/zenith-release.jks
 
       - name: Build Release APKs
+        env:
+          RELEASE_STORE_FILE: ${{ github.workspace }}/android/zenith-release.jks
+          RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           cd android
-          ./gradlew assembleRelease
 
-      - name: Rename APKs
+          chmod +x gradlew
+
+          ./gradlew assembleRelease \
+            -PRELEASE_STORE_FILE="$RELEASE_STORE_FILE" \
+            -PRELEASE_STORE_PASSWORD="$RELEASE_STORE_PASSWORD" \
+            -PRELEASE_KEY_ALIAS="$RELEASE_KEY_ALIAS" \
+            -PRELEASE_KEY_PASSWORD="$RELEASE_KEY_PASSWORD"
+
+      - name: Collect Release APKs
         run: |
           mkdir -p release-apks
 
-          find android/app/build/outputs/apk/release -name "*.apk" -exec cp {} release-apks/ \;
+          find android/app/build/outputs/apk/release \
+            -type f \
+            -name "*.apk" \
+            -exec cp {} release-apks/ \;
 
-          for file in release-apks/*.apk; do
-            echo "Found: $file"
-          done
+          echo "================================"
+          echo "Generated APKs:"
+          echo "================================"
+
+          ls -lh release-apks
+
+      - name: Remove Temporary Keystore
+        if: always()
+        run: |
+          rm -f android/zenith-release.jks
 
       - name: Upload Release APKs
         uses: actions/upload-artifact@v4
         with:
           name: zenith-release-apks
           path: release-apks/
+          if-no-files-found: error
