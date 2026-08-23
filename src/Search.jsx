@@ -32,158 +32,156 @@ function SearchResult({
   };
 
   useEffect(() => {
-    setNavigatorOpen(true)
-    navigate('search');
+    setNavigatorOpen(true);
+    navigate('search', 'main');
   }, []);
 
   return (
-    <>
-      <section className={style.searchSection}>
-        <div className={style.top}>
-          <AnimatePresence>
-            {searchIsLoading && (
-              <motion.div
-                key='loader'
-                initial={{ width: 0, height: 2.5 }}
-                animate={{
-                  width: '65%',
-                  transition: { duration: 5 }
-                }}
-                exit={{
-                  height: 0,
-                  width: '100%',
-                  transition: {
-                    width: { duration: 0.25 },
-                    height: { duration: 0.25, delay: 0.25 }
-                  }
-                }}
-                className={style.loader}
-              />
-            )}
-          </AnimatePresence>
-          <AnimatePresence mode='popLayout'>
-            {!isSearching && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className={style.left}
-              >
-                <span>Search Result</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <motion.div
-            className={style.right}
-            initial={false}
-            animate={{
-              width: isSearching ? '100%' : '25px',
-              transition: { duration: isSearching ? 0.5 : 0.15 }
-            }}
-          >
-            <AnimatePresence initial={false} mode='wait'>
-              <motion.div
-                key={`isSearching-${isSearching}`}
-                initial={{ rotate: 0 }}
-                animate={{
-                  rotate: -360,
-                  transition: {
-                    type: 'spring',
-                    duration: isSearching ? 1.5 : 0.5,
-                    bounce: 0.5
-                  }
-                }}
-                exit={{
-                  opacity: 0,
-                  transition: { duration: 0.05 }
-                }}
-                onClick={() => {
-                  if (isSearching) {
-                    setIsSearching(false);
-                  } else {
-                    setIsSearching(true);
-                  }
-                }}
-              >
-                {isSearching ? (
-                  <X
-                    size={25}
-                    onClick={() => {
-                      setSearchInputClear(true);
-                    }}
-                  />
-                ) : (
-                  <Search size={25} />
-                )}
-              </motion.div>
-            </AnimatePresence>
-            <AnimatePresence>
-              {isSearching && (
-                <motion.div
-                  initial={{ width: 'auto', opacity: 0 }}
-                  animate={{ width: '100%', opacity: 1 }}
-                  exit={{ width: 'auto', opacity: 0 }}
-                  className={style.wrapper}
-                >
-                  <input
-                    type='text'
-                    autoFocus
-                    autoComplete='off'
-                    ref={searchInputRef}
-                    defaultValue={!searchInputClear ? searchQuery : ''}
-                    placeholder='Search title'
-                    onKeyUp={e => {
-                      if (e.key === 'Enter' && e.target.value.trim() !== '') {
-                        setSearchInputClear(false);
-                        setSearchQuery(e.target.value.trim());
-                      }
-                    }}
-                  />
-                  <div className={style.hr} />
-                  <ScanLine
-                    size={20}
-                    onClick={() => {
-                      if (
-                        !searchInputRef.current ||
-                        searchInputRef.current.value.trim() === ''
-                      )
-                        return;
-
-                      setSearchInputClear(false);
-                      setSearchQuery(searchInputRef.current.value.trim());
-                    }}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-
-        <AnimatePresence mode='popLayout'>
-          <motion.div
-            className={style.result}
-            key={searchData.length !== 0 ? searchData[0].id : 'empty'}
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0, transition: { duration: 0.25 } }}
-            exit={{ opacity: 0, y: 100, transition: { duration: 0.25 } }}
-            onScroll={handleScroll}
-          >
-            {searchData.length === 0 && (
-              <span className={style.infoSearch}>No result</span>
-            )}
-            {searchData.length !== 0 &&
-              searchData.map(anime => (
-                <AnimeCard
-                  key={`search-query-${anime.id}`}
-                  anime={anime}
-                  setViewData={setViewAnimeData}
-                  page={setPage}
-                />
-              ))}
-          </motion.div>
+    <section className={style.searchSection}>
+      <div className={style.top}>
+        <AnimatePresence>
+          {searchIsLoading && (
+            <motion.div
+              key='loader'
+              initial={{ width: 0, height: 2.5 }}
+              animate={{
+                width: '65%',
+                transition: { duration: 5 }
+              }}
+              exit={{
+                height: 0,
+                width: '100%',
+                transition: {
+                  width: { duration: 0.25 },
+                  height: { duration: 0.25, delay: 0.25 }
+                }
+              }}
+              className={style.loader}
+            />
+          )}
         </AnimatePresence>
-      </section>
-    </>
+        <AnimatePresence mode='popLayout'>
+          {!isSearching && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={style.left}
+            >
+              <span>Search Result</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <motion.div
+          className={style.right}
+          initial={false}
+          animate={{
+            width: isSearching ? '100%' : '25px',
+            transition: { duration: isSearching ? 0.5 : 0.15 }
+          }}
+        >
+          <AnimatePresence initial={false} mode='wait'>
+            <motion.div
+              key={`isSearching-${isSearching}`}
+              initial={{ rotate: 0 }}
+              animate={{
+                rotate: -360,
+                transition: {
+                  type: 'spring',
+                  duration: isSearching ? 1.5 : 0.5,
+                  bounce: 0.5
+                }
+              }}
+              exit={{
+                opacity: 0,
+                transition: { duration: 0.05 }
+              }}
+              onClick={() => {
+                if (isSearching) {
+                  setIsSearching(false);
+                } else {
+                  setIsSearching(true);
+                }
+              }}
+            >
+              {isSearching ? (
+                <X
+                  size={25}
+                  onClick={() => {
+                    setSearchInputClear(true);
+                  }}
+                />
+              ) : (
+                <Search size={25} />
+              )}
+            </motion.div>
+          </AnimatePresence>
+          <AnimatePresence>
+            {isSearching && (
+              <motion.div
+                initial={{ width: 'auto', opacity: 0 }}
+                animate={{ width: '100%', opacity: 1 }}
+                exit={{ width: 'auto', opacity: 0 }}
+                className={style.wrapper}
+              >
+                <input
+                  type='text'
+                  autoFocus
+                  autoComplete='off'
+                  ref={searchInputRef}
+                  defaultValue={!searchInputClear ? searchQuery : ''}
+                  placeholder='Search title'
+                  onKeyUp={e => {
+                    if (e.key === 'Enter' && e.target.value.trim() !== '') {
+                      setSearchInputClear(false);
+                      setSearchQuery(e.target.value.trim());
+                    }
+                  }}
+                />
+                <div className={style.hr} />
+                <ScanLine
+                  size={20}
+                  onClick={() => {
+                    if (
+                      !searchInputRef.current ||
+                      searchInputRef.current.value.trim() === ''
+                    )
+                      return;
+
+                    setSearchInputClear(false);
+                    setSearchQuery(searchInputRef.current.value.trim());
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+
+      <AnimatePresence mode='popLayout'>
+        <motion.div
+          className={style.result}
+          key={searchData.length !== 0 ? searchData[0].id : 'empty'}
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0, transition: { duration: 0.25 } }}
+          exit={{ opacity: 0, y: 100, transition: { duration: 0.25 } }}
+          onScroll={handleScroll}
+        >
+          {searchData.length === 0 && (
+            <span className={style.infoSearch}>No result</span>
+          )}
+          {searchData.length !== 0 &&
+            searchData.map(anime => (
+              <AnimeCard
+                key={`search-query-${anime.id}`}
+                anime={anime}
+                setViewData={setViewAnimeData}
+                page={setPage}
+              />
+            ))}
+        </motion.div>
+      </AnimatePresence>
+    </section>
   );
 }
 
@@ -193,7 +191,7 @@ const AnimeCard = memo(({ anime, setViewData, page }) => {
       className={style.card}
       onClick={() => {
         setViewData(anime);
-        page('anime')
+        page('anime');
       }}
     >
       <img src={anime.coverImage.extraLarge} />

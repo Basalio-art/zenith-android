@@ -90,7 +90,7 @@ function Home({ trendingAnime, popularAnime, latestAnime }) {
   }, []);
 
   useEffect(() => {
-    navigate('home');
+    navigate('home', 'main');
     setNavigatorOpen(true)
   }, []);
 

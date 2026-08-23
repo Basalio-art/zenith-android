@@ -12,7 +12,8 @@ function ViewAnime({ anime, providers }) {
     hasInternet,
     setNavigatorOpen,
     setPage,
-    navigate
+    navigate,
+    handleBack
   } = useContext(AppContext);
 
   const descriptionRef = useRef(null);
@@ -81,7 +82,7 @@ function ViewAnime({ anime, providers }) {
   };
 
   useEffect(() => {
-    navigate(['anime', anime.id]);
+    navigate('anime', 'preview');
     const mainStudio = anime.studios.edges.find(studio => studio.isMain);
     setMainStudio(mainStudio?.node.name || 'Unknown');
 
@@ -120,263 +121,263 @@ function ViewAnime({ anime, providers }) {
   }, []);
 
   return (
-    <>
-      <section className={style.viewAnimeSection}>
-        <div className={style.backWrapper}>
-          <ArrowLeft size={30} />
+    <section className={style.viewAnimeSection}>
+      <div className={style.backContainer}>
+        <div className={style.backWrapper} onClick={handleBack}>
+          <ArrowLeft className={style.backButton} size={30} />
         </div>
-        <motion.div className={style.container}>
-          <div
-            className={style.trailerWrapper}
-            data-view-type={`${anime.trailer ? 'video' : anime.bannerImage ? 'banner' : 'cover'}`}
-            style={{
-              background: !anime.bannerImage
-                ? anime.coverImage.color
-                : undefined,
-              backgroundImage: anime.bannerImage
-                ? `url(${anime.bannerImage})`
-                : undefined
-            }}
-          >
-            <AnimatePresence>
-              {anime.trailer && !trailerLoaded && (
-                <motion.img
-                  key={`${anime.id}-thumbnail`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className={style.thumbnail}
-                  src={anime.trailer.thumbnail}
-                />
-              )}
-            </AnimatePresence>
 
-            {anime.trailer ? (
-              <iframe
-                src={embededLink()}
-                onLoad={() => {
-                  setTrailerLoaded(true);
-                }}
-                title={`${anime.title.english || anime.title.romaji} Trailer`}
-                allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;'
-                className={style.trailerVideo}
-                style={{ border: 'none' }}
+        <div className={style.headTitle}>Anime Overview</div>
+      </div>
+
+      <motion.div className={style.container}>
+        <div
+          className={style.trailerWrapper}
+          data-view-type={`${anime.trailer ? 'video' : anime.bannerImage ? 'banner' : 'cover'}`}
+          style={{
+            background: !anime.bannerImage ? anime.coverImage.color : undefined,
+            backgroundImage: anime.bannerImage
+              ? `url(${anime.bannerImage})`
+              : undefined
+          }}
+        >
+          <AnimatePresence>
+            {anime.trailer && !trailerLoaded && (
+              <motion.img
+                key={`${anime.id}-thumbnail`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className={style.thumbnail}
+                src={anime.trailer.thumbnail}
               />
-            ) : (
-              !anime.bannerImage && (
-                <img
-                  className={style.coverImage}
-                  src={anime.coverImage.extraLarge}
-                />
-              )
             )}
-          </div>
+          </AnimatePresence>
 
-          <div className={style.title}>
-            <span className={style.main}>
-              {anime.title.english ? anime.title.english : anime.title.romaji}
-            </span>
-            {anime.title.english && (
-              <span className={style.fallback}>{anime.title.romaji}</span>
-            )}
-          </div>
+          {anime.trailer ? (
+            <iframe
+              src={embededLink()}
+              onLoad={() => {
+                setTrailerLoaded(true);
+              }}
+              title={`${anime.title.english || anime.title.romaji} Trailer`}
+              allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;'
+              className={style.trailerVideo}
+              style={{ border: 'none' }}
+            />
+          ) : (
+            !anime.bannerImage && (
+              <img
+                className={style.coverImage}
+                src={anime.coverImage.extraLarge}
+              />
+            )
+          )}
+        </div>
 
-          {anime.genres.length > 0 && (
-            <div className={style.genres}>
-              {anime.genres.map((genre, idx) => (
-                <span key={`genres-${idx}`}>{genre}</span>
-              ))}
-            </div>
+        <div className={style.title}>
+          <span className={style.main}>
+            {anime.title.english ? anime.title.english : anime.title.romaji}
+          </span>
+          {anime.title.english && (
+            <span className={style.fallback}>{anime.title.romaji}</span>
+          )}
+        </div>
+
+        {anime.genres.length > 0 && (
+          <div className={style.genres}>
+            {anime.genres.map((genre, idx) => (
+              <span key={`genres-${idx}`}>{genre}</span>
+            ))}
+          </div>
+        )}
+
+        <motion.p
+          className={style.description}
+          ref={descriptionRef}
+          initial={false}
+          animate={{
+            height: descriptionHeight,
+            transition: { duration: 0.5, ease: 'easeOut' }
+          }}
+          style={{
+            WebkitLineClamp: descriptionHeight === 72 ? 4 : 'none'
+          }}
+          onClick={() => {
+            expandDescription();
+          }}
+          dangerouslySetInnerHTML={{
+            __html:
+              anime.description ||
+              '<i>No description available for this title.</i>'
+          }}
+        ></motion.p>
+
+        <div className={style.stats}>
+          {anime.tags.length > 0 && (
+            <p>
+              Tags:{' '}
+              <span>
+                {anime.tags
+                  .filter(tag => !tag.isGeneralSpoiler)
+                  .map(tag => tag.name)
+                  .join(', ')}
+              </span>
+            </p>
           )}
 
-          <motion.p
-            className={style.description}
-            ref={descriptionRef}
-            initial={false}
-            animate={{
-              height: descriptionHeight,
-              transition: { duration: 0.5, ease: 'easeOut' }
-            }}
-            style={{
-              WebkitLineClamp: descriptionHeight === 72 ? 4 : 'none'
-            }}
-            onClick={() => {
-              expandDescription();
-            }}
-            dangerouslySetInnerHTML={{
-              __html:
-                anime.description ||
-                '<i>No description available for this title.</i>'
-            }}
-          ></motion.p>
+          <p>
+            Format: <span>{anime.format?.replace('_', ' ') || 'Unknown'}</span>
+          </p>
 
-          <div className={style.stats}>
-            {anime.tags.length > 0 && (
+          <p>
+            Status:{' '}
+            <span>
+              {anime.status === 'RELEASING'
+                ? 'Airing'
+                : CapitalizeWords(anime.status.replace(/(_)/g, ' '))}
+            </span>
+          </p>
+
+          <p>
+            Episode:{' '}
+            <span>
+              {anime.nextAiringEpisode
+                ? Math.max(anime.nextAiringEpisode.episode - 1, 1)
+                : anime.episodes
+                  ? anime.episodes
+                  : '-'}
+            </span>
+          </p>
+
+          <p>
+            Rating:{' '}
+            <span>
+              {anime.averageScore > 0 ? anime.averageScore : '-'} / 100
+            </span>
+          </p>
+
+          <p>
+            {anime.status === 'NOT_YET_RELEASED' || anime.format === 'MOVIE'
+              ? 'Release'
+              : 'Start'}{' '}
+            Date: <span>{dateFormat(anime.startDate)}</span>
+          </p>
+
+          {anime.status === 'NOT_YET_RELEASED' ||
+            (anime.format === 'MOVIE' ? (
+              ''
+            ) : (
               <p>
-                Tags:{' '}
-                <span>
-                  {anime.tags
-                    .filter(tag => !tag.isGeneralSpoiler)
-                    .map(tag => tag.name)
-                    .join(', ')}
-                </span>
+                End Date: <span>{dateFormat(anime.endDate)}</span>
               </p>
-            )}
+            ))}
 
-            <p>
-              Format:{' '}
-              <span>{anime.format?.replace('_', ' ') || 'Unknown'}</span>
-            </p>
+          <p>
+            Country: <span>{anime.countryOfOrigin}</span>
+          </p>
 
-            <p>
-              Status:{' '}
-              <span>
-                {anime.status === 'RELEASING'
-                  ? 'Airing'
-                  : CapitalizeWords(anime.status.replace(/(_)/g, ' '))}
-              </span>
-            </p>
+          <p>
+            Mature Content:{' '}
+            <span style={{ fontWeight: 'bold' }}>
+              {(() => {
+                const MATURE_GENRES = ['Horror', 'Ecchi'];
+                const MATURE_TAGS = [
+                  'Gore',
+                  'Violence',
+                  'Body Horror',
+                  'Nudity'
+                ];
 
-            <p>
-              Episode:{' '}
-              <span>
-                {anime.nextAiringEpisode
-                  ? Math.max(anime.nextAiringEpisode.episode - 1, 1)
-                  : anime.episodes
-                    ? anime.episodes
-                    : '-'}
-              </span>
-            </p>
+                const isMature =
+                  anime.genres.some(g => MATURE_GENRES.includes(g)) ||
+                  anime.tags.some(t => MATURE_TAGS.includes(t.name));
 
-            <p>
-              Rating:{' '}
-              <span>
-                {anime.averageScore > 0 ? anime.averageScore : '-'} / 100
-              </span>
-            </p>
+                return isMature ? 'Yes (17+)' : 'No (All Ages)';
+              })()}
+            </span>
+          </p>
 
-            <p>
-              {anime.status === 'NOT_YET_RELEASED' || anime.format === 'MOVIE'
-                ? 'Release'
-                : 'Start'}{' '}
-              Date: <span>{dateFormat(anime.startDate)}</span>
-            </p>
+          <p>
+            Main Studio: <span>{mainStudio}</span>
+          </p>
 
-            {anime.status === 'NOT_YET_RELEASED' ||
-              (anime.format === 'MOVIE' ? (
-                ''
-              ) : (
+          {(() => {
+            const supportingStudios = anime.studios.edges.find(
+              studio => !studio.isMain
+            );
+
+            if (supportingStudios)
+              return (
                 <p>
-                  End Date: <span>{dateFormat(anime.endDate)}</span>
+                  Supporting Studio:{' '}
+                  <span>
+                    {anime.studios.edges
+                      .filter(studio => !studio.isMain)
+                      .map(studio => studio.node.name)
+                      .join(', ')}
+                  </span>
                 </p>
-              ))}
-
-            <p>
-              Country: <span>{anime.countryOfOrigin}</span>
-            </p>
-
-            <p>
-              Mature Content:{' '}
-              <span style={{ fontWeight: 'bold' }}>
-                {(() => {
-                  const MATURE_GENRES = ['Horror', 'Ecchi'];
-                  const MATURE_TAGS = [
-                    'Gore',
-                    'Violence',
-                    'Body Horror',
-                    'Nudity'
-                  ];
-
-                  const isMature =
-                    anime.genres.some(g => MATURE_GENRES.includes(g)) ||
-                    anime.tags.some(t => MATURE_TAGS.includes(t.name));
-
-                  return isMature ? 'Yes (17+)' : 'No (All Ages)';
-                })()}
-              </span>
-            </p>
-
-            <p>
-              Main Studio: <span>{mainStudio}</span>
-            </p>
-
-            {(() => {
-              const supportingStudios = anime.studios.edges.find(
-                studio => !studio.isMain
               );
+          })()}
 
-              if (supportingStudios)
-                return (
-                  <p>
-                    Supporting Studio:{' '}
-                    <span>
-                      {anime.studios.edges
-                        .filter(studio => !studio.isMain)
-                        .map(studio => studio.node.name)
-                        .join(', ')}
-                    </span>
-                  </p>
-                );
-            })()}
+          <p>
+            Official Site:{' '}
+            {officialSiteUrl ? (
+              <a
+                target='_blank'
+                rel='noreferrer noopener'
+                href={officialSiteUrl}
+              >
+                {officialSiteUrl}
+              </a>
+            ) : (
+              <span>{officialSiteUrl}</span>
+            )}
+          </p>
+        </div>
 
-            <p>
-              Official Site:{' '}
-              {officialSiteUrl ? (
-                <a
-                  target='_blank'
-                  rel='noreferrer noopener'
-                  href={officialSiteUrl}
+        <AnimatePresence mode='popLayout'>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            key={`${loadingProviders ? 'loading' : 'loaded'}-anime-providers-${true ? 'true' : 'false'}`}
+            className={style.watchNDownload}
+          >
+            {loadingProviders ? (
+              <div className={style.wrapper}>Fetching Providers . . .</div>
+            ) : providers ? (
+              <div className={style.wrapper}>
+                <div
+                  className={style.watch}
+                  onClick={() => {
+                    setPage('stream');
+                  }}
                 >
-                  {officialSiteUrl}
-                </a>
-              ) : (
-                <span>{officialSiteUrl}</span>
-              )}
-            </p>
-          </div>
-
-          <AnimatePresence mode='popLayout'>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              key={`${loadingProviders ? 'loading' : 'loaded'}-anime-providers-${true ? 'true' : 'false'}`}
-              className={style.watchNDownload}
-            >
-              {loadingProviders ? (
-                <div className={style.wrapper}>Fetching Providers . . .</div>
-              ) : providers ? (
-                <div className={style.wrapper}>
-                  <div
-                    className={style.watch}
-                    onClick={() => {
-                      setPage('stream');
-                    }}
-                  >
-                    Watch
-                  </div>
-
-                  <div
-                    className={style.download}
-                    onClick={() => {
-                      setViewerOpen(false);
-                    }}
-                  >
-                    Download
-                  </div>
+                  Watch
                 </div>
-              ) : (
-                <div className={style.wrapper}>
-                  {hasInternet
-                    ? 'No avilable providers'
-                    : 'Check your internet conntection'}
+
+                <div
+                  className={style.download}
+                  onClick={() => {
+                    setViewerOpen(false);
+                  }}
+                >
+                  Download
                 </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
-      </section>
-    </>
+              </div>
+            ) : (
+              <div className={style.wrapper}>
+                {hasInternet
+                  ? 'No avilable providers'
+                  : 'Check your internet conntection'}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+    </section>
   );
 }
 

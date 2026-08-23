@@ -1,6 +1,6 @@
 .viewAnimeSection {
   padding: 0 1rem;
-  padding-top: var(--safe-top);
+  padding-top: calc(var(--safe-top) + 0.5rem);
   padding-bottom: var(--safe-bottom);
   position: absolute;
   display: flex;
@@ -12,6 +12,24 @@
   background: var(--bg-color);
   will-change: transform;
 
+  .backContainer {
+    display: flex;
+    padding-bottom: 0.5rem;
+    align-items: center;
+
+    .backWrapper {
+      user-select: none;
+
+      .backButton {
+        display: block;
+      }
+    }
+
+    .headTitle {
+      flex: 1 0;
+      text-align: center;
+    }
+  }
 
   .container {
     height: 100%;

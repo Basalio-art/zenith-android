@@ -79,7 +79,11 @@ function App() {
   const isInitialInternetMount = useRef(true);
   const bodyRef = useRef(null);
 
-  const pageHistoryStack = useRef([]);
+  const currentPageData = useRef({
+    current: 'main',
+    main: null,
+    preview: null
+  });
 
   const renderPage = page => {
     switch (page) {
@@ -118,12 +122,27 @@ function App() {
     }
   };
 
-  const navigate = type => {
-    pageHistoryStack.current.push(type);
+  const navigate = (page, type) => {
+    const pageData = currentPageData.current;
+    currentPageData.current = {
+      current: type,
+      main: type === 'main' ? page : pageData.main,
+      preview: type === 'preview' ? page : pageData.preview
+    };
   };
 
   const handleBack = () => {
-    const historyStack = pageHistoryStack.current;
+    const pageData = currentPageData.current;
+    if (pageData.current === 'preview') {
+      setPage(pageData.main);
+    } else if (pageData.current === 'main') {
+      if (pageData.main !== 'home') {
+        navigate('home', 'main');
+        setPage('home');
+      } else {
+        CapApp.exitApp();
+      }
+    }
   };
 
   const internetCheck = async () => {
@@ -461,7 +480,6 @@ function App() {
           }, 3000);
         }
       });
-
       const nativeListener = CapApp.addListener('backButton', () => {
         handleBack();
       });
@@ -545,7 +563,8 @@ function App() {
               setSelAudio,
               setNavigatorOpen,
               setSelVideoType,
-              navigate
+              navigate,
+              handleBack
             }}
           >
             <div className={style.wrapper}>
