@@ -36,11 +36,10 @@ jobs:
         run: npx cap sync android
 
       - name: Restore Release Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/zenith-release.jks
-
-          echo "Keystore restored:"
-          ls -lh android/zenith-release.jks
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/zenith-release.jks
 
       - name: Verify Release Keystore
         env:
@@ -52,7 +51,7 @@ jobs:
             -storepass "$RELEASE_STORE_PASSWORD" \
             -alias "$RELEASE_KEY_ALIAS"
 
-      - name: Build Release APKs
+      - name: Build Release APK
         env:
           RELEASE_STORE_FILE: ${{ github.workspace }}/android/zenith-release.jks
           RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -69,29 +68,20 @@ jobs:
             -PRELEASE_KEY_ALIAS="$RELEASE_KEY_ALIAS" \
             -PRELEASE_KEY_PASSWORD="$RELEASE_KEY_PASSWORD"
 
-      - name: Collect Release APKs
+      - name: Rename APK
         run: |
-          mkdir -p release-apks
-
-          find android/app/build/outputs/apk/release \
-            -type f \
-            -name "*.apk" \
-            -exec cp {} release-apks/ \;
-
-          echo "================================"
-          echo "Generated APKs:"
-          echo "================================"
-
-          ls -lh release-apks
+          mkdir -p release-apk
+          cp android/app/build/outputs/apk/release/app-release.apk release-apk/Zenith.apk
+          ls -lh release-apk/Zenith.apk
 
       - name: Remove Temporary Keystore
         if: always()
         run: |
           rm -f android/zenith-release.jks
 
-      - name: Upload Release APKs
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: zenith-release-apks
-          path: release-apks/
+          name: Zenith-release
+          path: release-apk/
           if-no-files-found: error
