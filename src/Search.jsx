@@ -4,25 +4,37 @@ import { useState, useContext, useRef, memo, useEffect } from 'react';
 import { ChevronRight, Search, X, ScanLine, Star } from 'lucide-react';
 import { AppContext } from './App.jsx';
 
-function SearchResult({searchData, searchQuery, searchInputClear, searchIsLoading}) {
+function SearchResult({
+  searchData,
+  searchQuery,
+  searchInputClear,
+  searchIsLoading
+}) {
   const {
     setSearchQuery,
     setSearchInputClear,
     setViewAnimeData,
-    setViewerOpen,
+    setNavigatorOpen,
+    navigate,
+    setPage
   } = useContext(AppContext);
 
   const [isSearching, setIsSearching] = useState(false);
 
   const searchInputRef = useRef(null);
 
-  const handleScroll = (e) => {
+  const handleScroll = e => {
     const target = e.target;
 
     const height = target.clientHeight;
     const scrollHeight = target.scrollHeight;
     const bottomScroll = scrollHeight - (height + 10);
-  }
+  };
+
+  useEffect(() => {
+    setNavigatorOpen(true)
+    navigate('search');
+  }, []);
 
   return (
     <>
@@ -35,15 +47,15 @@ function SearchResult({searchData, searchQuery, searchInputClear, searchIsLoadin
                 initial={{ width: 0, height: 2.5 }}
                 animate={{
                   width: '65%',
-                  transition: { duration: 5 },
+                  transition: { duration: 5 }
                 }}
                 exit={{
                   height: 0,
                   width: '100%',
                   transition: {
                     width: { duration: 0.25 },
-                    height: { duration: 0.25, delay: 0.25 },
-                  },
+                    height: { duration: 0.25, delay: 0.25 }
+                  }
                 }}
                 className={style.loader}
               />
@@ -66,7 +78,7 @@ function SearchResult({searchData, searchQuery, searchInputClear, searchIsLoadin
             initial={false}
             animate={{
               width: isSearching ? '100%' : '25px',
-              transition: { duration: isSearching ? 0.5 : 0.15 },
+              transition: { duration: isSearching ? 0.5 : 0.15 }
             }}
           >
             <AnimatePresence initial={false} mode='wait'>
@@ -78,12 +90,12 @@ function SearchResult({searchData, searchQuery, searchInputClear, searchIsLoadin
                   transition: {
                     type: 'spring',
                     duration: isSearching ? 1.5 : 0.5,
-                    bounce: 0.5,
-                  },
+                    bounce: 0.5
+                  }
                 }}
                 exit={{
                   opacity: 0,
-                  transition: { duration: 0.05 },
+                  transition: { duration: 0.05 }
                 }}
                 onClick={() => {
                   if (isSearching) {
@@ -120,7 +132,7 @@ function SearchResult({searchData, searchQuery, searchInputClear, searchIsLoadin
                     ref={searchInputRef}
                     defaultValue={!searchInputClear ? searchQuery : ''}
                     placeholder='Search title'
-                    onKeyUp={(e) => {
+                    onKeyUp={e => {
                       if (e.key === 'Enter' && e.target.value.trim() !== '') {
                         setSearchInputClear(false);
                         setSearchQuery(e.target.value.trim());
@@ -160,12 +172,12 @@ function SearchResult({searchData, searchQuery, searchInputClear, searchIsLoadin
               <span className={style.infoSearch}>No result</span>
             )}
             {searchData.length !== 0 &&
-              searchData.map((anime) => (
+              searchData.map(anime => (
                 <AnimeCard
                   key={`search-query-${anime.id}`}
                   anime={anime}
                   setViewData={setViewAnimeData}
-                  viewer={setViewerOpen}
+                  page={setPage}
                 />
               ))}
           </motion.div>
@@ -175,13 +187,13 @@ function SearchResult({searchData, searchQuery, searchInputClear, searchIsLoadin
   );
 }
 
-const AnimeCard = memo(({ anime, setViewData, viewer }) => {
+const AnimeCard = memo(({ anime, setViewData, page }) => {
   return (
     <div
       className={style.card}
       onClick={() => {
         setViewData(anime);
-        viewer(true);
+        page('anime')
       }}
     >
       <img src={anime.coverImage.extraLarge} />
@@ -191,7 +203,9 @@ const AnimeCard = memo(({ anime, setViewData, viewer }) => {
         </span>
         <div className={style.seasonYearWrapper}>
           <span className={style.year}>
-            {anime.seasonYear || anime.format?.replace('_', ' ') || anime.countryOfOrigin}
+            {anime.seasonYear ||
+              anime.format?.replace('_', ' ') ||
+              anime.countryOfOrigin}
           </span>
           {anime.averageScore && (
             <div className={style.score}>
@@ -205,7 +219,7 @@ const AnimeCard = memo(({ anime, setViewData, viewer }) => {
           dangerouslySetInnerHTML={{
             __html:
               anime.description ||
-              '<i>No description available for this title.</i>',
+              '<i>No description available for this title.</i>'
           }}
         />
         <div className={style.space} />

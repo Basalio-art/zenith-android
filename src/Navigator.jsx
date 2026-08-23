@@ -64,7 +64,7 @@ const labelVariants = {
 };
 
 function Navigator({ navigatorOpen, page }) {
-  const { setPage, setViewerOpen, setNavigatorOpen } = useContext(AppContext);
+  const { setPage, setNavigatorOpen } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState(page);
   const [introFinished, setIntroFinished] = useState(false);
 

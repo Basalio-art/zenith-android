@@ -73,8 +73,8 @@
   }
 
   .loadingIndicator {
-    width: 90%;
-    max-width: 300px;
+    width: calc(100% - 3rem);
+    max-width: 700px;
     height: 2px;
     background: color-mix(in srgb, var(--color-1), transparent 80%);
 
@@ -87,8 +87,8 @@
   }
 
   .infoWrapper {
-    width: 90%;
-    max-width: 300px;
+    width: calc(100% - 4rem);
+    max-width: calc(700px - 1rem);
     display: flex;
     justify-content: space-between;
     

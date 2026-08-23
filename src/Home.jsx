@@ -1,4 +1,4 @@
-import { useRef, useContext, useLayoutEffect } from 'react';
+import { useRef, useContext, memo, useEffect, useLayoutEffect } from 'react';
 import { AppContext } from './App.jsx';
 import { motion, AnimatePresence } from 'motion/react';
 import style from './Home.module.css';
@@ -13,16 +13,9 @@ import {
   Star
 } from 'lucide-react';
 
-function Home() {
-  const {
-    trendingAnime,
-    popularAnime,
-    latestAnime,
-    setSearchQuery,
-    setPage,
-    setViewAnimeData,
-    setViewerOpen
-  } = useContext(AppContext);
+function Home({ trendingAnime, popularAnime, latestAnime }) {
+  const { setNavigatorOpen, setSearchQuery, setPage, setViewAnimeData, navigate } =
+    useContext(AppContext);
 
   const trendingRef = useRef(null);
   const popularRef = useRef(null);
@@ -94,6 +87,11 @@ function Home() {
     return () => {
       observer.disconnect();
     };
+  }, []);
+
+  useEffect(() => {
+    navigate('home');
+    setNavigatorOpen(true)
   }, []);
 
   return (
@@ -185,8 +183,8 @@ function Home() {
                     key={`latest-card-${anime.id}`}
                     className={style.card}
                     onClick={() => {
-                      setViewAnimeData(anime);
-                      setViewerOpen(true);
+                      setViewAnimeData(anime)
+                      setPage('anime')
                     }}
                   >
                     <img
@@ -328,8 +326,8 @@ function Home() {
                     key={`trending-card-${anime.id}`}
                     className={style.card}
                     onClick={() => {
-                      setViewAnimeData(anime);
-                      setViewerOpen(true);
+                      setViewAnimeData(anime)
+                      setPage('anime')
                     }}
                   >
                     <img
@@ -470,8 +468,8 @@ function Home() {
                     key={`popular-card-${anime.id}`}
                     className={style.card}
                     onClick={() => {
-                      setViewAnimeData(anime);
-                      setViewerOpen(true);
+                      setViewAnimeData(anime)
+                      setPage('anime')
                     }}
                   >
                     <img
@@ -565,4 +563,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default memo(Home);

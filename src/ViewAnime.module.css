@@ -12,25 +12,6 @@
   background: var(--bg-color);
   will-change: transform;
 
-  .chevronUp {
-    position: absolute;
-    top: var(--safe-top);
-    right: 1rem;
-    transform: translateY(-100%);
-    padding-inline: 10px;
-    border-radius: 10px 10px 0 0;
-    border: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
-    border-bottom: none;
-    box-sizing: content-box;
-    background: var(--bg-color);
-    user-select: none;
-    z-index: 100;
-    background: var(--bg-color);
-
-    svg {
-      display: block;
-    }
-  }
 
   .container {
     height: 100%;
@@ -38,7 +19,7 @@
     overflow-y: auto;
     gap: 0.5rem;
     padding: 2.25rem 1rem;
-    margin-bottom: var(--safe-bottom);
+    padding-top: 0;
 
     .trailerWrapper {
       width: 100%;

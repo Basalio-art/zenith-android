@@ -13,12 +13,11 @@ const ColorType = {
 function Stream({
   providers,
   anime,
-  openStream,
   selProvider,
   selAudio,
   selVideoType
 }) {
-  const { setNavigatorOpen, setOpenStream } = useContext(AppContext);
+  const { setNavigatorOpen, navigate } = useContext(AppContext);
 
   const [thumbnail, setThumbnail] = useState(null);
   const [episode, setEpisode] = useState(0);
@@ -68,7 +67,11 @@ function Stream({
         undefined
     );
 
-    setEpisodeList(providers[PROVIDER].episodes.sub);
+    setEpisodeList(
+      Object.values(providers[PROVIDER].episodes).reduce((a, b) =>
+        b.length > a.length ? b : a
+      )
+    );
 
     setVideoSource(prev => ({
       ...prev,
@@ -191,7 +194,7 @@ function Stream({
 
   const renderedEpisode = useMemo(
     () =>
-      episodeList.map((episode, idx) => {
+      episodeList?.map((episode, idx) => {
         return (
           <div
             key={episode.title}
@@ -217,12 +220,8 @@ function Stream({
   );
 
   useEffect(() => {
-    if (!openStream) {
-      setNavigatorOpen(true);
-      return;
-    }
-
     setNavigatorOpen(false);
+    navigate('stream')
 
     let PROVIDER = selProvider;
     let AUDIO = selAudio;
@@ -278,182 +277,175 @@ function Stream({
         countdownInterval = null;
       }
     };
-  }, [openStream]);
+  }, []);
 
   return (
     <AnimatePresence>
-      {openStream && (
-        <motion.div
-          className={style.container}
-          key='stream-container'
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          transition={{ duration: 0.5 }}
+      <div className={style.container}>
+        <div className={style.animeTitle}>
+          <div className={style.backBtn} onClick={() => setOpenStream(false)}>
+            <ArrowLeft size={27.5} />
+          </div>
+          <div className={style.title} ref={animeTitleRef}>
+            <div className={style.wrapper}>
+              <span>{anime.title.english || anime.title.romaji}</span>
+            </div>
+          </div>
+        </div>
+        <div
+          className={style.videoWrapper}
+          style={{ backgroundImage: `url(${thumbnail})` }}
         >
-          <div className={style.animeTitle}>
-            <div className={style.backBtn} onClick={() => setOpenStream(false)}>
-              <ArrowLeft size={27.5} />
-            </div>
-            <div className={style.title} ref={animeTitleRef}>
-              <div className={style.wrapper}>
-                <span>{anime.title.english || anime.title.romaji}</span>
+          <MyPlayer
+            videoType={videoSource.type?.split(' ')?.at(-1)}
+            src={videoSource.src}
+            poster={thumbnail}
+          ></MyPlayer>
+        </div>
+
+        {(() => {
+          const { provider, type, audio } = videoSource;
+          if (!provider || !audio) return;
+
+          const data = providers[provider].episodes[audio][episode];
+          return (
+            <div className={style.wrapper}>
+              <div className={style.episodeTitle}>
+                {episode + 1}. {data.title}
+              </div>
+
+              {data.description && (
+                <div className={style.sypnosisContainer}>
+                  <div className={style.head}>Sypnosis</div>
+                  <div className={style.sypnosis}>{data.description}</div>
+                </div>
+              )}
+
+              <div className={style.providerWrapper}>
+                <motion.div
+                  layout
+                  className={style.provider}
+                  onClick={() => {
+                    setDropdownState('provider');
+                  }}
+                >
+                  {provider}
+                </motion.div>
+                <motion.div
+                  layout
+                  className={style.audio}
+                  onClick={() => {
+                    setDropdownState('audio');
+                  }}
+                >
+                  {audio || '-'}
+                </motion.div>
+                <motion.div
+                  layout
+                  className={style.videoType}
+                  onClick={() => {
+                    setDropdownState('video-type');
+                  }}
+                >
+                  {type || '-'}
+                </motion.div>
+
+                <AnimatePresence mode='wait'>
+                  <motion.div
+                    className={style.dropdownWrapper}
+                    key={openDropdown}
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                  >
+                    {openDropdown === 'provider' && (
+                      <div className={style.providers} key='providers'>
+                        {availDropdown.providers
+                          .filter(i => i !== provider)
+                          .map((provider, idx) => (
+                            <div
+                              key={`provider-${idx}`}
+                              onClick={e => {
+                                setDropdownState('provider');
+                                getEpisodeData(
+                                  e.target.innerText,
+                                  audio,
+                                  type,
+                                  episode
+                                );
+                              }}
+                            >
+                              {provider}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                    {openDropdown === 'audio' && (
+                      <div className={style.audios}>
+                        {availDropdown.audios
+                          .filter(i => i !== audio)
+                          .map((audio, idx) => (
+                            <div
+                              key={`audio-${idx}`}
+                              onClick={e => {
+                                setDropdownState('audio');
+                                getEpisodeData(
+                                  provider,
+                                  e.target.innerText,
+                                  type,
+                                  episode
+                                );
+                              }}
+                            >
+                              {audio}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                    {openDropdown === 'video-type' && (
+                      <div className={style.videoTypes}>
+                        {availDropdown.videoTypes
+                          .filter(i => i !== type)
+                          .map((type, idx) => (
+                            <div
+                              key={`video-type-${idx}`}
+                              onClick={e => {
+                                setDropdownState('video-type');
+                                getEpisodeData(
+                                  provider,
+                                  audio,
+                                  e.target.innerText,
+                                  episode
+                                );
+                              }}
+                            >
+                              {type}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {anime.nextAiringEpisode && (
+                <motion.div
+                  className={style.countDown}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  ref={countDownRef}
+                ></motion.div>
+              )}
+
+              <div className={style.episodes}>
+                {renderedEpisode ?? 'No avail episodes change provider'}
               </div>
             </div>
-          </div>
-          <div
-            className={style.videoWrapper}
-            style={{ backgroundImage: `url(${thumbnail})` }}
-          >
-            <MyPlayer
-              videoType={videoSource.type?.split(' ')?.at(-1)}
-              src={videoSource.src}
-              poster={thumbnail}
-            ></MyPlayer>
-          </div>
+          );
+        })()}
 
-          {(() => {
-            const { provider, type, audio } = videoSource;
-            if (!provider || !audio) return;
-
-            const data = providers[provider].episodes[audio][episode];
-            return (
-              <div className={style.wrapper}>
-                <div className={style.episodeTitle}>
-                  {episode + 1}. {data.title}
-                </div>
-
-                {data.description && (
-                  <div className={style.sypnosisContainer}>
-                    <div className={style.head}>Sypnosis</div>
-                    <div className={style.sypnosis}>{data.description}</div>
-                  </div>
-                )}
-
-                <div className={style.providerWrapper}>
-                  <motion.div
-                    layout
-                    className={style.provider}
-                    onClick={() => {
-                      setDropdownState('provider');
-                    }}
-                  >
-                    {provider}
-                  </motion.div>
-                  <motion.div
-                    layout
-                    className={style.audio}
-                    onClick={() => {
-                      setDropdownState('audio');
-                    }}
-                  >
-                    {audio || '-'}
-                  </motion.div>
-                  <motion.div
-                    layout
-                    className={style.videoType}
-                    onClick={() => {
-                      setDropdownState('video-type');
-                    }}
-                  >
-                    {type || '-'}
-                  </motion.div>
-
-                  <AnimatePresence mode='wait'>
-                    <motion.div
-                      className={style.dropdownWrapper}
-                      key={openDropdown}
-                      initial={{ height: 0 }}
-                      animate={{ height: 'auto' }}
-                      exit={{ height: 0 }}
-                    >
-                      {openDropdown === 'provider' && (
-                        <div className={style.providers} key='providers'>
-                          {availDropdown.providers
-                            .filter(i => i !== provider)
-                            .map((provider, idx) => (
-                              <div
-                                key={`provider-${idx}`}
-                                onClick={e => {
-                                  setDropdownState('provider');
-                                  getEpisodeData(
-                                    e.target.innerText,
-                                    audio,
-                                    type,
-                                    episode
-                                  );
-                                }}
-                              >
-                                {provider}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                      {openDropdown === 'audio' && (
-                        <div className={style.audios}>
-                          {availDropdown.audios
-                            .filter(i => i !== audio)
-                            .map((audio, idx) => (
-                              <div
-                                key={`audio-${idx}`}
-                                onClick={e => {
-                                  setDropdownState('audio');
-                                  getEpisodeData(
-                                    provider,
-                                    e.target.innerText,
-                                    type,
-                                    episode
-                                  );
-                                }}
-                              >
-                                {audio}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                      {openDropdown === 'video-type' && (
-                        <div className={style.videoTypes}>
-                          {availDropdown.videoTypes
-                            .filter(i => i !== type)
-                            .map((type, idx) => (
-                              <div
-                                key={`video-type-${idx}`}
-                                onClick={e => {
-                                  setDropdownState('video-type');
-                                  getEpisodeData(
-                                    provider,
-                                    audio,
-                                    e.target.innerText,
-                                    episode
-                                  );
-                                }}
-                              >
-                                {type}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-
-                {anime.nextAiringEpisode && (
-                  <motion.div
-                    className={style.countDown}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    ref={countDownRef}
-                  ></motion.div>
-                )}
-
-                <div className={style.episodes}>{renderedEpisode}</div>
-              </div>
-            );
-          })()}
-
-          <div className={style.safeBottom} />
-        </motion.div>
-      )}
+        <div className={style.safeBottom} />
+      </div>
     </AnimatePresence>
   );
 }

@@ -18,6 +18,7 @@ import {
 import { Capacitor, CapacitorHttp, SystemBars } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
 import { StatusBar } from '@capacitor/status-bar';
+import { App } from '@capacitor/app';
 import Navigator from './Navigator.jsx';
 import SearchResult from './Search.jsx';
 import ViewAnime from './ViewAnime.jsx';
@@ -25,7 +26,6 @@ import Stream from './Stream.jsx';
 
 const hideSystemBars = async () => {
   await SystemBars.hide();
-  await StatusBar.hide();
 };
 
 export const AppContext = createContext(null);
@@ -37,7 +37,7 @@ const CONFIG_URL =
 
 function App() {
   const [hasInternet, setHasInternet] = useState(true);
-  const [navigatorOpen, setNavigatorOpen] = useState(true);
+  const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [message, setMessage] = useState([]);
   const [trendingAnime, setTrendingAnime] = useState([]);
   const [popularAnime, setPopularAnime] = useState([]);
@@ -46,9 +46,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState(null);
   const [searchInputClear, setSearchInputClear] = useState(false);
   const [searchIsLoading, setSearchIsLoading] = useState(false);
-  const [viewerOpen, setViewerOpen] = useState(false);
   const [viewAnimeData, setViewAnimeData] = useState(null);
-  const [openStream, setOpenStream] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [bash1Copied, setBash1Copied] = useState(false);
   const [bash2Copied, setBash2Copied] = useState(false);
@@ -75,6 +73,14 @@ function App() {
   });
   const [page, setPage] = useState('home');
 
+  const percent = useMotionValue(0);
+  const loadingPercentRef = useRef(0);
+
+  const isInitialInternetMount = useRef(true);
+  const bodyRef = useRef(null);
+
+  const pageHistoryStack = useRef([]);
+
   const renderPage = page => {
     switch (page) {
       case 'search':
@@ -86,16 +92,39 @@ function App() {
             searchIsLoading={searchIsLoading}
           />
         );
+
       case 'home':
-        return <Home />;
+        return (
+          <Home
+            trendingAnime={trendingAnime}
+            popularAnime={popularAnime}
+            latestAnime={latestAnime}
+          />
+        );
+
+      case 'anime':
+        return <ViewAnime anime={viewAnimeData} providers={providers} />;
+
+      case 'stream':
+        return (
+          <Stream
+            anime={viewAnimeData}
+            providers={providers}
+            selProvider={selProvider}
+            selAudio={selAudio}
+            selVideoType={selVideoType}
+          />
+        );
     }
   };
 
-  const percent = useMotionValue(0);
-  const loadingPercentRef = useRef(0);
+  const navigate = type => {
+    pageHistoryStack.current.push(type);
+  };
 
-  const isInitialInternetMount = useRef(true);
-  const bodyRef = useRef(null);
+  const handleBack = () => {
+    const historyStack = pageHistoryStack.current;
+  };
 
   const internetCheck = async () => {
     if (!navigator.onLine) {
@@ -422,7 +451,7 @@ function App() {
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       let hideTimeout = null;
-      window.addEventListener('touchmove', async () => {
+      window.addEventListener('touchend', async () => {
         const info = await StatusBar.getInfo();
 
         if (info.visible && !hideTimeout) {
@@ -497,22 +526,18 @@ function App() {
 
           <AppContext.Provider
             value={{
-              trendingAnime,
-              popularAnime,
-              latestAnime,
               setSearchQuery,
               setSearchInputClear,
               page,
               setPage,
-              setViewerOpen,
               hasInternet,
               setViewAnimeData,
-              setOpenStream,
               setProviders,
               setSelProvider,
               setSelAudio,
               setNavigatorOpen,
-              setSelVideoType
+              setSelVideoType,
+              navigate
             }}
           >
             <div className={style.wrapper}>
@@ -545,21 +570,6 @@ function App() {
                   }
                 </AnimatePresence>
               </LayoutGroup>
-
-              <ViewAnime
-                anime={viewAnimeData}
-                viewerOpen={viewerOpen}
-                providers={providers}
-              />
-
-              <Stream
-                anime={viewAnimeData}
-                providers={providers}
-                selProvider={selProvider}
-                selAudio={selAudio}
-                selVideoType={selVideoType}
-                openStream={openStream}
-              />
             </div>
 
             <Navigator navigatorOpen={navigatorOpen} page={page} />
