@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android Release APK
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: npm
 
       - name: Install Dependencies
         run: npm install
@@ -35,13 +35,26 @@ jobs:
       - name: Sync Code to Capacitor Android
         run: npx cap sync android
 
-      - name: Build APK with Gradle
+      - name: Make Gradle Executable
+        run: chmod +x android/gradlew
+
+      - name: Build Release APKs
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease
 
-      - name: Upload Finished APK
+      - name: Rename APKs
+        run: |
+          mkdir -p release-apks
+
+          find android/app/build/outputs/apk/release -name "*.apk" -exec cp {} release-apks/ \;
+
+          for file in release-apks/*.apk; do
+            echo "Found: $file"
+          done
+
+      - name: Upload Release APKs
         uses: actions/upload-artifact@v4
         with:
-          name: zenith-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: zenith-release-apks
+          path: release-apks/
