@@ -1,0 +1,24 @@
+{
+  "appId": "com.basalioart.zenith",
+  "appName": "Zenith",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": false
+    },
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DEFAULT",
+      "hidden": true,
+      "animation": "NONE"
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DEFAULT",
+      "backgroundColor": "#ffffff"
+    }
+  }
+}

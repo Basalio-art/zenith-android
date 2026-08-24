@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cap:dev": "node scripts/cap-config.mjs dev && npx cap sync android",
+    "cap:release": "node scripts/cap-config.mjs release && npm run build && npx cap sync android"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",

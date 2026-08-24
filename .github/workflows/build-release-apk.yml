@@ -33,23 +33,13 @@ jobs:
           distribution: 'zulu'
 
       - name: Sync Code to Capacitor Android
-        run: npx cap sync android
+        run: npm run cap:release
 
       - name: Restore Release Keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/zenith-release.jks
-
-      - name: Verify Release Keystore
-        env:
-          RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        run: |
-          keytool -list \
-            -keystore android/zenith-release.jks \
-            -storepass "$RELEASE_STORE_PASSWORD" \
-            -alias "$RELEASE_KEY_ALIAS"
 
       - name: Build Release APK
         env:

@@ -33,7 +33,7 @@ jobs:
           distribution: 'zulu'
 
       - name: Sync Code to Capacitor Android
-        run: npx cap sync android
+        run: npm run cap:dev
 
       - name: Build APK with Gradle
         run: |
