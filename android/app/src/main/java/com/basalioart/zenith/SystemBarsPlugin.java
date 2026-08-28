@@ -23,6 +23,10 @@ public class SystemBarsPlugin extends Plugin {
     public void normal(PluginCall call) {
         WindowInsetsControllerCompat controller = getController();
 
+        getActivity().getWindow().setNavigationBarColor(
+            android.graphics.Color.TRANSPARENT
+        );
+          
         controller.setSystemBarsBehavior(
             WindowInsetsControllerCompat
                 .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
