@@ -1,6 +1,8 @@
 package com.basalioart.zenith;
 
+import android.content.res.Configuration;
 import android.graphics.Color;
+import android.os.Build;
 import android.view.Window;
 
 import androidx.core.view.WindowCompat;
@@ -27,57 +29,62 @@ public class SystemBarsPlugin extends Plugin {
     }
 
     private void setupController() {
+        Window window = getWindow();
         WindowInsetsControllerCompat controller = getController();
 
+        // 1. Enable drawing behind system bars for true transparency
+        WindowCompat.setDecorFitsSystemWindows(window, false);
+
+        // 2. Auto-hide bars when the user swipes to show them (Immersive Mode)
         controller.setSystemBarsBehavior(
-            WindowInsetsControllerCompat
-                .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         );
 
-        // Light app:
-        // dark status-bar icons
-        // dark navigation-bar buttons
-        controller.setAppearanceLightStatusBars(true);
-        controller.setAppearanceLightNavigationBars(true);
+        // 3. Detect system theme (Dark or Light)
+        int nightModeFlags = getContext().getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        boolean isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
 
-        // Transparent backgrounds where supported
-        getWindow().setStatusBarColor(Color.TRANSPARENT);
-        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        // Adjust icon colors for visibility (Light icons for Dark mode, Dark icons for Light mode)
+        controller.setAppearanceLightStatusBars(!isDarkMode);
+        controller.setAppearanceLightNavigationBars(!isDarkMode);
 
-        // Prevent the 3-button navigation contrast scrim
-        getWindow().setNavigationBarContrastEnforced(false);
+        // 4. Transparent backgrounds
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+
+        // Prevent the 3-button navigation contrast scrim on Android 10+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.setNavigationBarContrastEnforced(false);
+        }
     }
 
     @PluginMethod
     public void normal(PluginCall call) {
-        setupController();
+        // UI manipulations must happen on the UI thread
+        getActivity().runOnUiThread(() -> {
+            setupController();
+            WindowInsetsControllerCompat controller = getController();
 
-        WindowInsetsControllerCompat controller = getController();
+            // Status bar visible
+            controller.show(WindowInsetsCompat.Type.statusBars());
 
-        // Status bar visible
-        controller.show(
-            WindowInsetsCompat.Type.statusBars()
-        );
+            // Navigation bar hidden
+            controller.hide(WindowInsetsCompat.Type.navigationBars());
 
-        // Navigation bar hidden
-        controller.hide(
-            WindowInsetsCompat.Type.navigationBars()
-        );
-
-        call.resolve();
+            call.resolve();
+        });
     }
 
     @PluginMethod
     public void fullscreen(PluginCall call) {
-        setupController();
+        getActivity().runOnUiThread(() -> {
+            setupController();
+            WindowInsetsControllerCompat controller = getController();
 
-        WindowInsetsControllerCompat controller = getController();
+            // Hide status + navigation bars
+            controller.hide(WindowInsetsCompat.Type.systemBars());
 
-        // Hide status + navigation bars
-        controller.hide(
-            WindowInsetsCompat.Type.systemBars()
-        );
-
-        call.resolve();
+            call.resolve();
+        });
     }
 }
