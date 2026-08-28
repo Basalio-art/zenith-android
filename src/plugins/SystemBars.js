@@ -1,5 +1,5 @@
 import { registerPlugin } from '@capacitor/core';
 
-const SystemBars = registerPlugin('SystemBars');
+const AppBars = registerPlugin('AppBars');
 
-export default SystemBars;
+export default AppBars;

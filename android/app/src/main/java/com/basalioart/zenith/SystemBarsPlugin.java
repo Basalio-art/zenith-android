@@ -9,7 +9,7 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
-@CapacitorPlugin(name = "SystemBars")
+@CapacitorPlugin(name = "AppBars")
 public class SystemBarsPlugin extends Plugin {
 
     private WindowInsetsControllerCompat getController() {
@@ -21,7 +21,6 @@ public class SystemBarsPlugin extends Plugin {
 
     @PluginMethod
     public void normal(PluginCall call) {
-
         WindowInsetsControllerCompat controller = getController();
 
         controller.setSystemBarsBehavior(
@@ -29,12 +28,12 @@ public class SystemBarsPlugin extends Plugin {
                 .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         );
 
-        // Keep status bar visible
+        // Status bar visible
         controller.show(
             WindowInsetsCompat.Type.statusBars()
         );
 
-        // Hide navigation bar
+        // Navigation bar hidden
         controller.hide(
             WindowInsetsCompat.Type.navigationBars()
         );
@@ -44,7 +43,6 @@ public class SystemBarsPlugin extends Plugin {
 
     @PluginMethod
     public void fullscreen(PluginCall call) {
-
         WindowInsetsControllerCompat controller = getController();
 
         controller.setSystemBarsBehavior(
@@ -52,7 +50,7 @@ public class SystemBarsPlugin extends Plugin {
                 .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         );
 
-        // Hide status + navigation bars
+        // Status + navigation bars hidden
         controller.hide(
             WindowInsetsCompat.Type.systemBars()
         );
