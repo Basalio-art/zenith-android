@@ -15,18 +15,14 @@ import {
   useMotionValue,
   animate
 } from 'motion/react';
-import { Capacitor, CapacitorHttp, SystemBars } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
-import { StatusBar } from '@capacitor/status-bar';
 import { App as CapApp } from '@capacitor/app';
 import Navigator from './Navigator.jsx';
 import SearchResult from './Search.jsx';
 import ViewAnime from './ViewAnime.jsx';
 import Stream from './Stream.jsx';
-
-const hideSystemBars = async () => {
-  await SystemBars.hide();
-};
+import SystemBars from './plugins/SystemBars.js'
 
 export const AppContext = createContext(null);
 
@@ -469,17 +465,7 @@ function App() {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      let hideTimeout = null;
-      window.addEventListener('touchend', async () => {
-        const info = await StatusBar.getInfo();
-
-        if (info.visible && !hideTimeout) {
-          hideTimeout = setTimeout(() => {
-            hideSystemBars();
-            hideTimeout = null;
-          }, 3000);
-        }
-      });
+      SystemBars.normal()
       const nativeListener = CapApp.addListener('backButton', () => {
         handleBack();
       });

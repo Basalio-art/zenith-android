@@ -72,8 +72,6 @@ function ViewAnime({ anime, providers }) {
 
       if (animeIDRef.current === id) {
         setProviders(data.providers);
-
-        console.log(data.providers);
       }
     } catch (err) {
       setProviders(null);
@@ -112,6 +110,13 @@ function ViewAnime({ anime, providers }) {
 
   useEffect(() => {
     let timeout;
+
+    fetch('http://localhost:9189/anime/' + anime.id + '/relations')
+      .then(res => res.json())
+      .then(data => console.log(data));
+    fetch('http://localhost:9189/anime/' + anime.id + '/recommendations')
+      .then(res => res.json())
+      .then(data => console.log(data));
 
     setNavigatorOpen(true);
     return () => {
