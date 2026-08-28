@@ -8,17 +8,6 @@
   "plugins": {
     "CapacitorHttp": {
       "enabled": false
-    },
-    "SystemBars": {
-      "insetsHandling": "css",
-      "style": "DEFAULT",
-      "hidden": true,
-      "animation": "NONE"
-    },
-    "StatusBar": {
-      "overlaysWebView": false,
-      "style": "DEFAULT",
-      "backgroundColor": "#ffffff"
     }
   }
 }
