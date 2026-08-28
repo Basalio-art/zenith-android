@@ -118,7 +118,7 @@ function ViewAnime({ anime, providers }) {
       .then(res => res.json())
       .then(data => console.log(data));
 
-    setNavigatorOpen(true);
+    setNavigatorOpen(false);
     return () => {
       setTrailerLoaded(false);
       setDescriptionHeight('auto');
