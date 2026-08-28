@@ -465,9 +465,7 @@ function App() {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      (async () => {
-        await AppBars.fullscreen();
-      })();
+      AppBars.normal();
       const nativeListener = CapApp.addListener('backButton', () => {
         handleBack();
       });

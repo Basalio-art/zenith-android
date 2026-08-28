@@ -4,6 +4,7 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.view.Window;
+import android.view.WindowManager; // Required for WindowManager flags
 
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -32,23 +33,28 @@ public class SystemBarsPlugin extends Plugin {
         Window window = getWindow();
         WindowInsetsControllerCompat controller = getController();
 
-        // 1. Enable drawing behind system bars for true transparency
+        // 1. Clear legacy translucent flags and allow custom system bar backgrounds
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+
+        // 2. Enable drawing behind system bars for true edge-to-edge transparency
         WindowCompat.setDecorFitsSystemWindows(window, false);
 
-        // 2. Auto-hide bars when the user swipes to show them (Immersive Mode)
+        // 3. Auto-hide bars when the user swipes to show them (Immersive Mode)
         controller.setSystemBarsBehavior(
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         );
 
-        // 3. Detect system theme (Dark or Light)
+        // 4. Detect system theme (Dark or Light)
         int nightModeFlags = getContext().getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         boolean isDarkMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
 
-        // Adjust icon colors for visibility (Light icons for Dark mode, Dark icons for Light mode)
+        // Adjust icon colors for visibility
         controller.setAppearanceLightStatusBars(!isDarkMode);
         controller.setAppearanceLightNavigationBars(!isDarkMode);
 
-        // 4. Transparent backgrounds
+        // 5. Force transparent backgrounds
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(Color.TRANSPARENT);
 
@@ -60,7 +66,6 @@ public class SystemBarsPlugin extends Plugin {
 
     @PluginMethod
     public void normal(PluginCall call) {
-        // UI manipulations must happen on the UI thread
         getActivity().runOnUiThread(() -> {
             setupController();
             WindowInsetsControllerCompat controller = getController();
