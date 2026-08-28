@@ -1,6 +1,7 @@
 package com.basalioart.zenith;
 
 import android.graphics.Color;
+import android.view.Window;
 
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -14,10 +15,14 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "AppBars")
 public class SystemBarsPlugin extends Plugin {
 
+    private Window getWindow() {
+        return getActivity().getWindow();
+    }
+
     private WindowInsetsControllerCompat getController() {
         return WindowCompat.getInsetsController(
-            getActivity().getWindow(),
-            getActivity().getWindow().getDecorView()
+            getWindow(),
+            getWindow().getDecorView()
         );
     }
 
@@ -29,50 +34,50 @@ public class SystemBarsPlugin extends Plugin {
                 .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         );
 
-        // Transparent navigation background where supported.
-        getActivity().getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        // Light app:
+        // dark status-bar icons
+        // dark navigation-bar buttons
+        controller.setAppearanceLightStatusBars(true);
+        controller.setAppearanceLightNavigationBars(true);
 
-        // Disable Android's navigation-bar contrast scrim.
-        getActivity().getWindow().setNavigationBarContrastEnforced(false);
+        // Transparent backgrounds where supported
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+
+        // Prevent the 3-button navigation contrast scrim
+        getWindow().setNavigationBarContrastEnforced(false);
     }
 
     @PluginMethod
     public void normal(PluginCall call) {
+        setupController();
+
         WindowInsetsControllerCompat controller = getController();
-    
-        controller.setSystemBarsBehavior(
-            WindowInsetsControllerCompat
-                .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        );
-    
-        controller.setAppearanceLightNavigationBars(true);
-    
+
+        // Status bar visible
         controller.show(
             WindowInsetsCompat.Type.statusBars()
         );
-    
+
+        // Navigation bar hidden
         controller.hide(
             WindowInsetsCompat.Type.navigationBars()
         );
-    
+
         call.resolve();
     }
-      
+
     @PluginMethod
     public void fullscreen(PluginCall call) {
+        setupController();
+
         WindowInsetsControllerCompat controller = getController();
-    
-        controller.setSystemBarsBehavior(
-            WindowInsetsControllerCompat
-                .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        );
-    
-        controller.setAppearanceLightNavigationBars(true);
-    
+
+        // Hide status + navigation bars
         controller.hide(
             WindowInsetsCompat.Type.systemBars()
         );
-    
+
         call.resolve();
     }
 }
