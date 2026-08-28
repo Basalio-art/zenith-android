@@ -20,30 +20,22 @@ public class MainActivity extends BridgeActivity {
         setupSystemBars();
     }
 
-    private void setupSystemBars() {
-        WindowInsetsControllerCompat controller =
-            WindowCompat.getInsetsController(
-                getWindow(),
-                getWindow().getDecorView()
-            );
-
-        // Allow Android to temporarily reveal hidden bars
-        // when the user performs the system edge gesture.
+    private void setupController() {
+        WindowInsetsControllerCompat controller = getController();
+    
         controller.setSystemBarsBehavior(
             WindowInsetsControllerCompat
                 .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         );
-
-        // Hide ONLY the navigation bar initially.
-        controller.hide(
-            WindowInsetsCompat.Type.navigationBars()
+    
+        getActivity().getWindow().setNavigationBarColor(
+            Color.TRANSPARENT
         );
-
-        // For Android versions/navigation modes where
-        // navigationBarColor is respected.
-        getWindow().setNavigationBarColor(Color.TRANSPARENT);
-
-        // Don't force a contrast scrim on 3-button navigation.
-        getWindow().setNavigationBarContrastEnforced(false);
+    
+        getActivity().getWindow().setNavigationBarContrastEnforced(
+            false
+        );
+    
+        // Light app → dark navigation buttons
+        controller.setAppearanceLightNavigationBars(true);
     }
-}

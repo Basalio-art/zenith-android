@@ -22,7 +22,7 @@ import Navigator from './Navigator.jsx';
 import SearchResult from './Search.jsx';
 import ViewAnime from './ViewAnime.jsx';
 import Stream from './Stream.jsx';
-import AppBars from './plugins/SystemBars.js'
+import AppBars from './plugins/SystemBars.js';
 
 export const AppContext = createContext(null);
 
@@ -465,7 +465,9 @@ function App() {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      AppBars.normal()
+      (async () => {
+        await AppBars.fullscreen();
+      })();
       const nativeListener = CapApp.addListener('backButton', () => {
         handleBack();
       });

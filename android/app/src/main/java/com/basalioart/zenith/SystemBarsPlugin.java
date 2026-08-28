@@ -38,34 +38,41 @@ public class SystemBarsPlugin extends Plugin {
 
     @PluginMethod
     public void normal(PluginCall call) {
-        setupController();
-
         WindowInsetsControllerCompat controller = getController();
-
-        // Status bar visible.
+    
+        controller.setSystemBarsBehavior(
+            WindowInsetsControllerCompat
+                .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        );
+    
+        controller.setAppearanceLightNavigationBars(true);
+    
         controller.show(
             WindowInsetsCompat.Type.statusBars()
         );
-
-        // Navigation bar hidden.
+    
         controller.hide(
             WindowInsetsCompat.Type.navigationBars()
         );
-
+    
         call.resolve();
     }
-
+      
     @PluginMethod
     public void fullscreen(PluginCall call) {
-        setupController();
-
         WindowInsetsControllerCompat controller = getController();
-
-        // Hide status + navigation bars.
+    
+        controller.setSystemBarsBehavior(
+            WindowInsetsControllerCompat
+                .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        );
+    
+        controller.setAppearanceLightNavigationBars(true);
+    
         controller.hide(
             WindowInsetsCompat.Type.systemBars()
         );
-
+    
         call.resolve();
     }
 }
