@@ -1,5 +1,7 @@
 package com.basalioart.zenith;
 
+import android.graphics.Color;
+
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -19,25 +21,33 @@ public class SystemBarsPlugin extends Plugin {
         );
     }
 
-    @PluginMethod
-    public void normal(PluginCall call) {
+    private void setupController() {
         WindowInsetsControllerCompat controller = getController();
 
-        getActivity().getWindow().setNavigationBarColor(
-            android.graphics.Color.TRANSPARENT
-        );
-          
         controller.setSystemBarsBehavior(
             WindowInsetsControllerCompat
                 .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         );
 
-        // Status bar visible
+        // Transparent navigation background where supported.
+        getActivity().getWindow().setNavigationBarColor(Color.TRANSPARENT);
+
+        // Disable Android's navigation-bar contrast scrim.
+        getActivity().getWindow().setNavigationBarContrastEnforced(false);
+    }
+
+    @PluginMethod
+    public void normal(PluginCall call) {
+        setupController();
+
+        WindowInsetsControllerCompat controller = getController();
+
+        // Status bar visible.
         controller.show(
             WindowInsetsCompat.Type.statusBars()
         );
 
-        // Navigation bar hidden
+        // Navigation bar hidden.
         controller.hide(
             WindowInsetsCompat.Type.navigationBars()
         );
@@ -47,14 +57,11 @@ public class SystemBarsPlugin extends Plugin {
 
     @PluginMethod
     public void fullscreen(PluginCall call) {
+        setupController();
+
         WindowInsetsControllerCompat controller = getController();
 
-        controller.setSystemBarsBehavior(
-            WindowInsetsControllerCompat
-                .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        );
-
-        // Status + navigation bars hidden
+        // Hide status + navigation bars.
         controller.hide(
             WindowInsetsCompat.Type.systemBars()
         );
