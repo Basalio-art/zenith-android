@@ -1,7 +1,6 @@
 package com.basalioart.zenith;
 
 import android.os.Bundle;
-import android.graphics.Color;
 
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -20,22 +19,22 @@ public class MainActivity extends BridgeActivity {
         setupSystemBars();
     }
 
-    private void setupController() {
-        WindowInsetsControllerCompat controller = getController();
-    
+    private void setupSystemBars() {
+        WindowInsetsControllerCompat controller =
+            WindowCompat.getInsetsController(
+                getWindow(),
+                getWindow().getDecorView()
+            );
+
         controller.setSystemBarsBehavior(
             WindowInsetsControllerCompat
                 .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         );
-    
-        getActivity().getWindow().setNavigationBarColor(
-            Color.TRANSPARENT
-        );
-    
-        getActivity().getWindow().setNavigationBarContrastEnforced(
-            false
-        );
-    
-        // Light app → dark navigation buttons
+
         controller.setAppearanceLightNavigationBars(true);
+
+        controller.hide(
+            WindowInsetsCompat.Type.navigationBars()
+        );
     }
+}
