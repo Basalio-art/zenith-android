@@ -70,12 +70,10 @@ public class SystemBarsPlugin extends Plugin {
             setupController();
             WindowInsetsControllerCompat controller = getController();
 
-            // Status bar visible
+            controller.hide(WindowInsetsCompat.Type.systemBars());
+
             controller.show(WindowInsetsCompat.Type.statusBars());
-
-            // Navigation bar hidden
-            controller.hide(WindowInsetsCompat.Type.navigationBars());
-
+        
             call.resolve();
         });
     }

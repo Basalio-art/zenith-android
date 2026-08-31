@@ -8,6 +8,7 @@
   padding-bottom: calc(var(--safe-bottom) + 1rem);
   z-index: 10;
   display: flex;
+  transition: padding-bottom .5s;
 
   .home,
   .search,
