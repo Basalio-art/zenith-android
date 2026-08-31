@@ -1,6 +1,7 @@
 package com.basalioart.zenith;
 
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -23,8 +24,10 @@ public class MainActivity extends BridgeActivity {
     private void startBackend() {
         try {
             File backendDir = new File(getFilesDir(), "backend");
-            if (!backendDir.exists()) {
-                backendDir.mkdirs();
+
+            if (!backendDir.exists() && !backendDir.mkdirs()) {
+                showStatus("Failed to create backend directory");
+                return;
             }
 
             File backend = new File(backendDir, "zenith-backend");
@@ -33,7 +36,14 @@ public class MainActivity extends BridgeActivity {
                 copyBackend(backend);
             }
 
-            backend.setExecutable(true, true);
+            if (!backend.exists()) {
+                showStatus("Backend file does not exist");
+                return;
+            }
+
+            if (!backend.setExecutable(true, false)) {
+                showStatus("Warning: could not set executable permission");
+            }
 
             ProcessBuilder builder = new ProcessBuilder(
                     backend.getAbsolutePath()
@@ -43,8 +53,13 @@ public class MainActivity extends BridgeActivity {
 
             backendProcess = builder.start();
 
+            showStatus("Go backend started");
+
+        } catch (IOException e) {
+            showStatus("Backend failed: " + e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
+            showStatus("Backend error: " + e.getClass().getSimpleName()
+                    + ": " + e.getMessage());
         }
     }
 
@@ -52,7 +67,6 @@ public class MainActivity extends BridgeActivity {
         try (
                 InputStream input =
                         getAssets().open("backend/zenith-backend");
-
                 FileOutputStream output =
                         new FileOutputStream(destination)
         ) {
@@ -65,10 +79,21 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    private void showStatus(String message) {
+        runOnUiThread(() ->
+                Toast.makeText(
+                        MainActivity.this,
+                        message,
+                        Toast.LENGTH_LONG
+                ).show()
+        );
+    }
+
     @Override
     public void onDestroy() {
         if (backendProcess != null) {
             backendProcess.destroy();
+            backendProcess = null;
         }
 
         super.onDestroy();
