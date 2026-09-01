@@ -7,17 +7,11 @@ import com.getcapacitor.BridgeActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 public class MainActivity extends BridgeActivity {
-
-    private Process backendProcess;
 
     private File logFile;
 
@@ -28,7 +22,7 @@ public class MainActivity extends BridgeActivity {
         setupLogFile();
 
         log("========================================");
-        log("Zenith Backend Startup");
+        log("Zenith Go Backend Startup");
         log("Time: " + new SimpleDateFormat(
                 "yyyy-MM-dd HH:mm:ss",
                 Locale.US
@@ -36,11 +30,17 @@ public class MainActivity extends BridgeActivity {
         log("========================================");
 
         log("Android SDK: " + android.os.Build.VERSION.SDK_INT);
-        log("CPU ABI: " + android.os.Build.SUPPORTED_ABIS[0]);
 
-        startBackend();
+        if (android.os.Build.SUPPORTED_ABIS.length > 0) {
+            log("CPU ABI: " + android.os.Build.SUPPORTED_ABIS[0]);
+        }
+
+        startGoBackend();
     }
 
+    /**
+     * Creates the Zenith log file.
+     */
     private void setupLogFile() {
         try {
             File documentsDir = Environment.getExternalStoragePublicDirectory(
@@ -50,22 +50,35 @@ public class MainActivity extends BridgeActivity {
             File zenithDir = new File(documentsDir, "Zenith");
 
             if (!zenithDir.exists()) {
-                zenithDir.mkdirs();
+                boolean created = zenithDir.mkdirs();
+
+                if (!created && !zenithDir.exists()) {
+                    logFile = null;
+                    return;
+                }
             }
 
             logFile = new File(zenithDir, "backend.log");
 
-            FileOutputStream output = new FileOutputStream(logFile, false);
+            // Clear the previous log when the app starts.
+            FileOutputStream output =
+                    new FileOutputStream(logFile, false);
+
             output.close();
 
         } catch (Exception e) {
-            // If Documents cannot be accessed, continue without file logging.
+            // Logging to Documents is optional.
             logFile = null;
         }
     }
 
+    /**
+     * Writes a message to the Zenith backend log.
+     */
     private synchronized void log(String message) {
-        String line = "[" +
+
+        String line =
+                "[" +
                 new SimpleDateFormat(
                         "HH:mm:ss.SSS",
                         Locale.US
@@ -74,212 +87,65 @@ public class MainActivity extends BridgeActivity {
                 message +
                 "\n";
 
-        if (logFile != null) {
-            try {
-                FileOutputStream output =
-                        new FileOutputStream(logFile, true);
+        if (logFile == null) {
+            return;
+        }
 
-                output.write(line.getBytes());
-                output.close();
+        try {
+            FileOutputStream output =
+                    new FileOutputStream(logFile, true);
 
-            } catch (Exception ignored) {
-            }
+            output.write(line.getBytes());
+            output.close();
+
+        } catch (Exception ignored) {
         }
     }
 
-    private void startBackend() {
+    /**
+     * Starts the embedded Go backend.
+     *
+     * Java
+     *   ↓
+     * GoBackend.startServer()
+     *   ↓
+     * JNI
+     *   ↓
+     * libzenith.so
+     *   ↓
+     * StartServer()
+     *   ↓
+     * Go HTTP server
+     */
+    private void startGoBackend() {
 
         log("----------------------------------------");
-        log("Starting Go backend...");
+        log("Starting embedded Go backend...");
+        log("Loading native library: zenith_jni");
 
         try {
 
-            File backendDir = new File(
-                    getFilesDir(),
-                    "backend"
-            );
+            GoBackend.startServer();
 
-            log("Backend directory:");
-            log(backendDir.getAbsolutePath());
+            log("SUCCESS: Go backend StartServer() called.");
+            log("Go backend is starting in the background.");
 
-            if (!backendDir.exists()) {
+        } catch (Throwable e) {
 
-                log("Backend directory does not exist.");
-                log("Creating directory...");
+            log("----------------------------------------");
+            log("GO BACKEND START FAILED");
 
-                boolean created = backendDir.mkdirs();
-
-                log("mkdir result: " + created);
-
-                if (!created && !backendDir.exists()) {
-                    log("ERROR: Could not create backend directory.");
-                    return;
-                }
-            }
-
-            File backend = new File(
-                    backendDir,
-                    "zenith-backend"
-            );
-
-            log("Backend file:");
-            log(backend.getAbsolutePath());
-
-            if (!backend.exists()) {
-
-                log("Backend does not exist.");
-                log("Copying from APK assets...");
-
-                copyBackend(backend);
-
-                log("Copy completed.");
-            }
-
-            log("Backend exists: " + backend.exists());
-            log("Backend size: " + backend.length() + " bytes");
-            log("Backend readable: " + backend.canRead());
-            log("Backend executable: " + backend.canExecute());
-
-            log("Setting executable permission...");
-
-            boolean executable =
-                    backend.setExecutable(true, false);
-
-            log("setExecutable result: " + executable);
-            log("Executable after change: " + backend.canExecute());
-
-            log("Creating ProcessBuilder...");
-
-            ProcessBuilder builder = new ProcessBuilder(
-                    backend.getAbsolutePath()
-            );
-
-            builder.redirectErrorStream(true);
-
-            log("Starting Go process...");
-
-            backendProcess = builder.start();
-
-            log("SUCCESS: Go process started.");
-
-            log("Process alive: " +
-                    backendProcess.isAlive());
-
-            startOutputReader();
-
-        } catch (Exception e) {
-
-            log("========================================");
-            log("BACKEND START FAILED");
             log("Exception: " +
                     e.getClass().getName());
 
             log("Message: " +
                     String.valueOf(e.getMessage()));
 
-            StringWriter stringWriter =
-                    new StringWriter();
+            log("Cause: " +
+                    String.valueOf(e.getCause()));
 
-            PrintWriter printWriter =
-                    new PrintWriter(stringWriter);
-
-            e.printStackTrace(printWriter);
-
-            log("Stack trace:");
-            log(stringWriter.toString());
-
-            log("========================================");
+            log("----------------------------------------");
         }
-    }
-
-    private void copyBackend(File destination)
-            throws IOException {
-
-        log("Opening APK asset:");
-
-        log("backend/zenith-backend");
-
-        try (
-                InputStream input =
-                        getAssets().open(
-                                "backend/zenith-backend"
-                        );
-
-                FileOutputStream output =
-                        new FileOutputStream(destination)
-        ) {
-
-            byte[] buffer =
-                    new byte[8192];
-
-            int length;
-
-            long total = 0;
-
-            while ((length =
-                    input.read(buffer)) != -1) {
-
-                output.write(
-                        buffer,
-                        0,
-                        length
-                );
-
-                total += length;
-            }
-
-            output.flush();
-
-            log("Copied " +
-                    total +
-                    " bytes.");
-        }
-    }
-
-    private void startOutputReader() {
-
-        if (backendProcess == null) {
-            return;
-        }
-
-        new Thread(() -> {
-
-            try {
-
-                InputStream input =
-                        backendProcess.getInputStream();
-
-                byte[] buffer =
-                        new byte[4096];
-
-                int length;
-
-                log("----------------------------------------");
-                log("Go backend output:");
-
-                while ((length =
-                        input.read(buffer)) != -1) {
-
-                    String output =
-                            new String(
-                                    buffer,
-                                    0,
-                                    length
-                            );
-
-                    log("GO: " + output);
-                }
-
-                log("Go process output stream ended.");
-
-            } catch (Exception e) {
-
-                log("Error reading Go output:");
-
-                log(e.toString());
-            }
-
-        }).start();
     }
 
     @Override
@@ -288,16 +154,18 @@ public class MainActivity extends BridgeActivity {
         log("----------------------------------------");
         log("Zenith shutting down.");
 
-        if (backendProcess != null) {
+        /*
+         * The Go backend currently runs inside libzenith.so.
+         *
+         * We do not use Process.destroy() anymore because
+         * there is no separate Go executable process.
+         *
+         * The Go runtime/server will remain tied to the
+         * native library process.
+         */
 
-            log("Stopping Go backend...");
-
-            backendProcess.destroy();
-
-            backendProcess = null;
-
-            log("Go backend stopped.");
-        }
+        log("Go backend is embedded in the native library.");
+        log("Zenith shutting down.");
 
         super.onDestroy();
     }
