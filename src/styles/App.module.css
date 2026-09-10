@@ -100,7 +100,8 @@
 
 .invalidAppVersion,
 .noBackend,
-.backendChanges {
+.backendChanges,
+.anilistStatus {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -116,6 +117,7 @@
   align-items: center;
   text-align: center;
   gap: 1rem;
+  z-index: 10;
   border-radius: 0.5rem;
   box-shadow: 0 0 10px #262626;
 
@@ -127,6 +129,24 @@
     .triangleAlert {
       color: yellow;
     }
+  }
+}
+
+.anilistStatus {
+  max-width: 700px;
+
+  .exit {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+
+    svg {
+      display: block;
+    }
+  }
+
+  p  {
+    text-align: left;
   }
 }
 

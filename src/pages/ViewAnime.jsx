@@ -1,8 +1,8 @@
-import style from './ViewAnime.module.css';
+import style from '../styles/ViewAnime.module.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
 import { useState, useContext, useEffect, useRef, memo } from 'react';
-import { AppContext } from './App.jsx';
+import { AppContext } from '../App.jsx';
 import { CapacitorHttp } from '@capacitor/core';
 
 function ViewAnime({ anime, providers }) {

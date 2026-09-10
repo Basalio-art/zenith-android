@@ -1,12 +1,12 @@
-import Home from './Home.jsx';
-import style from './App.module.css';
 import { useState, useRef, useEffect, createContext, useCallback } from 'react';
 import {
   WifiOff,
   TriangleAlert,
   MessageSquare,
   Copy,
-  Check
+  Check,
+  X,
+  CloudOff
 } from 'lucide-react';
 import {
   motion,
@@ -18,11 +18,15 @@ import {
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
 import { App as CapApp } from '@capacitor/app';
-import Navigator from './Navigator.jsx';
-import SearchResult from './Search.jsx';
-import ViewAnime from './ViewAnime.jsx';
-import Stream from './Stream.jsx';
+
+import style from './styles/App.module.css';
+import Home from './pages/Home.jsx';
+import Navigator from './pages/Navigator.jsx';
+import SearchResult from './pages/Search.jsx';
+import ViewAnime from './pages/ViewAnime.jsx';
+import Stream from './pages/Stream.jsx';
 import AppBars from './plugins/SystemBars.js';
+
 export const AppContext = createContext(null);
 
 const APP_VERSION = '1.4.0';
@@ -50,6 +54,7 @@ function App() {
   const [selProvider, setSelProvider] = useState('pewe');
   const [selAudio, setSelAudio] = useState('sub');
   const [selVideoType, setSelVideoType] = useState('hls');
+  const [openAnilistStatusAlert, setOpenAnilistStatusAlert] = useState(false);
   const [valid, setValid] = useState({
     appVersion: {
       required: APP_VERSION,
@@ -70,6 +75,7 @@ function App() {
 
   const percent = useMotionValue(0);
   const loadingPercentRef = useRef(0);
+  const anilistStatus = useRef(null);
 
   const isInitialInternetMount = useRef(true);
   const bodyRef = useRef(null);
@@ -161,11 +167,18 @@ function App() {
 
   const serverStatus = async () => {
     try {
-      const { data } = await CapacitorHttp.get({
+      const { data: statusData } = await CapacitorHttp.get({
         url: 'http://localhost:9189/anilist_status'
       });
 
-      console.log(data)
+      const NotAvailable =
+        !statusData.available &&
+        statusData.http_status === 403 &&
+        statusData.status === 'forbidden';
+
+      anilistStatus.current = statusData;
+
+      setOpenAnilistStatusAlert(NotAvailable);
     } catch (e) {
       console.log(e);
     }
@@ -204,7 +217,7 @@ function App() {
     try {
       const { data: trending, status: trendingStatus } =
         await CapacitorHttp.get({
-          url: 'http://localhost:9189/trending?page=1&per_page=20',
+          url: 'http://localhost:9189/trending?page=1&per_page=20'
         });
       const { data: popular, status: popularStatus } = await CapacitorHttp.get({
         url: 'http://localhost:9189/popular?page=1&per_page=20'
@@ -452,14 +465,13 @@ function App() {
       loadingStartup();
       return;
     }
-    
-    serverStatus()
+
+    serverStatus();
+    fetchAnimeData();
 
     const backendCheck = async () => {
       await checkBackendR();
     };
-
-    fetchAnimeData();
 
     const intervalChecker = setInterval(internetCheck, 10000);
 
@@ -837,6 +849,52 @@ function App() {
                 server main.go && ./server
               </code>
             </div>
+          </motion.div>
+        )}
+        {openAnilistStatusAlert && (
+          <motion.div
+            key='disabled-anilist'
+            className={style.anilistStatus}
+            initial={{
+              opacity: 0,
+              x: '-50%',
+              y: '-40%'
+            }}
+            animate={{
+              opacity: 1,
+              y: '-50%'
+            }}
+            exit={{
+              opacity: 0,
+              y: '-30%'
+            }}
+            transition={{
+              duration: 0.5
+            }}
+          >
+            <div className={style.head}>
+              <CloudOff size={25} />
+              <h3 className={style.head}>Temporary Service Interruption</h3>
+            </div>
+
+            <div
+              className={style.exit}
+              onClick={() => setOpenAnilistStatusAlert(false)}
+            >
+              <X size={25} />
+            </div>
+
+            <p>
+              Zenith is currently unable to connect to AniList, our primary
+              source for anime data and a core dependency of the app. As a
+              result, the Home and Search features may be temporarily
+              unavailable, and some other features may not function as expected.
+              If you currently have a download in progress, it may be paused
+              while the service is unavailable and will automatically resume
+              once the connection is restored. Please try again later. We’re
+              monitoring the issue and will restore full functionality as soon
+              as AniList becomes available.
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

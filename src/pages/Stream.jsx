@@ -1,9 +1,9 @@
-import style from './Stream.module.css';
+import style from '../styles/Stream.module.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { useContext, useState, useEffect, useRef, memo, useMemo } from 'react';
-import { AppContext } from './App.jsx';
+import { AppContext } from '../App.jsx';
 import { CapacitorHttp } from '@capacitor/core';
-import { MyPlayer } from './Video.jsx';
+import { MyPlayer } from '../components/Video/Video.jsx';
 import { ArrowLeft } from 'lucide-react';
 
 const ColorType = {

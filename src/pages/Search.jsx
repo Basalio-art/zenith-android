@@ -1,8 +1,8 @@
-import style from './Search.module.css';
+import style from '../styles/Search.module.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useContext, useRef, memo, useEffect } from 'react';
 import { ChevronRight, Search, X, ScanLine, Star } from 'lucide-react';
-import { AppContext } from './App.jsx';
+import { AppContext } from '../App.jsx';
 
 function SearchResult({
   searchData,

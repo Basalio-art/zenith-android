@@ -1,7 +1,7 @@
 import { useRef, useContext, memo, useEffect, useLayoutEffect } from 'react';
-import { AppContext } from './App.jsx';
+import { AppContext } from '../App.jsx';
 import { motion, AnimatePresence } from 'motion/react';
-import style from './Home.module.css';
+import style from '../styles/Home.module.css';
 import {
   ScanLine,
   Search,

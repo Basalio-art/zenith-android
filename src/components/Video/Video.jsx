@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useContext } from 'react';
 import Hls from 'hls.js';
 import style from './Video.module.css';
-import { AppContext } from './App.jsx';
+import { AppContext } from '../../App.jsx';
 
 export const MyPlayer = memo(({ src, videoType, poster }) => {
   const videoRef = useRef(null);
