@@ -29,7 +29,8 @@
     padding-top: calc(var(--safe-top) + 0.5rem);
     top: 0;
     left: 0;
-    background: var(--bg-color);
+    background: var(--bg-color2);
+    box-shadow: 0 0 20px 0 #00000048;
     z-index: 5;
 
     .backBtn {

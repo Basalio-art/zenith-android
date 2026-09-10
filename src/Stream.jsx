@@ -11,7 +11,14 @@ const ColorType = {
 };
 
 function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
-  const { setNavigatorOpen, navigate, handleBack } = useContext(AppContext);
+  const {
+    setNavigatorOpen,
+    setSelProvider,
+    setSelAudio,
+    setSelVideoType,
+    navigate,
+    handleBack
+  } = useContext(AppContext);
 
   const [thumbnail, setThumbnail] = useState(null);
   const [episode, setEpisode] = useState(0);
@@ -74,6 +81,9 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
       audio: AUDIO
     }));
 
+    setSelProvider(PROVIDER)
+    setSelAudio(AUDIO)
+
     const id = ++getEpisodeDataId.current;
 
     const path = providers[PROVIDER].episodes[AUDIO];
@@ -101,7 +111,7 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
 
       const selectedItem =
         arrList.find(item => new RegExp(`\\b${TYPE}\\b`).test(item)) ??
-        arrList.find(item => new RegExp(`\\b${selVideoType}\\b`).test(item)) ??
+        arrList.find(item => new RegExp(`\\b${selVideoType.split(' ').at(-1)}\\b`).test(item)) ??
         arrList[0];
 
       const streamResult = result[selectedItem];
@@ -115,6 +125,7 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
           `&origin=${encodeURIComponent(streamResult.referer)}`,
         type: selectedItem
       }));
+      setSelVideoType(selectedItem)
     } catch (e) {
       setVideoSource(prev => ({ ...prev, src: null }));
       console.log(e);

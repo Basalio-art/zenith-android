@@ -2,13 +2,14 @@
   overflow: hidden;
   flex-shrink: 0;
   border-top: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
-  background: var(--bg-color);
+  background: var(--bg-color2);
   min-height: 0;
   padding: 1rem;
   padding-bottom: calc(var(--safe-bottom) + 1rem);
   z-index: 10;
   display: flex;
   transition: padding-bottom .5s;
+  box-shadow: 0 0 20px 0 #00000048;
 
   .home,
   .search,
@@ -34,6 +35,7 @@
     span {
       opacity: 0.7;
       overflow: hidden;
+      text-transform: capitalize;
       transition:
         color 0.25s,
         opacity 0.25s,

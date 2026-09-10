@@ -45,7 +45,7 @@
     display: flex;
     align-items: center;
     padding-inline: 10px;
-    background: color-mix(in srgb, var(--color-1), transparent 80%);
+    background: color-mix(in srgb, var(--color-1), transparent 90%);
     border-radius: 10px;
     border: 1px solid color-mix(in srgb, var(--color-2), transparent 50%);
     gap: 0.5rem;
@@ -212,17 +212,7 @@
         background: color-mix(in srgb, var(--color-1), transparent 90%);
 
         &.loading {
-          --lighter: color-mix(in srgb, var(--color-1), transparent 70%);
-          --darker: color-mix(in srgb, var(--color-1), transparent 80%);
-          background: linear-gradient(
-            to right,
-            var(--darker) 20%,
-            var(--lighter),
-            var(--darker) 80%
-          );
-          background-size: 200%;
-          background-position: 0 200%;
-          animation: loading-card 5s linear infinite;
+          background-color: color-mix(in srgb, var(--color-1), transparent 90%);
         }
 
         img {
@@ -314,14 +304,5 @@
         }
       }
     }
-  }
-}
-
-@keyframes loading-card {
-  0% {
-    background-position: 0 200%;
-  }
-  100% {
-    background-position: 200% 0;
   }
 }

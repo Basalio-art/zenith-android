@@ -23,7 +23,6 @@ import SearchResult from './Search.jsx';
 import ViewAnime from './ViewAnime.jsx';
 import Stream from './Stream.jsx';
 import AppBars from './plugins/SystemBars.js';
-
 export const AppContext = createContext(null);
 
 const APP_VERSION = '1.4.0';
@@ -160,6 +159,18 @@ function App() {
     }
   };
 
+  const serverStatus = async () => {
+    try {
+      const { data } = await CapacitorHttp.get({
+        url: 'http://localhost:9189/anilist_status'
+      });
+
+      console.log(data)
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   const newMessage = (msg, type = 'message') => {
     if (!msg) return;
     const id = Date.now() + '-' + (Math.random() * 1000).toFixed(0);
@@ -193,7 +204,7 @@ function App() {
     try {
       const { data: trending, status: trendingStatus } =
         await CapacitorHttp.get({
-          url: 'http://localhost:9189/trending?page=1&per_page=20'
+          url: 'http://localhost:9189/trending?page=1&per_page=20',
         });
       const { data: popular, status: popularStatus } = await CapacitorHttp.get({
         url: 'http://localhost:9189/popular?page=1&per_page=20'
@@ -441,6 +452,8 @@ function App() {
       loadingStartup();
       return;
     }
+    
+    serverStatus()
 
     const backendCheck = async () => {
       await checkBackendR();
@@ -549,8 +562,8 @@ function App() {
               setProviders,
               setSelProvider,
               setSelAudio,
-              setNavigatorOpen,
               setSelVideoType,
+              setNavigatorOpen,
               navigate,
               handleBack
             }}
@@ -561,23 +574,10 @@ function App() {
                   {
                     <motion.div
                       key={page}
-                      initial={{ opacity: 0, y: 100 }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                        transition: {
-                          duration: 0.15,
-                          ease: 'linear'
-                        }
-                      }}
-                      exit={{
-                        opacity: 0,
-                        y: 100,
-                        transition: {
-                          duration: 0.15,
-                          ease: 'linear'
-                        }
-                      }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
                       className={style.pageContainer}
                     >
                       {renderPage(page)}

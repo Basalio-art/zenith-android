@@ -6,22 +6,24 @@
 }
 
 @font-face {
-  font-family: 'Orbitron';
   src: url('./assets/Orbitron.woff2') format('woff2-variations');
+  font-family: 'Orbitron';
   font-weight: 100 900;
   font-style: normal;
 }
 
 :root {
-  --bg-color: #fafafa;
-  --color-1: black;
+  --bg-color: #f0f0f0;
+  --bg-color2: #dddddd;
+  --color-1: #141414;
   --color-2: #8264db;
   --color-3: #259996;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-color: black;
+    --bg-color: #111111;
+    --bg-color2: #090909;
     --color-1: #fafafaff;
     --color-3: #1bd3ceff;
   }

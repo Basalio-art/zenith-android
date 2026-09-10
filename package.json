@@ -18,13 +18,14 @@
     "@capacitor/clipboard": "^8.0.1",
     "@capacitor/core": "^8.4.0",
     "@capacitor/splash-screen": "^8.0.2",
+    "anime-sdk": "^1.1.0",
+    "buffer": "^6.0.3",
     "cors": "^2.8.6",
     "hls.js": "^1.6.16",
     "lucide-react": "^1.17.0",
     "motion": "^12.40.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-native": "0.85.3"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -55,7 +55,6 @@
     will-change: transform, opacity;
     contain: content;
     overflow: hidden;
-    transform: scale(1.5);
   }
 }
 
@@ -91,9 +90,9 @@
     max-width: calc(700px - 1rem);
     display: flex;
     justify-content: space-between;
-    
+
     .loadingInfo,
-    .percent{
+    .percent {
       font-size: 0.85rem;
     }
   }

@@ -14,13 +14,19 @@ import {
 } from 'lucide-react';
 
 function Home({ trendingAnime, popularAnime, latestAnime }) {
-  const { setNavigatorOpen, setSearchQuery, setPage, setViewAnimeData, navigate } =
-    useContext(AppContext);
+  const {
+    setNavigatorOpen,
+    setSearchQuery,
+    setPage,
+    setViewAnimeData,
+    navigate
+  } = useContext(AppContext);
 
   const trendingRef = useRef(null);
   const popularRef = useRef(null);
   const latestRef = useRef(null);
   const searchInputRef = useRef(null);
+  const initialMount = useRef(true);
 
   const calculateCardsWidth = container => {
     if (!container) return;
@@ -91,7 +97,7 @@ function Home({ trendingAnime, popularAnime, latestAnime }) {
 
   useEffect(() => {
     navigate('home', 'main');
-    setNavigatorOpen(true)
+    setNavigatorOpen(true);
   }, []);
 
   return (
@@ -164,120 +170,20 @@ function Home({ trendingAnime, popularAnime, latestAnime }) {
           ref={latestRef}
           onScroll={() => scrollDataset(latestRef.current)}
         >
-          <AnimatePresence>
-            {latestAnime.length === 0
-              ? [...Array(20)].map((_, idx) => (
-                  <div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    key={`latest-card-${idx}`}
-                    className={`${style.card} ${style.loading}`}
-                  ></div>
-                ))
-              : latestAnime.map(anime => (
-                  <div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    key={`latest-card-${anime.id}`}
-                    className={style.card}
-                    onClick={() => {
-                      setViewAnimeData(anime)
-                      setPage('anime')
-                    }}
-                  >
-                    <img
-                      className={style.loading}
-                      onLoad={e => {
-                        e.target.classList.remove(style.loading);
-                      }}
-                      src={anime.coverImage.extraLarge}
-                      alt={anime.title.english || anime.title.romaji}
-                    />
-
-                    {anime.averageScore && (
-                      <motion.div
-                        initial={{ opacity: 0, y: '-100%' }}
-                        animate={{
-                          opacity: 1,
-                          y: 0,
-                          transition: { duration: 1 }
-                        }}
-                        className={style.rate}
-                      >
-                        <Star className={style.star} size={12.5} />
-                        <span>{(anime.averageScore / 10).toFixed(1)}</span>
-                      </motion.div>
-                    )}
-
-                    {(() => {
-                      let txt;
-                      switch (anime.status) {
-                        case 'FINISHED':
-                          if (anime.episodes) {
-                            txt = `${anime.episodes} EP`;
-                          } else {
-                            txt = anime.countryOfOrigin;
-                          }
-                          break;
-                        case 'RELEASING':
-                          if (anime.nextAiringEpisode) {
-                            txt = `${anime.nextAiringEpisode.episode - 1} EP`;
-                          } else {
-                            txt = anime.countryOfOrigin;
-                          }
-                          break;
-                      }
-
-                      return (
-                        <motion.div
-                          initial={{ opacity: 0, y: '-100%' }}
-                          animate={{
-                            opacity: 1,
-                            y: 0,
-                            transition: { duration: 1 }
-                          }}
-                          className={style.eps}
-                        >
-                          {txt}{' '}
-                          <span
-                            style={{
-                              color:
-                                anime.status === 'RELEASING'
-                                  ? 'orange'
-                                  : anime.status === 'FINISHED'
-                                    ? 'lime'
-                                    : 'red'
-                            }}
-                          >
-                            &bull;
-                          </span>
-                        </motion.div>
-                      );
-                    })()}
-
-                    <motion.div
-                      initial={{ y: `100%` }}
-                      animate={{ y: 0, transition: { duration: 1 } }}
-                      className={style.titleWrapper}
-                    >
-                      <span className={style.seasonYear}>
-                        {anime.format?.replace('_', ' ')}{' '}
-                        {anime.format && anime.seasonYear ? (
-                          <span>&bull;</span>
-                        ) : (
-                          ''
-                        )}{' '}
-                        {anime.seasonYear}
-                      </span>
-                      <span className={style.title}>
-                        {anime.title.english || anime.title.romaji}
-                      </span>
-                    </motion.div>
-                  </div>
-                ))}
-          </AnimatePresence>
+          {latestAnime.length === 0
+            ? [...Array(20)].map((_, idx) => (
+                <div
+                  key={`latest-card-${idx}`}
+                  className={`${style.card} ${style.loading}`}
+                ></div>
+              ))
+            : latestAnime.map(anime => (
+                <AnimeCard
+                  key={`latest-${anime.id}`}
+                  {...{ setViewAnimeData, setPage, anime }}
+                  id={`latest-${anime.id}`}
+                />
+              ))}
         </div>
       </div>
 
@@ -319,105 +225,11 @@ function Home({ trendingAnime, popularAnime, latestAnime }) {
                   ></div>
                 ))
               : trendingAnime.map(anime => (
-                  <div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    key={`trending-card-${anime.id}`}
-                    className={style.card}
-                    onClick={() => {
-                      setViewAnimeData(anime)
-                      setPage('anime')
-                    }}
-                  >
-                    <img
-                      className={style.loading}
-                      onLoad={e => {
-                        e.target.classList.remove(style.loading);
-                      }}
-                      src={anime.coverImage.extraLarge}
-                      alt={anime.title.english || anime.title.romaji}
-                    />
-                    {anime.averageScore && (
-                      <motion.div
-                        initial={{ opacity: 0, y: '-100%' }}
-                        animate={{
-                          opacity: 1,
-                          y: 0,
-                          transition: { duration: 1 }
-                        }}
-                        className={style.rate}
-                      >
-                        <Star className={style.star} size={12.5} />
-                        <span>{(anime.averageScore / 10).toFixed(1)}</span>
-                      </motion.div>
-                    )}
-
-                    {(() => {
-                      let txt;
-                      switch (anime.status) {
-                        case 'FINISHED':
-                          if (anime.episodes) {
-                            txt = `${anime.episodes} EP`;
-                          } else {
-                            txt = anime.countryOfOrigin;
-                          }
-                          break;
-                        case 'RELEASING':
-                          if (anime.nextAiringEpisode) {
-                            txt = `${anime.nextAiringEpisode.episode - 1} EP`;
-                          } else {
-                            txt = anime.countryOfOrigin;
-                          }
-                          break;
-                      }
-
-                      return (
-                        <motion.div
-                          initial={{ opacity: 0, y: '-100%' }}
-                          animate={{
-                            opacity: 1,
-                            y: 0,
-                            transition: { duration: 1 }
-                          }}
-                          className={style.eps}
-                        >
-                          {txt}{' '}
-                          <span
-                            style={{
-                              color:
-                                anime.status === 'RELEASING'
-                                  ? 'orange'
-                                  : anime.status === 'FINISHED'
-                                    ? 'lime'
-                                    : 'red'
-                            }}
-                          >
-                            &bull;
-                          </span>
-                        </motion.div>
-                      );
-                    })()}
-
-                    <motion.div
-                      initial={{ y: `100%` }}
-                      animate={{ y: 0, transition: { duration: 1 } }}
-                      className={style.titleWrapper}
-                    >
-                      <span className={style.seasonYear}>
-                        {anime.format?.replace('_', ' ')}{' '}
-                        {anime.format && anime.seasonYear ? (
-                          <span>&bull;</span>
-                        ) : (
-                          ''
-                        )}{' '}
-                        {anime.seasonYear}
-                      </span>
-                      <span className={style.title}>
-                        {anime.title.english || anime.title.romaji}
-                      </span>
-                    </motion.div>
-                  </div>
+                  <AnimeCard
+                    key={`trending-${anime.id}`}
+                    {...{ setViewAnimeData, setPage, anime }}
+                    id={`trending-${anime.id}`}
+                  />
                 ))}
           </AnimatePresence>
         </div>
@@ -461,100 +273,11 @@ function Home({ trendingAnime, popularAnime, latestAnime }) {
                   ></div>
                 ))
               : popularAnime.map(anime => (
-                  <div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    key={`popular-card-${anime.id}`}
-                    className={style.card}
-                    onClick={() => {
-                      setViewAnimeData(anime)
-                      setPage('anime')
-                    }}
-                  >
-                    <img
-                      className={style.loading}
-                      onLoad={e => {
-                        e.target.classList.remove(style.loading);
-                      }}
-                      src={anime.coverImage.extraLarge}
-                      alt={anime.title.english || anime.title.romaji}
-                    />
-                    {anime.averageScore && (
-                      <motion.div
-                        initial={{ opacity: 0, y: '-100%' }}
-                        animate={{
-                          opacity: 1,
-                          y: 0,
-                          transition: { duration: 1 }
-                        }}
-                        className={style.rate}
-                      >
-                        <Star className={style.star} size={12.5} />
-                        <span>{(anime.averageScore / 10).toFixed(1)}</span>
-                      </motion.div>
-                    )}
-
-                    {(() => {
-                      let txt;
-                      switch (anime.status) {
-                        case 'FINISHED':
-                          if (anime.episodes) {
-                            txt = `${anime.episodes} EP`;
-                          } else {
-                            txt = anime.countryOfOrigin;
-                          }
-                          break;
-                        case 'RELEASING':
-                          if (anime.nextAiringEpisode) {
-                            txt = `${anime.nextAiringEpisode.episode - 1} EP`;
-                          } else {
-                            txt = anime.countryOfOrigin;
-                          }
-                          break;
-                      }
-
-                      return (
-                        <motion.div
-                          initial={{ opacity: 0, y: '-100%' }}
-                          animate={{
-                            opacity: 1,
-                            y: 0,
-                            transition: { duration: 1 }
-                          }}
-                          className={style.eps}
-                        >
-                          {txt}{' '}
-                          <span
-                            style={{
-                              color:
-                                anime.status === 'RELEASING'
-                                  ? 'orange'
-                                  : anime.status === 'FINISHED'
-                                    ? 'lime'
-                                    : 'red'
-                            }}
-                          >
-                            &bull;
-                          </span>
-                        </motion.div>
-                      );
-                    })()}
-
-                    <motion.div
-                      initial={{ y: `100%` }}
-                      animate={{ y: 0, transition: { duration: 1 } }}
-                      className={style.titleWrapper}
-                    >
-                      <span className={style.seasonYear}>
-                        {anime.format?.replace('_', ' ')} &bull;{' '}
-                        {anime.seasonYear}
-                      </span>
-                      <span className={style.title}>
-                        {anime.title.english || anime.title.romaji}
-                      </span>
-                    </motion.div>
-                  </div>
+                  <AnimeCard
+                    key={`popular-${anime.id}`}
+                    {...{ setViewAnimeData, setPage, anime }}
+                    id={`popular-${anime.id}`}
+                  />
                 ))}
           </AnimatePresence>
         </div>
@@ -562,5 +285,107 @@ function Home({ trendingAnime, popularAnime, latestAnime }) {
     </section>
   );
 }
+
+const animated = new Set();
+
+const AnimeCard = ({ anime, id, setViewAnimeData, setPage }) => {
+  const hasAnimated = animated.has(id);
+  animated.add(id);
+
+  return (
+    <div
+      className={style.card}
+      onClick={() => {
+        setViewAnimeData(anime);
+        setPage('anime');
+      }}
+    >
+      <img
+        className={style.loading}
+        onLoad={e => {
+          e.target.classList.remove(style.loading);
+        }}
+        src={anime.coverImage.extraLarge}
+        alt={anime.title.english || anime.title.romaji}
+      />
+
+      {anime.averageScore && (
+        <motion.div
+          initial={hasAnimated ? false : { opacity: 0, y: '-100%' }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 1 }
+          }}
+          className={style.rate}
+        >
+          <Star className={style.star} size={12.5} />
+          <span>{(anime.averageScore / 10).toFixed(1)}</span>
+        </motion.div>
+      )}
+
+      {(() => {
+        let txt;
+        switch (anime.status) {
+          case 'FINISHED':
+            if (anime.episodes) {
+              txt = `${anime.episodes} EP`;
+            } else {
+              txt = anime.countryOfOrigin;
+            }
+            break;
+          case 'RELEASING':
+            if (anime.nextAiringEpisode) {
+              txt = `${anime.nextAiringEpisode.episode - 1} EP`;
+            } else {
+              txt = anime.countryOfOrigin;
+            }
+            break;
+        }
+
+        return (
+          <motion.div
+            initial={hasAnimated ? false : { opacity: 0, y: '-100%' }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              transition: { duration: 1 }
+            }}
+            className={style.eps}
+          >
+            {txt}{' '}
+            <span
+              style={{
+                color:
+                  anime.status === 'RELEASING'
+                    ? 'orange'
+                    : anime.status === 'FINISHED'
+                      ? 'lime'
+                      : 'red'
+              }}
+            >
+              &bull;
+            </span>
+          </motion.div>
+        );
+      })()}
+
+      <motion.div
+        initial={hasAnimated ? false : { y: `100%` }}
+        animate={{ y: 0, transition: { duration: 1 } }}
+        className={style.titleWrapper}
+      >
+        <span className={style.seasonYear}>
+          {anime.format?.replace('_', ' ')}{' '}
+          {anime.format && anime.seasonYear ? <span>&bull;</span> : ''}{' '}
+          {anime.seasonYear}
+        </span>
+        <span className={style.title}>
+          {anime.title.english || anime.title.romaji}
+        </span>
+      </motion.div>
+    </div>
+  );
+};
 
 export default memo(Home);

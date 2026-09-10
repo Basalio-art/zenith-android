@@ -135,51 +135,54 @@ function ViewAnime({ anime, providers }) {
         <div className={style.headTitle}>Anime Overview</div>
       </div>
 
-      <motion.div className={style.container}>
-        <div
-          className={style.trailerWrapper}
-          data-view-type={`${anime.trailer ? 'video' : anime.bannerImage ? 'banner' : 'cover'}`}
-          style={{
-            background: !anime.bannerImage ? anime.coverImage.color : undefined,
-            backgroundImage: anime.bannerImage
-              ? `url(${anime.bannerImage})`
-              : undefined
-          }}
-        >
-          <AnimatePresence>
-            {anime.trailer && !trailerLoaded && (
-              <motion.img
-                key={`${anime.id}-thumbnail`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className={style.thumbnail}
-                src={anime.trailer.thumbnail}
-              />
-            )}
-          </AnimatePresence>
-
-          {anime.trailer ? (
-            <iframe
-              src={embededLink()}
-              onLoad={() => {
-                setTrailerLoaded(true);
-              }}
-              title={`${anime.title.english || anime.title.romaji} Trailer`}
-              allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;'
-              className={style.trailerVideo}
-              style={{ border: 'none' }}
+      <div
+        className={style.trailerWrapper}
+        data-view-type={`${anime.trailer ? 'video' : anime.bannerImage ? 'banner' : 'cover'}`}
+        data-video-loaded={
+          anime.trailer ? (trailerLoaded ? true : false) : undefined
+        }
+        style={{
+          background: !anime.bannerImage ? anime.coverImage.color : undefined,
+          backgroundImage: anime.bannerImage
+            ? `url(${anime.bannerImage})`
+            : undefined
+        }}
+      >
+        <AnimatePresence>
+          {anime.trailer && !trailerLoaded && (
+            <motion.img
+              key={`${anime.id}-thumbnail`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={style.thumbnail}
+              src={anime.trailer.thumbnail}
             />
-          ) : (
-            !anime.bannerImage && (
-              <img
-                className={style.coverImage}
-                src={anime.coverImage.extraLarge}
-              />
-            )
           )}
-        </div>
+        </AnimatePresence>
 
+        {anime.trailer ? (
+          <iframe
+            src={embededLink()}
+            onLoad={() => {
+              setTrailerLoaded(true);
+            }}
+            title={`${anime.title.english || anime.title.romaji} Trailer`}
+            allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;'
+            className={style.trailerVideo}
+            style={{ border: 'none' }}
+          />
+        ) : (
+          !anime.bannerImage && (
+            <img
+              className={style.coverImage}
+              src={anime.coverImage.extraLarge}
+            />
+          )
+        )}
+      </div>
+
+      <div className={style.container}>
         <div className={style.title}>
           <span className={style.main}>
             {anime.title.english ? anime.title.english : anime.title.romaji}
@@ -381,7 +384,7 @@ function ViewAnime({ anime, providers }) {
             )}
           </motion.div>
         </AnimatePresence>
-      </motion.div>
+      </div>
     </section>
   );
 }
