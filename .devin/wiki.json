@@ -1,0 +1,223 @@
+{
+  "repo_notes": [
+    {
+      "content": ""
+    }
+  ],
+  "pages": [
+    {
+      "title": "Overview",
+      "purpose": "What Zenith Android is: a React + Capacitor anime streaming client with an embedded Go backend. High-level architecture and links to child pages. And  tell its not fully finished developing so the app itself cannot fully used",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Getting Started & Local Development",
+      "purpose": "Install, npm scripts (dev/build/lint/cap:dev/cap:release), Vite config, Prettier, and the cap-config.mjs environment switcher.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "App Bootstrap & Runtime Configuration",
+      "purpose": "index.html root mount, main.jsx React root, capacitor.config.json settings, config.json app/backend version contract, dev tools (suger, eruda).",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Frontend Application",
+      "purpose": "Overview of the React client: root App orchestration, pages, components and styling. Links to child pages.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "App Root, Context and Navigation",
+      "purpose": "AppContext state, page routing between home/search/anime/stream, hardware back handling, message/alert overlays, internet checks.",
+      "parent": "Frontend Application",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Startup Pipeline & Version Checks",
+      "purpose": "loadingStartup sequence: checkVersion against remote config.json, checkBackendR probing localhost:9189, checkBackendV version compatibility, loading animations.",
+      "parent": "Frontend Application",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Pages",
+      "purpose": "Home, Search, ViewAnime, Stream, and Navigator pages: responsibilities, data flow, and their CSS modules.",
+      "parent": "Frontend Application",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Video Player Component",
+      "purpose": "The HLS-based Video component and its styling, playback controls and integration with the Stream page.",
+      "parent": "Frontend Application",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Styling System",
+      "purpose": "Global index.css, CSS modules conventions, theming and safe-area/edge-to-edge handling.",
+      "parent": "Frontend Application",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Backend & Data Services",
+      "purpose": "How the client obtains anime data: local Go backend HTTP API, backup anime-sdk server, and providers. Links to children.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Local Backend HTTP API",
+      "purpose": "Endpoints consumed at localhost:9189 (/trending, /popular, /recent, /search, /version, /anilist_status) and CapacitorHttp usage.",
+      "parent": "Backend & Data Services",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Backup Server & Providers",
+      "purpose": "backup-api/backup.mjs anime-sdk server on port 9190, provider list (Gogoanime, AnimeParadise, Anikoto, MegaPlay, Goyabu), and src/services/BackupServer.js client fallback.",
+      "parent": "Backend & Data Services",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Android Native Layer",
+      "purpose": "Overview of the Capacitor Android host app: activity lifecycle, plugins, native Go library embedding, resources.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "MainActivity & Startup Logging",
+      "purpose": "BridgeActivity subclass, onCreate pipeline, backend.log diagnostics in Documents/Zenith, lifecycle teardown.",
+      "parent": "Android Native Layer",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Embedded Go Backend via JNI",
+      "purpose": "GoBackend.java, zenith_jni.c dlopen/dlsym of libzenith.so StartServer, CMakeLists.txt, jniLibs arm64-v8a packaging.",
+      "parent": "Android Native Layer",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "SystemBars Capacitor Plugin",
+      "purpose": "AppBars plugin: JS bridge in src/plugins/SystemBars.js and native edge-to-edge/immersive window control.",
+      "parent": "Android Native Layer",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Android Resources, Themes & Manifest",
+      "purpose": "AndroidManifest declarations, AppTheme styles, splash/launcher drawables and mipmaps, strings, file_paths, network_security_config.",
+      "parent": "Android Native Layer",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Build, Packaging & CI",
+      "purpose": "Gradle build, signing, Capacitor sync, and GitHub Actions automation. Links to children.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Gradle Build & Signing",
+      "purpose": "app/build.gradle config (SDKs, abiFilters, signingConfigs, CMake), root build.gradle, variables.gradle, settings, capacitor.settings.gradle, gradle wrapper.",
+      "parent": "Build, Packaging & CI",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "CI Workflows",
+      "purpose": "build-apk.yml debug build, build-release-apk.yml signed release, and generate-assets.yml icon/splash generation with auto-commit.",
+      "parent": "Build, Packaging & CI",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Testing & Code Quality",
+      "purpose": "Example unit/instrumented tests, ProGuard rules, ESLint/Prettier setup.",
+      "parent": "Build, Packaging & CI",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Glossary",
+      "purpose": "Definitions of Zenith-specific terms: AppBars, GoBackend, libzenith.so, Termux server, AniList, cap:dev/cap:release, webDir, backend-version, HLS, providers, etc., with code pointers.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    }
+  ]
+    }The content has been copied to your clipboard. Please paste it here to complete the file creation.
