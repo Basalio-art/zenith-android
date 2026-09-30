@@ -46,6 +46,7 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
   };
 
   const prevEpisodeData = useRef(null);
+  
   const getEpisodeData = async (PROVIDER, AUDIO, TYPE, EPISODE = 0) => {
     const prevData = prevEpisodeData.current;
     const newData = [PROVIDER, AUDIO, TYPE, EPISODE];
@@ -96,8 +97,10 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
 
       if (id !== getEpisodeDataId.current) return;
 
-      if (typeof data !== 'object' || !('streams' in data))
+      if (typeof data !== 'object' || !('streams' in data)) {
+        console.log(data)
         throw new Error('invalid data');
+      }
 
       const result = data.streams.reduce((acc, stream) => {
         const key = `${stream.server ? stream.server : ''} ${stream.type}`;

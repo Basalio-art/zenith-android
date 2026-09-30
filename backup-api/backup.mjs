@@ -5,7 +5,8 @@ import {
   AnimeParadiseProvider,
   AnikotoProvider,
   MegaPlayProvider,
-  GoyabuProvider
+  GoyabuProvider,
+  AnilistMeta
 } from 'anime-sdk';
 
 const http = new HttpClient({
@@ -20,7 +21,7 @@ const server = startServer({
     new MegaPlayProvider(http),
     new GoyabuProvider(http)
   ],
+  metaProviders: [new AnilistMeta(http)],
   port: 9190,
   proxy: true
 });
-

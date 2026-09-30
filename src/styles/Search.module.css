@@ -97,6 +97,17 @@
     }
   }
 
+  .fallbackProviders {
+    user-select: none;
+    display: flex;
+    justify-content: space-evenly;
+    padding-top: .5rem;
+    
+    .active {
+      color: var(--color-2);
+    }
+  }
+
   .result {
     flex-grow: 1;
     min-height: 0;

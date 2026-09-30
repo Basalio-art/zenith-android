@@ -26,13 +26,16 @@ import SearchResult from './pages/Search.jsx';
 import ViewAnime from './pages/ViewAnime.jsx';
 import Stream from './pages/Stream.jsx';
 import AppBars from './plugins/SystemBars.js';
+import { SearchAnime } from './services/AnimeSdk.js';
 
 export const AppContext = createContext(null);
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.3.0';
 
 const CONFIG_URL =
   'https://raw.githubusercontent.com/Basalio-art/zenith-android/refs/heads/main/config.json';
+
+const fallbackProviders = ['AnimeParadise', 'Anikoto', 'GogoAnime', 'MegaPlay', 'Goyabu']
 
 function App() {
   const [hasInternet, setHasInternet] = useState(true);
@@ -51,10 +54,12 @@ function App() {
   const [bash2Copied, setBash2Copied] = useState(false);
   const [bash3Copied, setBash3Copied] = useState(false);
   const [providers, setProviders] = useState(null);
-  const [selProvider, setSelProvider] = useState('pewe');
+  const [selProvider, setSelProvider] = useState('bee');
   const [selAudio, setSelAudio] = useState('sub');
   const [selVideoType, setSelVideoType] = useState('hls');
   const [openAnilistStatusAlert, setOpenAnilistStatusAlert] = useState(false);
+  const [anilistStatus, setAnilistStatus] = useState(null);
+  const [fallbackProvider, setFallbackProvider] = useState(fallbackProviders[0]);
   const [valid, setValid] = useState({
     appVersion: {
       required: APP_VERSION,
@@ -75,7 +80,6 @@ function App() {
 
   const percent = useMotionValue(0);
   const loadingPercentRef = useRef(0);
-  const anilistStatus = useRef(null);
 
   const isInitialInternetMount = useRef(true);
   const bodyRef = useRef(null);
@@ -171,13 +175,13 @@ function App() {
         url: 'http://localhost:9189/anilist_status'
       });
 
-      const NotAvailable =
-        !statusData.available &&
-        statusData.http_status === 403 &&
-        statusData.status === 'forbidden';
+      // const NotAvailable =
+      //   !statusData.available &&
+      //   statusData.http_status === 403 &&
+      //   statusData.status === 'forbidden';
+      const NotAvailable = false
 
-      anilistStatus.current = statusData;
-
+      setAnilistStatus(NotAvailable ? 'unavailable' : 'ok');
       setOpenAnilistStatusAlert(NotAvailable);
     } catch (e) {
       console.log(e);
@@ -236,6 +240,18 @@ function App() {
     }
   };
 
+  const fallbackFetchSearchQuery = async query => {
+    setSearchIsLoading(true);
+    try {
+      const result = await SearchAnime(query, fallbackProvider);
+      console.log(result);
+    } catch (e) {
+      console.log(e);
+      setSearchData([]);
+    }
+    setSearchIsLoading(false);
+  };
+
   const fetchSearchQuery = async (query, page = 1) => {
     setSearchIsLoading(true);
     try {
@@ -247,7 +263,6 @@ function App() {
           per_page: 50
         }
       });
-
       setSearchData(data.results || []);
     } catch (error) {
       setSearchData([]);
@@ -429,8 +444,18 @@ function App() {
   useEffect(() => {
     if (!searchQuery) return;
 
-    fetchSearchQuery(searchQuery);
+    if (anilistStatus === 'ok') {
+      fetchSearchQuery(searchQuery);
+    } else {
+      fallbackFetchSearchQuery(searchQuery);
+    }
   }, [searchQuery]);
+
+  useEffect(() => {
+     if (!searchQuery) return;
+    
+    fallbackFetchSearchQuery(searchQuery)
+  }, [fallbackProvider])
 
   useEffect(() => {
     const reChecking = async () => {
@@ -577,7 +602,11 @@ function App() {
               setSelVideoType,
               setNavigatorOpen,
               navigate,
-              handleBack
+              handleBack,
+              anilistStatus,
+              fallbackProvider,
+              setFallbackProvider,
+              fallbackProviders
             }}
           >
             <div className={style.wrapper}>

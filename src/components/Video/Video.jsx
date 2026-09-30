@@ -85,9 +85,11 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
       console.log(e);
     };
 
+    console.log(src)
+
     return () => {
       if (hls) hlsDestroy();
-      if (isNative) video.removeAttribute('src');
+      video.src = '';
 
       video.removeEventListener('error', handleError);
     };

@@ -16,7 +16,11 @@ function SearchResult({
     setViewAnimeData,
     setNavigatorOpen,
     navigate,
-    setPage
+    setPage,
+    anilistStatus,
+    fallbackProvider,
+    setFallbackProvider,
+    fallbackProviders
   } = useContext(AppContext);
 
   const [isSearching, setIsSearching] = useState(false);
@@ -158,6 +162,23 @@ function SearchResult({
         </motion.div>
       </div>
 
+      {anilistStatus === 'unavailable' && (
+        <div className={style.fallbackProviders}>
+          {fallbackProviders.map(
+            (provider, i) => (
+              <span
+                key={'provider-' + i}
+                className={fallbackProvider === provider ? style.active : ''}
+                onClick={() => {
+                  setFallbackProvider(provider)
+                }}
+              >
+                {provider}
+              </span>
+            )
+          )}
+        </div>
+      )}
       <AnimatePresence initial={false} mode='wait'>
         <motion.div
           key={searchData}
@@ -170,7 +191,6 @@ function SearchResult({
           exit={{
             opacity: 0
           }}
-          
           className={style.result}
           onScroll={handleScroll}
         >
