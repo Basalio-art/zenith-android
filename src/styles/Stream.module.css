@@ -18,6 +18,22 @@
     background-repeat: no-repeat;
     background-position: center;
     max-height: 250px;
+
+    .errorOverlay {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: #fff;
+      background: color-mix(in srgb, var(--danger), transparent 78%);
+      border: 1px solid color-mix(in srgb, var(--danger), transparent 45%);
+      backdrop-filter: blur(2px);
+    }
   }
 
   .animeTitle {
@@ -30,7 +46,9 @@
     top: 0;
     left: 0;
     background: var(--bg-color2);
-    box-shadow: 0 0 20px 0 #00000048;
+    box-shadow:
+      0 10px 24px color-mix(in srgb, var(--color-2), transparent 90%),
+      0 1px 0 color-mix(in srgb, var(--color-2), transparent 70%);
     z-index: 5;
 
     .backBtn {
@@ -64,12 +82,14 @@
       font-family: 'Orbitron';
       font-weight: 600;
       line-height: 1.2;
+      text-shadow: var(--text-glow);
     }
 
     .sypnosisContainer {
       padding: 1rem;
-      background: color-mix(in srgb, var(--color-1), transparent 90%);
-      border: 1px solid color-mix(in srgb, var(--color-1), transparent 85%);
+      background: color-mix(in srgb, var(--color-2), transparent 95%);
+      border: 1px solid color-mix(in srgb, var(--color-2), transparent 75%);
+      border-radius: 12px;
 
       .head {
         font-weight: 600;
@@ -97,6 +117,10 @@
 
       > * {
         border: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
+        transition:
+          border-color 0.15s,
+          background 0.15s,
+          box-shadow 0.15s;
       }
 
       .provider,
@@ -104,6 +128,16 @@
       .audio {
         line-height: 1;
         padding: 1rem;
+        cursor: pointer;
+
+        &:hover {
+          border-color: color-mix(in srgb, var(--color-2), transparent 45%);
+          background: color-mix(in srgb, var(--color-2), transparent 92%);
+        }
+
+        &:active {
+          box-shadow: var(--glow-sm);
+        }
       }
 
       .audio,
@@ -120,6 +154,12 @@
         border: none;
         flex-direction: column;
         background: var(--bg-color);
+        border-radius: 0 0 10px 10px;
+        overflow: hidden;
+        z-index: 20;
+        box-shadow:
+          var(--glow-box),
+          0 8px 20px color-mix(in srgb, var(--color-1), transparent 75%);
 
         > * {
           overflow: hidden;
@@ -150,9 +190,24 @@
         overflow: hidden;
         height: 90px;
         background: color-mix(in srgb, var(--color-1), transparent 90%);
-        border-radius: 5px;
+        border: 1px solid color-mix(in srgb, var(--color-2), transparent 80%);
+        border-radius: 12px;
         display: flex;
         flex-shrink: 0;
+        transition:
+          border-color 0.15s,
+          background 0.15s,
+          box-shadow 0.15s;
+
+        &:hover {
+          border-color: color-mix(in srgb, var(--color-2), transparent 55%);
+          background: color-mix(in srgb, var(--color-2), transparent 93%);
+        }
+
+        &:active {
+          border-color: color-mix(in srgb, var(--color-2), transparent 35%);
+          box-shadow: var(--glow-sm);
+        }
 
         img {
           border-radius: 5px;

@@ -26,11 +26,11 @@ import SearchResult from './pages/Search.jsx';
 import ViewAnime from './pages/ViewAnime.jsx';
 import Stream from './pages/Stream.jsx';
 import AppBars from './plugins/SystemBars.js';
-import { SearchAnime } from './services/AnimeSdk.js';
+import { services } from './services/manager/index.js';
 
 export const AppContext = createContext(null);
 
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 
 const CONFIG_URL =
   'https://raw.githubusercontent.com/Basalio-art/zenith-android/refs/heads/main/config.json';
@@ -171,15 +171,10 @@ function App() {
 
   const serverStatus = async () => {
     try {
-      const { data: statusData } = await CapacitorHttp.get({
-        url: 'http://localhost:9189/anilist_status'
-      });
+      // Direct AniList availability ping (replaces anime-api /anilist_status).
+      const available = await services.health.checkAniList();
 
-      // const NotAvailable =
-      //   !statusData.available &&
-      //   statusData.http_status === 403 &&
-      //   statusData.status === 'forbidden';
-      const NotAvailable = false
+      const NotAvailable = !available;
 
       setAnilistStatus(NotAvailable ? 'unavailable' : 'ok');
       setOpenAnilistStatusAlert(NotAvailable);
@@ -219,22 +214,23 @@ function App() {
     if (!hasInternet) return;
 
     try {
-      const { data: trending, status: trendingStatus } =
-        await CapacitorHttp.get({
-          url: 'http://localhost:9189/trending?page=1&per_page=20'
-        });
-      const { data: popular, status: popularStatus } = await CapacitorHttp.get({
-        url: 'http://localhost:9189/popular?page=1&per_page=20'
-      });
-      const { data: recent, status: recentStatus } = await CapacitorHttp.get({
-        url: 'http://localhost:9189/recent?page=1&per_page=20'
-      });
+      // Catalog now comes from AniList directly via the Service Manager.
+      // Each rail is applied independently (same as the old per-request 200 check).
+      const [trending, popular, recent] = await Promise.allSettled([
+        services.anilist.getTrending(1, 20),
+        services.anilist.getPopular(1, 20),
+        services.anilist.getRecent(1, 20)
+      ]);
 
-      setTrendingAnime(prev =>
-        trendingStatus === 200 ? trending.results : prev
-      );
-      setPopularAnime(prev => (popularStatus === 200 ? popular.results : prev));
-      setLatestAnime(prev => (recentStatus === 200 ? recent.results : prev));
+      if (trending.status === 'fulfilled' && trending.value?.results) {
+        setTrendingAnime(trending.value.results);
+      }
+      if (popular.status === 'fulfilled' && popular.value?.results) {
+        setPopularAnime(popular.value.results);
+      }
+      if (recent.status === 'fulfilled' && recent.value?.results) {
+        setLatestAnime(recent.value.results);
+      }
     } catch (error) {
       console.log('Error', error);
     }
@@ -243,8 +239,12 @@ function App() {
   const fallbackFetchSearchQuery = async query => {
     setSearchIsLoading(true);
     try {
-      const result = await SearchAnime(query, fallbackProvider);
-      console.log(result);
+      // Backup API (manager FALLBACK_BASE) is only used when AniList is unavailable.
+      const result = await services.fallback.fallbackSearch(query, fallbackProvider);
+      const list = Array.isArray(result)
+        ? result
+        : result?.results || result?.data || [];
+      setSearchData(list);
     } catch (e) {
       console.log(e);
       setSearchData([]);
@@ -255,16 +255,9 @@ function App() {
   const fetchSearchQuery = async (query, page = 1) => {
     setSearchIsLoading(true);
     try {
-      const { data } = await CapacitorHttp.get({
-        url: `http://localhost:9189/search`,
-        params: {
-          query: query,
-          page: page,
-          per_page: 50
-        }
-      });
-      setSearchData(data.results || []);
-    } catch (error) {
+      const data = await services.anilist.searchAnime(query, page, 50);
+      setSearchData(data?.results || []);
+    } catch {
       setSearchData([]);
       newMessage(
         'Search failed: Please check your internet connection',
@@ -304,18 +297,10 @@ function App() {
   };
 
   const checkBackendR = () => {
-    const hasBackend = async () => {
-      try {
-        await CapacitorHttp.request({
-          url: 'http://localhost:9189',
-          method: 'HEAD'
-        });
-        return true;
-      } catch {}
-      return false;
-    };
+    // Anivexa liveness via Service Manager (replaces old HEAD request).
+    const hasBackend = async () => services.health.checkAnivexa();
 
-    return new Promise(async resolve => {
+    return new Promise(resolve => {
       let isRunning = false;
 
       let intervalId = setInterval(async () => {
@@ -338,13 +323,9 @@ function App() {
   };
 
   const checkBackendV = () => {
-    const CURRENT_VERSION = async () => {
-      const { data } = await CapacitorHttp.get({
-        url: 'http://localhost:9189/version'
-      });
-
-      return data.version;
-    };
+    // Anivexa has no /version endpoint; its info payload
+    // {name: "Anivexa API 2.2.1", ...} is parsed to "2.2.1" by the manager.
+    const CURRENT_VERSION = async () => services.health.getBackendVersion();
 
     const ONLINE_VERSION = async () => {
       try {
@@ -353,26 +334,44 @@ function App() {
           connectTimeout: 5000,
           readTimeout: 5000
         });
-        return JSON.parse(data)['backend-version'];
+        const remoteConfig = JSON.parse(data);
+
+        // Preferred key for the Anivexa stack.
+        if (remoteConfig['anivexa-version']) return remoteConfig['anivexa-version'];
+
+        // Legacy anime-api key gates only when it targets the 2.x line.
+        const legacy = remoteConfig['backend-version'];
+        if (typeof legacy === 'string' && /^2\./.test(legacy)) return legacy;
+
+        return null;
       } catch {
-        return await CURRENT_VERSION();
+        return null;
       }
     };
 
-    return new Promise(async resolve => {
-      let timeoutId;
-      const version = await ONLINE_VERSION();
+    return new Promise(resolve => {
+      const runGate = async () => {
+        const version = await ONLINE_VERSION();
 
-      timeoutId = setTimeout(async () => {
+        // Missing/unknown optional version config → pass gracefully.
+        if (!version) {
+          setValid(prev => ({
+            ...prev,
+            backendVersion: { ok: true, required: null }
+          }));
+          resolve(null);
+          return;
+        }
+
+        await new Promise(r => setTimeout(r, 2500));
         const currentVersion = await CURRENT_VERSION();
 
-        if (version !== currentVersion) {
+        if (currentVersion && version !== currentVersion) {
           setValid(prev => ({
             ...prev,
             backendVersion: { ok: false, required: version }
           }));
         } else {
-          clearTimeout(timeoutId);
           setValid(prev => ({
             ...prev,
             backendVersion: { ok: true, required: version }
@@ -380,7 +379,9 @@ function App() {
 
           resolve(version);
         }
-      }, 2500);
+      };
+
+      runGate();
     });
   };
 
@@ -784,11 +785,11 @@ function App() {
                 )}
               </motion.div>
               <code className={style.text}>
-                pkg update -y && pkg upgrade -y && cd ~ && pkg install git &&
-                pkg install golang && git clone
-                https://github.com/Basalio-art/anime-api.git zenith-backend &&
-                cd zenith-backend && go mod tidy && go build -o server main.go
-                && ./server
+                pkg update -y && pkg upgrade -y && pkg install git nodejs-lts
+                golang -y && cd ~/zenith-project/anivexa-api && npm install &&
+                (PORT=9189 node server.js &) && cd ../stream-proxy && go build
+                -o /tmp/stream-proxy ./cmd/stream-proxy && PROXY_PORT=9190
+                ANIVEXA_BASE=http://localhost:9189 /tmp/stream-proxy
               </code>
             </div>
             <h4>◈ If already installed, run this to start</h4>
@@ -815,7 +816,9 @@ function App() {
                 )}
               </motion.div>
               <code className={style.text}>
-                cd ~/zenith-backend && ./server
+                cd ~/zenith-project/anivexa-api && (PORT=9189 node server.js &)
+                && cd ../stream-proxy && PROXY_PORT=9190
+                ANIVEXA_BASE=http://localhost:9189 /tmp/stream-proxy
               </code>
             </div>
           </motion.div>
@@ -874,8 +877,11 @@ function App() {
               </motion.div>
 
               <code>
-                cd ~/zenith-backend && git pull origin main && go build -o
-                server main.go && ./server
+                pkill -f stream-proxy; pkill -f "node server.js"; cd
+                ~/zenith-project/anivexa-api && git pull; (PORT=9189 node
+                server.js &) && cd ../stream-proxy && go build -o
+                /tmp/stream-proxy ./cmd/stream-proxy && PROXY_PORT=9190
+                ANIVEXA_BASE=http://localhost:9189 /tmp/stream-proxy
               </code>
             </div>
           </motion.div>

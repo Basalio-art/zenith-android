@@ -1,16 +1,15 @@
 import { CapacitorHttp } from '@capacitor/core';
+import { CONFIG } from './manager/config.js';
 
-const base = 'http://localhost:9190';
+const base = CONFIG.FALLBACK_BASE;
 
 export async function SearchAnime(query, provider) {
   const endpoint = '/search?q=' + encodeURIComponent(query);
   try {
     const { data } = await CapacitorHttp.get({
       url: `${base}${endpoint}&provider=${provider.toLowerCase()}`
-    })
+    });
 
-    console.log(provider.toLowerCase())
-    
     return {
       data
     };

@@ -9,10 +9,6 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 
-  &::-webkit-scrollbar {
-    width: 1px;
-  }
-
   .welcomeSection {
     .banner {
       display: flex;
@@ -26,6 +22,7 @@
         span {
           font-family: 'Inter';
           color: var(--color-2);
+          text-shadow: var(--text-glow);
         }
       }
 
@@ -44,11 +41,19 @@
   .searchBar {
     display: flex;
     align-items: center;
-    padding-inline: 10px;
-    background: color-mix(in srgb, var(--color-1), transparent 90%);
-    border-radius: 10px;
-    border: 1px solid color-mix(in srgb, var(--color-2), transparent 50%);
+    padding-inline: 14px;
+    background: color-mix(in srgb, var(--color-1), transparent 93%);
+    border-radius: 12px;
+    border: var(--neon-border);
     gap: 0.5rem;
+    transition:
+      box-shadow 0.2s,
+      border-color 0.2s;
+
+    &:focus-within {
+      border-color: color-mix(in srgb, var(--color-2), transparent 25%);
+      box-shadow: var(--glow-md);
+    }
 
     svg {
       flex-shrink: 0;
@@ -139,18 +144,21 @@
           width: 20px;
           height: 20px;
           color: var(--color-2);
+          filter: drop-shadow(
+            0 0 4px color-mix(in srgb, currentColor, transparent 55%)
+          );
         }
 
         .zap {
-          color: #4ede4e;
+          color: var(--accent-green);
         }
 
         .flame {
-          color: orange;
+          color: var(--accent-orange);
         }
 
         .sparkles {
-          color: gold;
+          color: var(--accent-gold);
         }
 
         span {
@@ -180,10 +188,17 @@
           transition:
             scale 0.15s,
             color 0.15s,
-            border-color 0.15s;
+            border-color 0.15s,
+            box-shadow 0.15s;
+
+          &:hover {
+            border-color: color-mix(in srgb, var(--color-2), transparent 35%);
+            box-shadow: var(--glow-sm);
+          }
 
           &:active {
             scale: 1.1;
+            box-shadow: var(--glow-md);
           }
         }
       }
@@ -206,13 +221,28 @@
         position: relative;
         overflow: hidden;
         scroll-snap-align: start;
-        border-radius: 5px;
+        border-radius: 12px;
         flex: 0 0 var(--flex-basis, 150px);
         aspect-ratio: 3 / 4;
         background: color-mix(in srgb, var(--color-1), transparent 90%);
+        border: 1px solid color-mix(in srgb, var(--color-2), transparent 78%);
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          scale 0.15s;
+
+        &:hover {
+          border-color: color-mix(in srgb, var(--color-2), transparent 40%);
+          box-shadow: var(--glow-box);
+        }
+
+        &:active {
+          scale: 0.97;
+        }
 
         &.loading {
           background-color: color-mix(in srgb, var(--color-1), transparent 90%);
+          animation: cardPulse 1.4s ease-in-out infinite;
         }
 
         img {
@@ -249,7 +279,7 @@
           color: #fafafa;
 
           .star {
-            color: yellow;
+            color: #ffd60a;
           }
         }
 
@@ -304,5 +334,15 @@
         }
       }
     }
+  }
+}
+
+@keyframes cardPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
   }
 }

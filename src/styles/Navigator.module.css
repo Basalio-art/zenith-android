@@ -1,15 +1,17 @@
 .navigationSection {
   overflow: hidden;
   flex-shrink: 0;
-  border-top: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
+  border-top: 1px solid color-mix(in srgb, var(--color-2), transparent 65%);
   background: var(--bg-color2);
   min-height: 0;
   padding: 1rem;
   padding-bottom: calc(var(--safe-bottom) + 1rem);
   z-index: 10;
   display: flex;
-  transition: padding-bottom .5s;
-  box-shadow: 0 0 20px 0 #00000048;
+  transition: padding-bottom 0.5s;
+  box-shadow:
+    0 -8px 24px color-mix(in srgb, var(--color-2), transparent 88%),
+    0 -1px 10px color-mix(in srgb, var(--color-2), transparent 92%);
 
   .home,
   .search,
@@ -19,11 +21,20 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    gap: 4px;
     font-size: 0.6rem;
     line-height: 10px;
     font-weight: 600;
     width: calc(100% / 5);
     position: relative;
+    min-height: 44px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+
+    &:active {
+      opacity: 0.65;
+    }
 
     div:first-of-type {
       transition:
@@ -39,7 +50,7 @@
       transition:
         color 0.25s,
         opacity 0.25s,
-        font-size .25s;
+        font-size 0.25s;
     }
 
     .underline {
@@ -49,10 +60,11 @@
       left: 10%;
       right: 10%;
       background: var(--color-2);
-      
+      box-shadow: var(--glow-sm);
+
       &::before {
         --color: color-mix(in srgb, var(--color-2), transparent 60%);
-        
+
         content: '';
         height: 40px;
         width: 100%;
@@ -60,9 +72,9 @@
         bottom: 100%;
         background: linear-gradient(to bottom, transparent, var(--color));
         transition: height 1s;
-        transition-delay: .5s;
+        transition-delay: 0.5s;
       }
-      
+
       &.intro::before {
         height: 0;
       }
@@ -70,15 +82,19 @@
 
     &.active {
       color: var(--color-2);
+      text-shadow: var(--text-glow);
 
       > div:first-of-type {
         opacity: 1 !important;
         transform: scale(1.1) !important;
+        filter: drop-shadow(
+          0 0 6px color-mix(in srgb, var(--color-2), transparent 45%)
+        );
       }
 
       span {
         opacity: 1 !important;
-        font-size: .5rem !important;
+        font-size: 0.5rem !important;
       }
     }
   }

@@ -6,26 +6,58 @@
 }
 
 @font-face {
-  src: url('../assets/Orbitron.woff2') format('woff2-variations');
   font-family: 'Orbitron';
+  src: url('../assets/Orbitron.woff2') format('woff2-variations');
   font-weight: 100 900;
   font-style: normal;
 }
 
+/* Neon token system — purple + teal identity, system dark/light driven. */
 :root {
-  --bg-color: #f0f0f0;
-  --bg-color2: #dddddd;
-  --color-1: #141414;
-  --color-2: #8264db;
-  --color-3: #259996;
+  color-scheme: light;
+
+  --bg-color: #f6f7fb;
+  --bg-color2: #eaecf6;
+  --color-1: #101018;
+  --color-2: #7b3ff2;
+  --color-3: #007570;
+  --danger: #d11a4a;
+
+  /* Text/icons drawn on solid --color-2 fills */
+  --on-accent: #ffffff;
+
+  /* Semantic neon accents (rail icons, warnings, stars) */
+  --accent-green: #0a9f57;
+  --accent-orange: #cc5500;
+  --accent-gold: #9a7200;
+
+  /* Balanced glow kit */
+  --glow-sm: 0 0 6px color-mix(in srgb, var(--color-2), transparent 55%);
+  --glow-md: 0 0 6px color-mix(in srgb, var(--color-2), transparent 45%),
+    0 0 16px color-mix(in srgb, var(--color-2), transparent 72%);
+  --glow-box: 0 0 16px color-mix(in srgb, var(--color-2), transparent 84%);
+  --neon-border: 1px solid color-mix(in srgb, var(--color-2), transparent 50%);
+  --text-glow: none;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-color: #111111;
-    --bg-color2: #090909;
-    --color-1: #fafafaff;
-    --color-3: #1bd3ceff;
+    color-scheme: dark;
+
+    --bg-color: #07070e;
+    --bg-color2: #0d0d18;
+    --color-1: #e9eaff;
+    --color-2: #a78bff;
+    --color-3: #2af5e8;
+    --danger: #ff4d6d;
+
+    --on-accent: #12101f;
+
+    --accent-green: #3dff8f;
+    --accent-orange: #ff8a1f;
+    --accent-gold: #ffd60a;
+
+    --text-glow: 0 0 8px color-mix(in srgb, var(--color-2), transparent 55%);
   }
 }
 
@@ -35,6 +67,23 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* No visible scrollbars anywhere — scrolling itself still works. */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-3);
+  outline-offset: 2px;
 }
 
 html {
@@ -67,6 +116,16 @@ body {
 @media (min-width: 1050px) {
   #root {
     box-sizing: border-box;
-    border-inline: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
+    border-inline: 1px solid color-mix(in srgb, var(--color-2), transparent 70%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

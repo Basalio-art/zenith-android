@@ -3,8 +3,12 @@ import Hls from 'hls.js';
 import style from './Video.module.css';
 import { AppContext } from '../../App.jsx';
 
-export const MyPlayer = memo(({ src, videoType, poster }) => {
+export const MyPlayer = memo(({ src, videoType, poster, onError }) => {
   const videoRef = useRef(null);
+
+  const notifyError = () => {
+    if (typeof onError === 'function') onError();
+  };
 
   useEffect(() => {
     if (!src || !videoType) return;
@@ -47,7 +51,10 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
               networkErrorRetries++;
               if (networkErrorRetries === 3) {
                 if (canUseNative) useNative();
-                else hlsDestroy();
+                else {
+                  hlsDestroy();
+                  notifyError();
+                }
                 break;
               }
               hls.startLoad();
@@ -56,7 +63,10 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
               mediaErrorRetries++;
               if (mediaErrorRetries === 3) {
                 if (canUseNative) useNative();
-                else hlsDestroy();
+                else {
+                  hlsDestroy();
+                  notifyError();
+                }
                 break;
               }
               hls.swapAudioCodec();
@@ -68,11 +78,15 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
               } else {
                 hls.destroy();
                 hls = null;
+                notifyError();
               }
               break;
             default:
               if (canUseNative) useNative();
-              else hlsDestroy();
+              else {
+                hlsDestroy();
+                notifyError();
+              }
               break;
           }
         }
@@ -81,17 +95,17 @@ export const MyPlayer = memo(({ src, videoType, poster }) => {
       useNative();
     }
 
-    const handleError = e => {
-      console.log(e);
+    // Native <video> load failures (mp4 404s, dead proxy, etc.).
+    const handleError = () => {
+      console.log('player error', video.error);
+      notifyError();
     };
-
-    console.log(src)
+    video.addEventListener('error', handleError);
 
     return () => {
+      video.removeEventListener('error', handleError);
       if (hls) hlsDestroy();
       video.src = '';
-
-      video.removeEventListener('error', handleError);
     };
   }, [src]);
 

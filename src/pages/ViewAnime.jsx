@@ -1,11 +1,11 @@
 import style from '../styles/ViewAnime.module.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
-import { useState, useContext, useEffect, useRef, memo } from 'react';
+import { useState, useContext, useEffect, useMemo, useRef, memo } from 'react';
 import { AppContext } from '../App.jsx';
-import { CapacitorHttp } from '@capacitor/core';
+import { services, mergeMedia } from '../services/manager/index.js';
 
-function ViewAnime({ anime, providers }) {
+function ViewAnime({ anime: animeProp, providers }) {
   const {
     setProviders,
     setOpenStream,
@@ -16,14 +16,33 @@ function ViewAnime({ anime, providers }) {
     handleBack
   } = useContext(AppContext);
 
-  const descriptionRef = useRef(null);
   const animeIDRef = useRef(null);
 
-  const [mainStudio, setMainStudio] = useState(null);
-  const [officialSiteUrl, setOfficialSiteUrl] = useState(null);
+  const [detail, setDetail] = useState(null);
   const [trailerLoaded, setTrailerLoaded] = useState(false);
   const [loadingProviders, setLoadingProviders] = useState(true);
-  const [descriptionHeight, setDescriptionHeight] = useState('auto');
+  const [descExpanded, setDescExpanded] = useState(false);
+
+  // Progressive enhancement: render the clicked list item immediately and
+  // overlay fresher AniList detail once it arrives. Keyed by id so clicking
+  // another card never receives stale detail.
+  const animeId = animeProp?.id;
+  const current =
+    detail && String(detail.id) === String(animeId) ? detail : null;
+  const anime = current ? mergeMedia(animeProp, current) : animeProp;
+
+  const mainStudio = useMemo(
+    () =>
+      anime?.studios?.edges?.find(studio => studio.isMain)?.node.name ||
+      'Unknown',
+    [anime]
+  );
+  const officialSiteUrl = useMemo(
+    () =>
+      anime?.externalLinks?.find(link => link.site === 'Official Site')?.url ||
+      'Unknown',
+    [anime]
+  );
 
   const embededLink = () => {
     if (anime.trailer.site === 'youtube') {
@@ -39,10 +58,6 @@ function ViewAnime({ anime, providers }) {
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-  };
-
-  const expandDescription = () => {
-    setDescriptionHeight('auto');
   };
 
   const dateFormat = date => {
@@ -66,62 +81,54 @@ function ViewAnime({ anime, providers }) {
   const getProviders = async id => {
     setLoadingProviders(true);
     try {
-      const { data } = await CapacitorHttp.get({
-        url: `http://localhost:9189/episodes/${id}`
-      });
+      // GET Anivexa /episodes/:anilistId → normalizer maps Anivexa's
+      // provider-top-level envelope into Zenith's { providers: {...} },
+      // filtering out failed provider entries ({error, stack}).
+      const result = await services.anivexa.getEpisodes(id);
 
       if (animeIDRef.current === id) {
-        setProviders(data.providers);
+        setProviders(result?.providers || null);
       }
     } catch (err) {
+      console.log('Episodes fetch failed:', err);
       setProviders(null);
     }
     setLoadingProviders(false);
   };
 
   useEffect(() => {
+    // Card click / mount only — id-keyed work must not re-run when detail
+    // arrives (anime would change identity).
     navigate('anime', 'preview');
-    const mainStudio = anime.studios.edges.find(studio => studio.isMain);
-    setMainStudio(mainStudio?.node.name || 'Unknown');
 
-    const officialSite = anime.externalLinks.find(
-      link => link.site === 'Official Site'
-    );
-    setOfficialSiteUrl(officialSite?.url || 'Unknown');
-
-    getProviders(anime.id);
-    animeIDRef.current = anime.id;
-
-    const descriptionHeight = () => {
-      if (!descriptionRef.current) return;
-
-      const element = descriptionRef.current;
-      const height = element.clientHeight;
-
-      if (height > 72) {
-        setDescriptionHeight(72);
-      } else {
-        setDescriptionHeight('auto');
-      }
-    };
-
-    descriptionHeight();
-  }, [anime]);
+    getProviders(animeProp?.id);
+    animeIDRef.current = animeProp?.id;
+    // New card click (or unmount) → collapsed description.
+    return () => setDescExpanded(false);
+  }, [animeProp]);
 
   useEffect(() => {
-    let timeout;
+    // Detail fetch keyed on the id: progressive enhancement over the list
+    // item. Failure keeps the passed prop (no spinner, no crash).
+    if (!animeId) return;
+    let cancelled = false;
 
-    // fetch('http://localhost:9189/anime/' + anime.id + '/relations')
-    //   .then(res => res.json())
-    //   .then(data => console.log(data));
-    // fetch('http://localhost:9189/anime/' + anime.id + '/recommendations')
-    //   .then(res => res.json())
-    //   .then(data => console.log(data));
+    services.anilist
+      .getInfo(animeId)
+      .then(fetched => {
+        if (!cancelled && fetched) setDetail(fetched);
+      })
+      .catch(e => console.log('Detail fetch failed, using list data:', e));
 
+    return () => {
+      cancelled = true;
+    };
+  }, [animeId]);
+
+  useEffect(() => {
     setNavigatorOpen(false);
     return () => {
       setTrailerLoaded(false);
-      setDescriptionHeight('auto');
     };
   }, []);
 
@@ -200,26 +207,15 @@ function ViewAnime({ anime, providers }) {
           </div>
         )}
 
-        <motion.p
-          className={style.description}
-          ref={descriptionRef}
-          initial={false}
-          animate={{
-            height: descriptionHeight,
-            transition: { duration: 0.5, ease: 'easeOut' }
-          }}
-          style={{
-            WebkitLineClamp: descriptionHeight === 72 ? 4 : 'none'
-          }}
-          onClick={() => {
-            expandDescription();
-          }}
+        <p
+          className={`${style.description}${descExpanded ? ' ' + style.expanded : ''}`}
+          onClick={() => setDescExpanded(value => !value)}
           dangerouslySetInnerHTML={{
             __html:
               anime.description ||
               '<i>No description available for this title.</i>'
           }}
-        ></motion.p>
+        ></p>
 
         <div className={style.stats}>
           {anime.tags.length > 0 && (
@@ -354,7 +350,9 @@ function ViewAnime({ anime, providers }) {
             className={style.watchNDownload}
           >
             {loadingProviders ? (
-              <div className={style.wrapper}>Fetching Providers . . .</div>
+              <div className={`${style.wrapper} ${style.statusText}`}>
+                Fetching Providers . . .
+              </div>
             ) : providers ? (
               <div className={style.wrapper}>
                 <div
@@ -376,7 +374,7 @@ function ViewAnime({ anime, providers }) {
                 </div>
               </div>
             ) : (
-              <div className={style.wrapper}>
+              <div className={`${style.wrapper} ${style.statusText}`}>
                 {hasInternet
                   ? 'No avilable providers'
                   : 'Check your internet conntection'}

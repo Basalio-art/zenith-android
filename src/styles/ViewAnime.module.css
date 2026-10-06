@@ -19,10 +19,22 @@
     top: 0;
     left: 0;
     z-index: 50;
-    box-shadow: 0 0 20px 0 #00000048;
+    box-shadow:
+      0 10px 24px color-mix(in srgb, var(--color-2), transparent 90%),
+      0 1px 0 color-mix(in srgb, var(--color-2), transparent 70%);
 
     .backWrapper {
       user-select: none;
+      cursor: pointer;
+      transition: opacity 0.15s;
+
+      &:hover {
+        opacity: 0.8;
+      }
+
+      &:active {
+        opacity: 0.6;
+      }
 
       .backButton {
         display: block;
@@ -82,8 +94,8 @@
     &[data-view-type='cover'] {
       background: color-mix(
         in srgb,
-        var(--color-1),
-        transparent 90%
+        var(--color-2),
+        transparent 88%
       ) !important;
       margin-inline: auto;
     }
@@ -147,12 +159,13 @@
         font-weight: bold;
         line-height: 20px;
         z-index: 10;
+        text-shadow: var(--text-glow);
       }
 
       .fallback {
         font-size: 0.9rem;
         opacity: 0.75;
-        color: color-mix(in srgb, gold, var(--color-1) 50%);
+        color: color-mix(in srgb, gold, var(--color-1) 65%);
         z-index: 10;
         font-style: italic;
       }
@@ -169,6 +182,14 @@
       -webkit-line-clamp: 4;
       line-clamp: 4;
       text-overflow: ellipsis;
+
+      cursor: pointer;
+      user-select: none;
+
+      &.expanded {
+        -webkit-line-clamp: none;
+        line-clamp: none;
+      }
     }
 
     .genres {
@@ -182,12 +203,13 @@
       span {
         z-index: 10;
         background: var(--color-2);
-        color: color-mix(in srgb, black, var(--color-2) 50%);
+        color: var(--on-accent);
         padding: 10px;
         line-height: 0.5;
         border-radius: 100em;
         text-wrap: nowrap;
         font-weight: 500;
+        box-shadow: var(--glow-sm);
       }
     }
 
@@ -197,6 +219,11 @@
       gap: 0.5rem;
       font-size: 0.9rem;
       margin-bottom: 1rem;
+      background: color-mix(in srgb, var(--color-2), transparent 92%);
+      border: 1px solid color-mix(in srgb, var(--color-2), transparent 80%);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      box-shadow: var(--glow-box);
 
       p {
         display: flex;
@@ -211,6 +238,15 @@
           text-decoration: none;
           color: var(--color-1);
         }
+
+        a {
+          color: var(--color-3);
+          text-decoration: underline;
+
+          &:active {
+            opacity: 0.7;
+          }
+        }
       }
     }
 
@@ -224,10 +260,31 @@
         .watch,
         .download {
           background: var(--color-2);
+          color: var(--on-accent);
           line-height: 1;
-          padding: 10px;
+          padding: 12px;
+          font-size: 0.95rem;
           border-radius: 10px;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: var(--glow-sm);
+          transition:
+            box-shadow 0.15s,
+            opacity 0.15s;
+
+          &:hover {
+            box-shadow: var(--glow-md);
+          }
+
+          &:active {
+            opacity: 0.75;
+          }
         }
+      }
+
+      .statusText {
+        opacity: 0.7;
+        font-size: 0.85rem;
       }
     }
   }

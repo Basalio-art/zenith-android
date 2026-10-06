@@ -148,7 +148,7 @@ function Home({ trendingAnime, popularAnime, latestAnime }) {
         <div className={style.top}>
           <div className={style.left}>
             <Sparkles className={style.sparkles} />
-            <span>Newest</span>
+            <span>Recent</span>
           </div>
 
           <div className={style.right}>
@@ -336,7 +336,7 @@ const AnimeCard = ({ anime, id, setViewAnimeData, setPage }) => {
             break;
           case 'RELEASING':
             if (anime.nextAiringEpisode) {
-              txt = `${anime.nextAiringEpisode.episode - 1} EP`;
+              txt = `${Math.max(1, anime.nextAiringEpisode.episode - 1)} EP`;
             } else {
               txt = anime.countryOfOrigin;
             }

@@ -11,7 +11,7 @@
   top: 0.5rem;
   right: 0.5rem;
   border-radius: 100%;
-  color: #d93e3ef0;
+  color: var(--danger);
   z-index: 500;
   pointer-events: none;
 }
@@ -33,10 +33,11 @@
     display: flex;
     gap: 0.5rem;
     font-size: 0.8rem;
-    border-radius: 5px;
+    border-radius: 10px;
     align-items: center;
     padding: 5px 10px;
     touch-action: none;
+    box-shadow: var(--glow-sm);
 
     svg {
       flex-shrink: 0;
@@ -80,7 +81,8 @@
     > div {
       height: 100%;
       width: 100%;
-      background: var(--color-3);
+      background: linear-gradient(to right, var(--color-2), var(--color-3));
+      box-shadow: var(--glow-sm);
       transform-origin: left;
     }
   }
@@ -106,7 +108,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: color-mix(in srgb, var(--color-1), var(--bg-color) 75%);
+  background: var(--bg-color2);
   width: 90%;
   max-width: 400px;
   max-height: 90%;
@@ -118,8 +120,11 @@
   text-align: center;
   gap: 1rem;
   z-index: 10;
-  border-radius: 0.5rem;
-  box-shadow: 0 0 10px #262626;
+  border-radius: 0.875rem;
+  border: var(--neon-border);
+  box-shadow:
+    var(--glow-md),
+    0 12px 32px color-mix(in srgb, var(--color-1), transparent 80%);
 
   .head {
     display: flex;
@@ -127,7 +132,7 @@
     align-items: center;
 
     .triangleAlert {
-      color: yellow;
+      color: var(--accent-orange);
     }
   }
 }
@@ -157,6 +162,19 @@
     font-size: 0.9rem;
     border-radius: 10px;
     background: var(--color-2);
+    color: var(--on-accent);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--glow-sm);
+    transition: box-shadow 0.15s;
+
+    &:hover {
+      box-shadow: var(--glow-md);
+    }
+
+    &:active {
+      opacity: 0.8;
+    }
   }
 }
 
@@ -167,7 +185,8 @@
   }
 
   a {
-    color: var(--color-1);
+    color: var(--color-3);
+    text-decoration: underline;
   }
 
   .bash1,

@@ -22,6 +22,6 @@ const server = startServer({
     new GoyabuProvider(http)
   ],
   metaProviders: [new AnilistMeta(http)],
-  port: 9190,
+  port: 9191,
   proxy: true
 });

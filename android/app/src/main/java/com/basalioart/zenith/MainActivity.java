@@ -35,7 +35,9 @@ public class MainActivity extends BridgeActivity {
             log("CPU ABI: " + android.os.Build.SUPPORTED_ABIS[0]);
         }
 
-        startGoBackend();
+        // Embedded Go backend (anime-api) is disabled.
+        // Ports 9189/9190 are now owned by Anivexa and stream-proxy running in Termux.
+        // startGoBackend();
     }
 
     /**

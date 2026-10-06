@@ -2,7 +2,7 @@ import style from '../styles/Stream.module.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { useContext, useState, useEffect, useRef, memo, useMemo } from 'react';
 import { AppContext } from '../App.jsx';
-import { CapacitorHttp } from '@capacitor/core';
+import { services } from '../services/manager/index.js';
 import { MyPlayer } from '../components/Video/Video.jsx';
 import { ArrowLeft } from 'lucide-react';
 
@@ -22,7 +22,6 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
 
   const [thumbnail, setThumbnail] = useState(null);
   const [episode, setEpisode] = useState(0);
-  const [episodeList, setEpisodeList] = useState([]);
   const [openDropdown, setOpenDropDown] = useState(null);
   const [availDropdown, setAvailDropdown] = useState({
     providers: [],
@@ -32,8 +31,10 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
   const [videoSource, setVideoSource] = useState({
     src: null,
     type: null,
+    kind: null,
     provider: null,
-    audio: null
+    audio: null,
+    error: null
   });
 
   const animeTitleRef = useRef(null);
@@ -46,65 +47,150 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
   };
 
   const prevEpisodeData = useRef(null);
-  
+
+  // Global episode-slot template: the longest audio list ANY provider has
+  // (e.g. P1=9 eps, P2=10 eps → display 10 slots). Playback follows the
+  // selected provider; clicking a slot it lacks auto-switches provider.
+  const episodeSlots = useMemo(() => {
+    let template = [];
+    let max = 0;
+    for (const pv of Object.values(providers || {})) {
+      for (const list of Object.values(pv?.episodes || {})) {
+        if (Array.isArray(list) && list.length > max) {
+          max = list.length;
+          template = list;
+        }
+      }
+    }
+    return { max, template };
+  }, [providers]);
+
+  // Resolve (provider, audio) holding episodeIdx, honoring the current
+  // selection: same provider+audio → same provider/other audio → other
+  // provider/same audio → any. Null when no provider has the slot.
+  const resolveEpisodeSlot = (requestedProvider, requestedAudio, episodeIdx) => {
+    const has = (p, a) => !!providers?.[p]?.episodes?.[a]?.[episodeIdx];
+    const pick = p => {
+      const audios = Object.keys(providers?.[p]?.episodes || {}).filter(a => has(p, a));
+      if (!audios.length) return null;
+      return { provider: p, audio: audios.includes(requestedAudio) ? requestedAudio : audios[0] };
+    };
+
+    if (requestedProvider && has(requestedProvider, requestedAudio)) {
+      return { provider: requestedProvider, audio: requestedAudio };
+    }
+    if (requestedProvider) {
+      const r = pick(requestedProvider);
+      if (r) return r;
+    }
+    for (const p of Object.keys(providers || {})) {
+      if (p === requestedProvider) continue;
+      const r = pick(p);
+      if (r) return r;
+    }
+    return null;
+  };
+
   const getEpisodeData = async (PROVIDER, AUDIO, TYPE, EPISODE = 0) => {
+    // Dropdown "providers": only providers with ≥1 non-empty audio list —
+    // episode-less providers never appear.
+    const providerList = Object.keys(providers || {}).filter(p =>
+      Object.values(providers[p]?.episodes || {}).some(
+        list => Array.isArray(list) && list.length
+      )
+    );
+    setAvailDropdown(prev => ({ ...prev, providers: providerList, audios: [], videoTypes: [] }));
+
+    const resolved = resolveEpisodeSlot(PROVIDER, AUDIO, EPISODE);
+    if (!resolved) {
+      prevEpisodeData.current = null;
+      setVideoSource(prev => ({
+        ...prev,
+        src: null,
+        kind: null,
+        provider: null,
+        audio: null,
+        error: `No provider has episode ${EPISODE + 1}`
+      }));
+      return;
+    }
+
+    const { provider, audio } = resolved;
+
+    // Dedupe on the RESOLVED tuple: auto-switching never double-fetches,
+    // and failure paths clear the ref so re-clicking retries.
     const prevData = prevEpisodeData.current;
-    const newData = [PROVIDER, AUDIO, TYPE, EPISODE];
+    const newData = [provider, audio, TYPE, EPISODE];
     if (prevData && prevData.every((data, i) => data === newData[i])) return;
     prevEpisodeData.current = newData;
+    setEpisode(EPISODE);
 
+    const episodes = providers[provider]?.episodes?.[audio] || [];
     setAvailDropdown(prev => ({
       ...prev,
-      audios: [],
-      videoTypes: []
+      audios: Object.entries(providers[provider]?.episodes || {})
+        .filter(([, list]) => Array.isArray(list) && list[EPISODE])
+        .map(([a]) => a)
     }));
 
-    PROVIDER = autoSelectProvider(PROVIDER);
-    AUDIO = autoSelectAudio(PROVIDER, AUDIO, EPISODE);
-
     setThumbnail(
-      providers[PROVIDER].episodes[AUDIO][EPISODE].image ??
+      episodes[EPISODE]?.image ??
         anime.bannerImage ??
         anime.coverImage.extraLarge ??
         undefined
     );
 
-    setEpisodeList(
-      Object.values(providers[PROVIDER].episodes).reduce((a, b) =>
-        b.length > a.length ? b : a
-      )
-    );
-
     setVideoSource(prev => ({
       ...prev,
       src: null,
-      provider: PROVIDER,
-      audio: AUDIO
+      kind: null,
+      provider,
+      audio,
+      error: null
     }));
 
-    setSelProvider(PROVIDER)
-    setSelAudio(AUDIO)
+    setSelProvider(provider);
+    setSelAudio(audio);
 
     const id = ++getEpisodeDataId.current;
 
-    const path = providers[PROVIDER].episodes[AUDIO];
+    const episodeObj = episodes[EPISODE];
 
-    const option = {
-      url: `http://localhost:9189/${path[EPISODE].id}`
-    };
+    if (!episodeObj?.id) {
+      prevEpisodeData.current = null;
+      setVideoSource(prev => ({
+        ...prev,
+        src: null,
+        error: `Episode ${EPISODE + 1} unavailable on ${provider} — try another provider`
+      }));
+      return;
+    }
+
     try {
-      const { data } = await CapacitorHttp.get(option);
+      // Episode ids are preserved exactly as Anivexa returned them:
+      // watch/{provider}/{anilistId}/{audio}/{provider}-{ep}
+      const streams = await services.anivexa.getWatchSources(episodeObj, provider);
 
       if (id !== getEpisodeDataId.current) return;
 
-      if (typeof data !== 'object' || !('streams' in data)) {
-        console.log(data)
-        throw new Error('invalid data');
+      if (!Array.isArray(streams) || streams.length === 0) {
+        prevEpisodeData.current = null;
+        setVideoSource(prev => ({
+          ...prev,
+          src: null,
+          error: `No streams found for ${provider} — try another provider`
+        }));
+        return;
       }
 
-      const result = data.streams.reduce((acc, stream) => {
+      // Prefer streams the player can render (hls/mp4/embed); DASH entries
+      // are filtered out unless nothing else is available.
+      const playableStreams = streams.filter(s => s.playable !== false);
+      const pool = playableStreams.length > 0 ? playableStreams : streams;
+
+      const result = pool.reduce((acc, stream) => {
         const key = `${stream.server ? stream.server : ''} ${stream.type}`;
-        acc[key] = stream;
+        if (!acc[key]) acc[key] = stream;
         return acc;
       }, {});
 
@@ -112,61 +198,48 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
 
       setAvailDropdown(prev => ({ ...prev, videoTypes: arrList }));
 
+      // Match by trailing type token ("Streamsb hls" → "hls"); plain string
+      // compare — no regex (server names may contain metacharacters).
+      const tokenOf = v => (v || '').split(' ').at(-1);
+      const typeToken = tokenOf(TYPE);
+      const prevToken = tokenOf(selVideoType);
       const selectedItem =
-        arrList.find(item => new RegExp(`\\b${TYPE}\\b`).test(item)) ??
-        arrList.find(item => new RegExp(`\\b${selVideoType.split(' ').at(-1)}\\b`).test(item)) ??
+        (typeToken && arrList.find(item => tokenOf(item) === typeToken)) ||
+        (prevToken && arrList.find(item => tokenOf(item) === prevToken)) ||
         arrList[0];
 
       const streamResult = result[selectedItem];
+      const playable = streamResult.playable !== false;
+
+      // Playable streams go through stream-proxy /stream/proxy; the rare
+      // non-playable (DASH) case falls back to stream-proxy's /v1/embed page.
+      const src = playable
+        ? services.playback.buildProxyUrl(streamResult)
+        : services.playback.buildEmbedUrl(streamResult);
+      const kind = playable
+        ? streamResult.kind && streamResult.kind !== 'unknown'
+          ? streamResult.kind
+          : streamResult.type?.split(' ')?.at(-1)
+        : 'embed';
+      const displayType = playable ? selectedItem : `${streamResult.server || provider} embed`;
 
       setVideoSource(prev => ({
         ...prev,
-        src:
-          `http://localhost:9189/proxy/stream` +
-          `?url=${encodeURIComponent(streamResult.url)}` +
-          `&referer=${encodeURIComponent(streamResult.referer)}` +
-          `&origin=${encodeURIComponent(streamResult.referer)}`,
-        type: selectedItem
+        src,
+        type: displayType,
+        kind,
+        error: null
       }));
-      setSelVideoType(selectedItem)
+      setSelVideoType(displayType);
     } catch (e) {
-      setVideoSource(prev => ({ ...prev, src: null }));
-      console.log(e);
+      prevEpisodeData.current = null;
+      const cls = e?.errorClass || e?.class || 'network';
+      setVideoSource(prev => ({
+        ...prev,
+        src: null,
+        error: `Failed to load streams (${provider}): ${cls} — try another provider`
+      }));
     }
-  };
-
-  const autoSelectProvider = PROVIDER => {
-    let provider = PROVIDER;
-
-    let list = Object.keys(providers).filter(
-      p => Object.keys(providers[p].episodes).length !== 0
-    );
-
-    if (!list.includes(provider)) {
-      provider = list[0];
-    }
-
-    setAvailDropdown(prev => ({ ...prev, providers: list }));
-    return provider;
-  };
-
-  const autoSelectAudio = (PROVIDER, AUDIO, EPISODE = 0) => {
-    const provider = autoSelectProvider(PROVIDER);
-    let audio = AUDIO;
-    const list = Object.entries(providers[provider].episodes)
-      .filter(audio => audio[1][EPISODE])
-      .map(audio => audio[0]);
-
-    if (!list.includes(audio)) {
-      audio = list[0];
-    }
-
-    setAvailDropdown(prev => ({
-      ...prev,
-      audios: list
-    }));
-
-    return audio;
   };
 
   const animeTitleDisplay = () => {
@@ -202,15 +275,14 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
 
   const renderedEpisode = useMemo(
     () =>
-      episodeList?.map((episode, idx) => {
+      episodeSlots.template.map((episode, idx) => {
         return (
           <div
-            key={episode.title}
+            key={`ep-${idx}-${episode.title ?? ''}`}
             className={style.episodeItem}
             onClick={() => {
               const { provider, audio, type } = videoSource;
               getEpisodeData(provider, audio, type, idx);
-              setEpisode(idx);
             }}
           >
             {episode.image && <img src={episode.image} />}
@@ -224,7 +296,7 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
           </div>
         );
       }),
-    [videoSource]
+    [episodeSlots.template, videoSource]
   );
 
   useEffect(() => {
@@ -277,8 +349,7 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
       });
       countDownRef.current = null;
       prevEpisodeData.current = null;
-      setVideoSource({ src: null, type: null, provider: null, audio: null });
-      setEpisodeList([]);
+      setVideoSource({ src: null, type: null, kind: null, provider: null, audio: null, error: null });
 
       if (countdownInterval) {
         clearInterval(countdownInterval);
@@ -303,18 +374,36 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
         className={style.videoWrapper}
         style={{ backgroundImage: `url(${thumbnail})` }}
       >
-        <MyPlayer
-          videoType={videoSource.type?.split(' ')?.at(-1)}
-          src={videoSource.src}
-          poster={thumbnail}
-        ></MyPlayer>
+        {videoSource.error && !videoSource.src ? (
+          <div className={style.errorOverlay}>
+            <span>{videoSource.error}</span>
+          </div>
+        ) : (
+          <MyPlayer
+            videoType={videoSource.kind || videoSource.type?.split(' ')?.at(-1)}
+            src={videoSource.src}
+            poster={thumbnail}
+            onError={() => {
+              // Player-level failure (HLS retries exhausted / media error):
+              // surface it in the wrapper; clearing the dedupe ref lets the
+              // user re-select the same stream to retry.
+              prevEpisodeData.current = null;
+              setVideoSource(prev => ({
+                ...prev,
+                src: null,
+                error: `Playback failed (${prev.type || prev.kind || 'stream'}) — try another stream`
+              }));
+            }}
+          />
+        )}
       </div>
 
       {(() => {
         const { provider, type, audio } = videoSource;
         if (!provider || !audio) return;
 
-        const data = providers[provider].episodes[audio][episode];
+        const data = providers[provider]?.episodes?.[audio]?.[episode];
+        if (!data) return;
         return (
           <div className={style.wrapper}>
             <div className={style.episodeTitle}>
@@ -369,20 +458,15 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
                     <div className={style.providers} key='providers'>
                       {availDropdown.providers
                         .filter(i => i !== provider)
-                        .map((provider, idx) => (
+                        .map(p => (
                           <div
-                            key={`provider-${idx}`}
-                            onClick={e => {
+                            key={`provider-${p}`}
+                            onClick={() => {
                               setDropdownState('provider');
-                              getEpisodeData(
-                                e.target.innerText,
-                                audio,
-                                type,
-                                episode
-                              );
+                              getEpisodeData(p, audio, type, episode);
                             }}
                           >
-                            {provider}
+                            {p}
                           </div>
                         ))}
                     </div>
@@ -391,20 +475,15 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
                     <div className={style.audios}>
                       {availDropdown.audios
                         .filter(i => i !== audio)
-                        .map((audio, idx) => (
+                        .map(a => (
                           <div
-                            key={`audio-${idx}`}
-                            onClick={e => {
+                            key={`audio-${a}`}
+                            onClick={() => {
                               setDropdownState('audio');
-                              getEpisodeData(
-                                provider,
-                                e.target.innerText,
-                                type,
-                                episode
-                              );
+                              getEpisodeData(provider, a, type, episode);
                             }}
                           >
-                            {audio}
+                            {a}
                           </div>
                         ))}
                     </div>
@@ -413,20 +492,15 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
                     <div className={style.videoTypes}>
                       {availDropdown.videoTypes
                         .filter(i => i !== type)
-                        .map((type, idx) => (
+                        .map(t => (
                           <div
-                            key={`video-type-${idx}`}
-                            onClick={e => {
+                            key={`video-type-${t}`}
+                            onClick={() => {
                               setDropdownState('video-type');
-                              getEpisodeData(
-                                provider,
-                                audio,
-                                e.target.innerText,
-                                episode
-                              );
+                              getEpisodeData(provider, audio, t, episode);
                             }}
                           >
-                            {type}
+                            {t}
                           </div>
                         ))}
                     </div>
