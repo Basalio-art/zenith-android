@@ -184,6 +184,7 @@
       text-overflow: ellipsis;
 
       cursor: pointer;
+      -webkit-user-select: none;
       user-select: none;
 
       &.expanded {

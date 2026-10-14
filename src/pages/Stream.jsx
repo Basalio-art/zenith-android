@@ -48,61 +48,43 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
 
   const prevEpisodeData = useRef(null);
 
-  // Global episode-slot template: the longest audio list ANY provider has
-  // (e.g. P1=9 eps, P2=10 eps → display 10 slots). Playback follows the
-  // selected provider; clicking a slot it lacks auto-switches provider.
-  const episodeSlots = useMemo(() => {
-    let template = [];
-    let max = 0;
-    for (const pv of Object.values(providers || {})) {
-      for (const list of Object.values(pv?.episodes || {})) {
-        if (Array.isArray(list) && list.length > max) {
-          max = list.length;
-          template = list;
-        }
-      }
-    }
-    return { max, template };
-  }, [providers]);
+  // Case/whitespace-tolerant title normalization for the meta-title gate.
+  const normTitle = value =>
+    (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 
-  // Resolve (provider, audio) holding episodeIdx, honoring the current
-  // selection: same provider+audio → same provider/other audio → other
-  // provider/same audio → any. Null when no provider has the slot.
-  const resolveEpisodeSlot = (requestedProvider, requestedAudio, episodeIdx) => {
-    const has = (p, a) => !!providers?.[p]?.episodes?.[a]?.[episodeIdx];
-    const pick = p => {
-      const audios = Object.keys(providers?.[p]?.episodes || {}).filter(a => has(p, a));
-      if (!audios.length) return null;
-      return { provider: p, audio: audios.includes(requestedAudio) ? requestedAudio : audios[0] };
-    };
-
-    if (requestedProvider && has(requestedProvider, requestedAudio)) {
-      return { provider: requestedProvider, audio: requestedAudio };
-    }
-    if (requestedProvider) {
-      const r = pick(requestedProvider);
-      if (r) return r;
-    }
-    for (const p of Object.keys(providers || {})) {
-      if (p === requestedProvider) continue;
-      const r = pick(p);
-      if (r) return r;
-    }
-    return null;
-  };
+  // Displayed episode list = the SELECTED provider's longest audio list
+  // (sub/dub can differ; the list changes only when the provider changes —
+  // no global max across providers).
+  const selectedProviderEpisodes = useMemo(() => {
+    const lists = Object.values(
+      providers?.[videoSource.provider]?.episodes || {}
+    ).filter(list => Array.isArray(list));
+    return lists.reduce((a, b) => (b.length > a.length ? b : a), []);
+  }, [providers, videoSource.provider]);
 
   const getEpisodeData = async (PROVIDER, AUDIO, TYPE, EPISODE = 0) => {
-    // Dropdown "providers": only providers with ≥1 non-empty audio list —
-    // episode-less providers never appear.
-    const providerList = Object.keys(providers || {}).filter(p =>
-      Object.values(providers[p]?.episodes || {}).some(
-        list => Array.isArray(list) && list.length
-      )
+    // Dropdown "providers": providers with ≥1 non-empty audio list whose
+    // meta.title equals this anime (english or romaji, normalized) —
+    // wrong-series matches never appear.
+    const titles = new Set(
+      [anime?.title?.english, anime?.title?.romaji]
+        .map(normTitle)
+        .filter(Boolean)
     );
+    const providerList = Object.keys(providers || {}).filter(p => {
+      const pv = providers[p];
+      const hasEpisodes = Object.values(pv?.episodes || {}).some(
+        list => Array.isArray(list) && list.length
+      );
+      return hasEpisodes && titles.has(normTitle(pv?.meta?.title));
+    });
     setAvailDropdown(prev => ({ ...prev, providers: providerList, audios: [], videoTypes: [] }));
 
-    const resolved = resolveEpisodeSlot(PROVIDER, AUDIO, EPISODE);
-    if (!resolved) {
+    // The selected provider is honored when valid; otherwise fall back to
+    // the first verified provider (initial mount / provider gated out).
+    const provider = providerList.includes(PROVIDER) ? PROVIDER : providerList[0];
+
+    if (!provider) {
       prevEpisodeData.current = null;
       setVideoSource(prev => ({
         ...prev,
@@ -110,15 +92,38 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
         kind: null,
         provider: null,
         audio: null,
-        error: `No provider has episode ${EPISODE + 1}`
+        error:
+          !providerList.length && Object.keys(providers || {}).length
+            ? 'No verified providers for this title'
+            : 'No providers with episodes available'
       }));
       return;
     }
 
-    const { provider, audio } = resolved;
+    // Audio within the selected provider: requested if it holds the
+    // episode, else any audio that does, else the first non-empty list.
+    const audioEntries = Object.entries(
+      providers[provider]?.episodes || {}
+    ).filter(([, list]) => Array.isArray(list) && list.length);
 
-    // Dedupe on the RESOLVED tuple: auto-switching never double-fetches,
-    // and failure paths clear the ref so re-clicking retries.
+    // Episode slots come only from the SELECTED provider: clamp the
+    // requested index to its longest list (switching from a 10-episode
+    // provider to a 9-episode one lands on its last episode).
+    const providerMax = audioEntries.reduce(
+      (max, [, list]) => Math.max(max, list.length),
+      0
+    );
+    EPISODE = Math.max(0, Math.min(EPISODE, providerMax - 1));
+
+    const audiosWithEp = audioEntries
+      .filter(([, list]) => list[EPISODE])
+      .map(([a]) => a);
+    const audio = audiosWithEp.includes(AUDIO)
+      ? AUDIO
+      : audiosWithEp[0] || audioEntries[0][0];
+
+    // Dedupe on the resolved tuple; failure paths clear the ref so
+    // re-clicking retries.
     const prevData = prevEpisodeData.current;
     const newData = [provider, audio, TYPE, EPISODE];
     if (prevData && prevData.every((data, i) => data === newData[i])) return;
@@ -126,12 +131,7 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
     setEpisode(EPISODE);
 
     const episodes = providers[provider]?.episodes?.[audio] || [];
-    setAvailDropdown(prev => ({
-      ...prev,
-      audios: Object.entries(providers[provider]?.episodes || {})
-        .filter(([, list]) => Array.isArray(list) && list[EPISODE])
-        .map(([a]) => a)
-    }));
+    setAvailDropdown(prev => ({ ...prev, audios: audiosWithEp }));
 
     setThumbnail(
       episodes[EPISODE]?.image ??
@@ -275,7 +275,7 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
 
   const renderedEpisode = useMemo(
     () =>
-      episodeSlots.template.map((episode, idx) => {
+      selectedProviderEpisodes.map((episode, idx) => {
         return (
           <div
             key={`ep-${idx}-${episode.title ?? ''}`}
@@ -296,7 +296,7 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
           </div>
         );
       }),
-    [episodeSlots.template, videoSource]
+    [selectedProviderEpisodes, videoSource]
   );
 
   useEffect(() => {

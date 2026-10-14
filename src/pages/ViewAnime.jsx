@@ -5,6 +5,16 @@ import { useState, useContext, useEffect, useMemo, useRef, memo } from 'react';
 import { AppContext } from '../App.jsx';
 import { services, mergeMedia } from '../services/manager/index.js';
 
+// Two-wave provider loading, ordered by measured cold latency: anikoto
+// answers in ~1s (Watch button goes live on wave 1); the remaining 13 ride
+// a single filtered request that merges in the background (~10s, same total
+// upstream work as the old blocking sweep).
+const FAST_PROVIDER = ['anikoto'];
+const REST_PROVIDERS = [
+  'mkissa', 'reanime', 'animegg', 'anineko', 'anidbapp', 'animenosub',
+  'anizone', 'aniwaves', 'anibd', 'senshi', 'kaa', 'animedunya', 'animeonsen'
+];
+
 function ViewAnime({ anime: animeProp, providers }) {
   const {
     setProviders,
@@ -80,20 +90,42 @@ function ViewAnime({ anime: animeProp, providers }) {
 
   const getProviders = async id => {
     setLoadingProviders(true);
-    try {
-      // GET Anivexa /episodes/:anilistId → normalizer maps Anivexa's
-      // provider-top-level envelope into Zenith's { providers: {...} },
-      // filtering out failed provider entries ({error, stack}).
-      const result = await services.anivexa.getEpisodes(id);
+    // Drop the previous anime's providers so wave merges below can never
+    // mix stale entries into the new title.
+    setProviders(null);
+    let firstWave = null;
 
-      if (animeIDRef.current === id) {
-        setProviders(result?.providers || null);
+    // Wave 1 — one fast provider (~1s cold) → Watch button usable now.
+    try {
+      const first = await services.anivexa.getEpisodesFiltered(id, FAST_PROVIDER);
+      if (animeIDRef.current !== id) return;
+      const firstMap = first?.providers || {};
+      if (Object.keys(firstMap).length) {
+        firstWave = firstMap;
+        setProviders(prev => ({ ...(prev || {}), ...firstMap }));
+        setLoadingProviders(false);
       }
     } catch (err) {
-      console.log('Episodes fetch failed:', err);
-      setProviders(null);
+      console.log('Fast providers fetch failed:', err);
     }
-    setLoadingProviders(false);
+
+    // Wave 2 — every remaining provider, merged into the dropdown as soon
+    // as it returns. A wave-2 failure keeps wave-1 results (partial set).
+    try {
+      const rest = await services.anivexa.getEpisodesFiltered(id, REST_PROVIDERS);
+      if (animeIDRef.current !== id) return;
+      const restMap = rest?.providers || {};
+      setProviders(prev => {
+        const merged = { ...(prev || {}), ...restMap };
+        return Object.keys(merged).length ? merged : null;
+      });
+      setLoadingProviders(false);
+    } catch (err) {
+      console.log('Episodes fetch failed:', err);
+      if (animeIDRef.current !== id) return;
+      if (!firstWave) setProviders(null); // no partial set to fall back on
+      setLoadingProviders(false);
+    }
   };
 
   useEffect(() => {

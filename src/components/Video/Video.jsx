@@ -13,6 +13,8 @@ export const MyPlayer = memo(({ src, videoType, poster, onError }) => {
   useEffect(() => {
     if (!src || !videoType) return;
 
+    console.log(src)
+    
     const video = videoRef.current;
     if (!video) return;
 

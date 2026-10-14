@@ -14,6 +14,27 @@ export async function getEpisodes(anilistId) {
   }
 }
 
+export async function getEpisodesFiltered(anilistId, providerNames) {
+  // Filtered route scrapes ONLY the requested providers (seconds, not the
+  // full ~10s all-provider sweep); map=false skips the id-mapping fetch
+  // the app never reads. Names are validated — they become URL path segments.
+  const names = (providerNames || [])
+    .filter(n => typeof n === 'string' && /^[\w-]+$/.test(n))
+    .join('/');
+  if (!names) return null;
+  try {
+    const data = await http.get(
+      `${CONFIG.ANIVEXA_BASE}/episodes/${names}/${anilistId}?map=false`,
+      {},
+      { timeout: 20000 }
+    );
+    return normalizeEpisodes(data);
+  } catch (e) {
+    if (e instanceof ServiceError) throw e;
+    throw new ServiceError('Episodes fetch failed', { class: ERROR_CLASSES.NETWORK, cause: e });
+  }
+}
+
 export async function getWatchSources(episode, provider) {
   if (!episode?.id) {
     throw new ServiceError('Episode missing id', { class: ERROR_CLASSES.INVALID });

@@ -10,6 +10,16 @@
   flex-direction: column;
   overflow-y: auto;
 
+  /* No text selection anywhere on the stream page: drag-scrolling or
+     tapping titles/descriptions must never paint a highlight. */
+  -webkit-user-select: none;
+  user-select: none;
+
+  /* Long-press on thumbnails/poster must not drag image ghosts. */
+  img {
+    -webkit-user-drag: none;
+  }
+
   .videoWrapper {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -114,6 +124,7 @@
       display: flex;
       font-size: 0.8rem;
       align-items: center;
+      user-select: none;
 
       > * {
         border: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
@@ -185,6 +196,7 @@
       gap: 10px;
       overflow-y: auto;
       max-height: 350px;
+      user-select: none;
 
       .episodeItem {
         overflow: hidden;
