@@ -35,7 +35,13 @@ const APP_VERSION = '1.4.0';
 const CONFIG_URL =
   'https://raw.githubusercontent.com/Basalio-art/zenith-android/refs/heads/main/config.json';
 
-const fallbackProviders = ['AnimeParadise', 'Anikoto', 'GogoAnime', 'MegaPlay', 'Goyabu']
+const fallbackProviders = [
+  'AnimeParadise',
+  'Anikoto',
+  'GogoAnime',
+  'MegaPlay',
+  'Goyabu'
+];
 
 function App() {
   const [hasInternet, setHasInternet] = useState(true);
@@ -54,12 +60,15 @@ function App() {
   const [bash2Copied, setBash2Copied] = useState(false);
   const [bash3Copied, setBash3Copied] = useState(false);
   const [providers, setProviders] = useState(null);
+  const [providersLoading, setProvidersLoading] = useState(false);
   const [selProvider, setSelProvider] = useState('bee');
   const [selAudio, setSelAudio] = useState('sub');
   const [selVideoType, setSelVideoType] = useState('hls');
   const [openAnilistStatusAlert, setOpenAnilistStatusAlert] = useState(false);
   const [anilistStatus, setAnilistStatus] = useState(null);
-  const [fallbackProvider, setFallbackProvider] = useState(fallbackProviders[0]);
+  const [fallbackProvider, setFallbackProvider] = useState(
+    fallbackProviders[0]
+  );
   const [valid, setValid] = useState({
     appVersion: {
       required: APP_VERSION,
@@ -82,6 +91,7 @@ function App() {
   const loadingPercentRef = useRef(0);
 
   const isInitialInternetMount = useRef(true);
+  const ServerIsChecked = useRef(false);
   const bodyRef = useRef(null);
 
   const currentPageData = useRef({
@@ -119,6 +129,7 @@ function App() {
           <Stream
             anime={viewAnimeData}
             providers={providers}
+            providersLoading={providersLoading}
             selProvider={selProvider}
             selAudio={selAudio}
             selVideoType={selVideoType}
@@ -240,7 +251,10 @@ function App() {
     setSearchIsLoading(true);
     try {
       // Backup API (manager FALLBACK_BASE) is only used when AniList is unavailable.
-      const result = await services.fallback.fallbackSearch(query, fallbackProvider);
+      const result = await services.fallback.fallbackSearch(
+        query,
+        fallbackProvider
+      );
       const list = Array.isArray(result)
         ? result
         : result?.results || result?.data || [];
@@ -337,7 +351,8 @@ function App() {
         const remoteConfig = JSON.parse(data);
 
         // Preferred key for the Anivexa stack.
-        if (remoteConfig['anivexa-version']) return remoteConfig['anivexa-version'];
+        if (remoteConfig['anivexa-version'])
+          return remoteConfig['anivexa-version'];
 
         // Legacy anime-api key gates only when it targets the 2.x line.
         const legacy = remoteConfig['backend-version'];
@@ -453,12 +468,17 @@ function App() {
   }, [searchQuery]);
 
   useEffect(() => {
-     if (!searchQuery) return;
-    
-    fallbackFetchSearchQuery(searchQuery)
-  }, [fallbackProvider])
+    if (!searchQuery) return;
+
+    fallbackFetchSearchQuery(searchQuery);
+  }, [fallbackProvider]);
 
   useEffect(() => {
+    if (!isLoading && hasInternet && !ServerIsChecked.current) {
+      ServerIsChecked.current = false
+      serverStatus();
+    }
+
     const reChecking = async () => {
       await checkVersion();
       await checkBackendV();
@@ -492,7 +512,6 @@ function App() {
       return;
     }
 
-    serverStatus();
     fetchAnimeData();
 
     const backendCheck = async () => {
@@ -598,6 +617,7 @@ function App() {
               hasInternet,
               setViewAnimeData,
               setProviders,
+              setProvidersLoading,
               setSelProvider,
               setSelAudio,
               setSelVideoType,

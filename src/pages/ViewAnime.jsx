@@ -3,21 +3,21 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
 import { useState, useContext, useEffect, useMemo, useRef, memo } from 'react';
 import { AppContext } from '../App.jsx';
-import { services, mergeMedia } from '../services/manager/index.js';
+import {
+  services,
+  mergeMedia,
+  ANIVEXA_PROVIDERS
+} from '../services/manager/index.js';
 
-// Two-wave provider loading, ordered by measured cold latency: anikoto
-// answers in ~1s (Watch button goes live on wave 1); the remaining 13 ride
-// a single filtered request that merges in the background (~10s, same total
-// upstream work as the old blocking sweep).
-const FAST_PROVIDER = ['anikoto'];
-const REST_PROVIDERS = [
-  'mkissa', 'reanime', 'animegg', 'anineko', 'anidbapp', 'animenosub',
-  'anizone', 'aniwaves', 'anibd', 'senshi', 'kaa', 'animedunya', 'animeonsen'
-];
+// Incremented whenever a new provider sweep starts. The active sweep must
+// keep merging after ViewAnime unmounts into Stream, but a sweep for a newer
+// anime must invalidate older ones so their late results cannot leak in.
+let providersRequestId = 0;
 
 function ViewAnime({ anime: animeProp, providers }) {
   const {
     setProviders,
+    setProvidersLoading,
     setOpenStream,
     hasInternet,
     setNavigatorOpen,
@@ -89,43 +89,57 @@ function ViewAnime({ anime: animeProp, providers }) {
   };
 
   const getProviders = async id => {
-    setLoadingProviders(true);
-    // Drop the previous anime's providers so wave merges below can never
-    // mix stale entries into the new title.
-    setProviders(null);
-    let firstWave = null;
+    const requestId = ++providersRequestId;
+    animeIDRef.current = id;
 
-    // Wave 1 — one fast provider (~1s cold) → Watch button usable now.
-    try {
-      const first = await services.anivexa.getEpisodesFiltered(id, FAST_PROVIDER);
-      if (animeIDRef.current !== id) return;
-      const firstMap = first?.providers || {};
-      if (Object.keys(firstMap).length) {
-        firstWave = firstMap;
-        setProviders(prev => ({ ...(prev || {}), ...firstMap }));
-        setLoadingProviders(false);
-      }
-    } catch (err) {
-      console.log('Fast providers fetch failed:', err);
+    if (!id) {
+      setLoadingProviders(false);
+      setProvidersLoading(false);
+      return;
     }
 
-    // Wave 2 — every remaining provider, merged into the dropdown as soon
-    // as it returns. A wave-2 failure keeps wave-1 results (partial set).
-    try {
-      const rest = await services.anivexa.getEpisodesFiltered(id, REST_PROVIDERS);
-      if (animeIDRef.current !== id) return;
-      const restMap = rest?.providers || {};
-      setProviders(prev => {
-        const merged = { ...(prev || {}), ...restMap };
-        return Object.keys(merged).length ? merged : null;
-      });
+    const isCurrentRequest = () =>
+      requestId === providersRequestId && animeIDRef.current === id;
+
+    setLoadingProviders(true);
+    setProvidersLoading(true);
+    // Drop the previous anime's providers so merges below can never mix
+    // stale entries into the new title.
+    setProviders(null);
+
+    // Cached results paint immediately on re-entry; the sweep below only
+    // retries providers that are missing or past their TTL.
+    const cached = services.anivexa.getCachedProviders(id);
+    let hasProvider = Boolean(cached);
+    if (cached) {
+      setProviders(cached);
       setLoadingProviders(false);
+    }
+
+    try {
+      // Each provider request is independent and merges the moment it
+      // settles, so the Stream dropdown fills progressively instead of
+      // waiting for the slowest provider in a single batched response.
+      await services.anivexa.loadProvidersProgressively(
+        id,
+        ANIVEXA_PROVIDERS,
+        (name, providerData) => {
+          if (!isCurrentRequest()) return;
+          if (!hasProvider) {
+            hasProvider = true;
+            setLoadingProviders(false);
+          }
+          setProviders(prev => ({ ...(prev || {}), [name]: providerData }));
+        }
+      );
     } catch (err) {
       console.log('Episodes fetch failed:', err);
-      if (animeIDRef.current !== id) return;
-      if (!firstWave) setProviders(null); // no partial set to fall back on
-      setLoadingProviders(false);
     }
+
+    if (!isCurrentRequest()) return;
+    if (!hasProvider) setProviders(null);
+    setLoadingProviders(false);
+    setProvidersLoading(false);
   };
 
   useEffect(() => {
@@ -134,7 +148,6 @@ function ViewAnime({ anime: animeProp, providers }) {
     navigate('anime', 'preview');
 
     getProviders(animeProp?.id);
-    animeIDRef.current = animeProp?.id;
     // New card click (or unmount) → collapsed description.
     return () => setDescExpanded(false);
   }, [animeProp]);

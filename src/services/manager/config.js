@@ -13,6 +13,25 @@ export const CONFIG = {
   ANILIST_RATE_LIMIT_MS: 500,
 };
 
+// Anivexa's provider IDs, ordered by observed cold latency (fastest first):
+// the first `concurrency` entries decide how quickly Watch and the provider
+// dropdown populate, so slow scrapers such as anizone run last.
+// Keep in sync with GET /version ({ providers }).
+export const ANIVEXA_PROVIDERS = [
+  'anipm',
+  'anikoto',
+  'reanime',
+  'animedunya',
+  'mkissa',
+  'animeonsen',
+  'animegg',
+  'animenosub',
+  'senshi',
+  'kaa',
+  'aniwaves',
+  'anizone',
+];
+
 // Fields the frontend reads from list/home/search cards, ViewAnime's first
 // paint, and Stream (which receives the RAW list item — needs airingAt for
 // its countdown). Verified against Home/Search/ViewAnime/Stream usage.

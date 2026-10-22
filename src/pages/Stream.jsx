@@ -2,15 +2,50 @@ import style from '../styles/Stream.module.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { useContext, useState, useEffect, useRef, memo, useMemo } from 'react';
 import { AppContext } from '../App.jsx';
-import { services } from '../services/manager/index.js';
+import { services, ANIVEXA_PROVIDERS } from '../services/manager/index.js';
 import { MyPlayer } from '../components/Video/Video.jsx';
 import { ArrowLeft } from 'lucide-react';
 
-const ColorType = {
-  hls: '#ffa000'
+// Case/whitespace-tolerant title normalization for the meta-title gate.
+const normTitle = value =>
+  (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const providerOrder = name => {
+  const index = ANIVEXA_PROVIDERS.indexOf(name);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 };
 
-function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
+// Dropdown "providers": providers with ≥1 non-empty audio list whose
+// meta.title equals this anime (english or romaji, normalized) —
+// wrong-series matches never appear. Kept as a pure helper so the list is
+// derived on every render from App's live provider state.
+function getVerifiedProviders(providers, titles) {
+  const normalizedTitles = new Set(
+    (titles || []).map(normTitle).filter(Boolean)
+  );
+  if (!normalizedTitles.size) return [];
+
+  return Object.keys(providers || {})
+    .filter(name => {
+      const provider = providers[name];
+      const hasEpisodes = Object.values(provider?.episodes || {}).some(
+        list => Array.isArray(list) && list.length
+      );
+      return (
+        hasEpisodes && normalizedTitles.has(normTitle(provider?.meta?.title))
+      );
+    })
+    .sort((a, b) => providerOrder(a) - providerOrder(b));
+}
+
+function Stream({
+  providers,
+  providersLoading,
+  anime,
+  selProvider,
+  selAudio,
+  selVideoType
+}) {
   const {
     setNavigatorOpen,
     setSelProvider,
@@ -24,7 +59,6 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
   const [episode, setEpisode] = useState(0);
   const [openDropdown, setOpenDropDown] = useState(null);
   const [availDropdown, setAvailDropdown] = useState({
-    providers: [],
     audios: [],
     videoTypes: []
   });
@@ -48,9 +82,17 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
 
   const prevEpisodeData = useRef(null);
 
-  // Case/whitespace-tolerant title normalization for the meta-title gate.
-  const normTitle = value =>
-    (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  // Live dropdown list: App merges provider waves into `providers` while
+  // this page is mounted, so deriving from the prop keeps the list fresh
+  // without a remount or a re-click.
+  const availProviders = useMemo(
+    () =>
+      getVerifiedProviders(providers, [
+        anime?.title?.english,
+        anime?.title?.romaji
+      ]),
+    [providers, anime?.title?.english, anime?.title?.romaji]
+  );
 
   // Displayed episode list = the SELECTED provider's longest audio list
   // (sub/dub can differ; the list changes only when the provider changes —
@@ -63,26 +105,14 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
   }, [providers, videoSource.provider]);
 
   const getEpisodeData = async (PROVIDER, AUDIO, TYPE, EPISODE = 0) => {
-    // Dropdown "providers": providers with ≥1 non-empty audio list whose
-    // meta.title equals this anime (english or romaji, normalized) —
-    // wrong-series matches never appear.
-    const titles = new Set(
-      [anime?.title?.english, anime?.title?.romaji]
-        .map(normTitle)
-        .filter(Boolean)
-    );
-    const providerList = Object.keys(providers || {}).filter(p => {
-      const pv = providers[p];
-      const hasEpisodes = Object.values(pv?.episodes || {}).some(
-        list => Array.isArray(list) && list.length
-      );
-      return hasEpisodes && titles.has(normTitle(pv?.meta?.title));
-    });
-    setAvailDropdown(prev => ({ ...prev, providers: providerList, audios: [], videoTypes: [] }));
+    const providerList = availProviders;
+    setAvailDropdown(prev => ({ ...prev, audios: [], videoTypes: [] }));
 
     // The selected provider is honored when valid; otherwise fall back to
     // the first verified provider (initial mount / provider gated out).
-    const provider = providerList.includes(PROVIDER) ? PROVIDER : providerList[0];
+    const provider = providerList.includes(PROVIDER)
+      ? PROVIDER
+      : providerList[0];
 
     if (!provider) {
       prevEpisodeData.current = null;
@@ -161,7 +191,9 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
       setVideoSource(prev => ({
         ...prev,
         src: null,
-        error: `Episode ${EPISODE + 1} unavailable on ${provider} — try another provider`
+        error: `Episode ${
+          EPISODE + 1
+        } unavailable on ${provider} — try another provider`
       }));
       return;
     }
@@ -169,7 +201,10 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
     try {
       // Episode ids are preserved exactly as Anivexa returned them:
       // watch/{provider}/{anilistId}/{audio}/{provider}-{ep}
-      const streams = await services.anivexa.getWatchSources(episodeObj, provider);
+      const streams = await services.anivexa.getWatchSources(
+        episodeObj,
+        provider
+      );
 
       if (id !== getEpisodeDataId.current) return;
 
@@ -221,7 +256,9 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
           ? streamResult.kind
           : streamResult.type?.split(' ')?.at(-1)
         : 'embed';
-      const displayType = playable ? selectedItem : `${streamResult.server || provider} embed`;
+      const displayType = playable
+        ? selectedItem
+        : `${streamResult.server || provider} embed`;
 
       setVideoSource(prev => ({
         ...prev,
@@ -261,7 +298,9 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
             offset: 0.1
           },
           {
-            transform: `translateX(-${firstChild.children[0].clientWidth + 50}px)`
+            transform: `translateX(-${
+              firstChild.children[0].clientWidth + 50
+            }px)`
           }
         ],
         {
@@ -285,7 +324,10 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
               getEpisodeData(provider, audio, type, idx);
             }}
           >
-            {episode.image && <img src={episode.image} />}
+            {episode.image && <img onError={(e) => {
+              e.target.outerHTML = `<div class="${style.noImage}">${idx++}</div>`
+            }} src={episode.image} />}
+
             <div className={style.wrapper}>
               <div className={style.episodeTitle}>
                 {episode.number && `${episode.number}. `}
@@ -306,6 +348,8 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
     let PROVIDER = selProvider;
     let AUDIO = selAudio;
 
+    // Mount-time player seeding is intentionally effect-driven.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     getEpisodeData(PROVIDER, AUDIO, selVideoType);
 
     animeTitleDisplay();
@@ -343,13 +387,19 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
       setOpenDropDown(null);
       setThumbnail(null);
       setAvailDropdown({
-        providers: [],
         videoTypes: [],
         audios: []
       });
       countDownRef.current = null;
       prevEpisodeData.current = null;
-      setVideoSource({ src: null, type: null, kind: null, provider: null, audio: null, error: null });
+      setVideoSource({
+        src: null,
+        type: null,
+        kind: null,
+        provider: null,
+        audio: null,
+        error: null
+      });
 
       if (countdownInterval) {
         clearInterval(countdownInterval);
@@ -357,6 +407,15 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    // Providers keep landing while the user is already on this page. If the
+    // first wave had no title-verified provider, auto-resolve as soon as a
+    // matching one arrives instead of leaving the error screen up.
+    if (videoSource.provider || !availProviders.length) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    getEpisodeData(selProvider, selAudio, selVideoType, episode);
+  }, [availProviders.length, videoSource.provider]);
 
   return (
     <div className={style.container}>
@@ -376,12 +435,16 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
       >
         {videoSource.error && !videoSource.src ? (
           <div className={style.errorOverlay}>
-            <span>{videoSource.error}</span>
+            <span>
+              {providersLoading && !videoSource.provider
+                ? 'Loading providers . . .'
+                : videoSource.error}
+            </span>
           </div>
         ) : (
           <MyPlayer
             videoType={videoSource.kind || videoSource.type?.split(' ')?.at(-1)}
-            src={videoSource.src}
+            // src={videoSource.src}
             poster={thumbnail}
             onError={() => {
               // Player-level failure (HLS retries exhausted / media error):
@@ -391,7 +454,9 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
               setVideoSource(prev => ({
                 ...prev,
                 src: null,
-                error: `Playback failed (${prev.type || prev.kind || 'stream'}) — try another stream`
+                error: `Playback failed (${
+                  prev.type || prev.kind || 'stream'
+                }) — try another stream`
               }));
             }}
           />
@@ -456,7 +521,7 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
                 >
                   {openDropdown === 'provider' && (
                     <div className={style.providers} key='providers'>
-                      {availDropdown.providers
+                      {availProviders
                         .filter(i => i !== provider)
                         .map(p => (
                           <div
@@ -469,6 +534,11 @@ function Stream({ providers, anime, selProvider, selAudio, selVideoType }) {
                             {p}
                           </div>
                         ))}
+                      {providersLoading && (
+                        <div className={style.dropdownLoading}>
+                          Checking more providers . . .
+                        </div>
+                      )}
                     </div>
                   )}
                   {openDropdown === 'audio' && (
