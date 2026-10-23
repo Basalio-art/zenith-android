@@ -27,7 +27,7 @@
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    max-height: 250px;
+    /* max-height: 250px; */
 
     .errorOverlay {
       width: 100%;
@@ -236,7 +236,7 @@
           display: grid;
           place-content: center;
           font-size: 2rem;
-          color: color-mix(in srgb, var(--bg-color2), white 5%);
+          color: color-mix(in srgb, var(--bg-color2), var(--color-1) 10%);
           font-family: 'Orbitron';
         }
 
@@ -251,7 +251,6 @@
           .episodeTitle {
             font-size: 0.9rem;
             line-height: 1.1;
-            flex: 1 0;
 
             overflow: hidden;
             display: -webkit-box;

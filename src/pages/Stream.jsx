@@ -5,6 +5,7 @@ import { AppContext } from '../App.jsx';
 import { services, ANIVEXA_PROVIDERS } from '../services/manager/index.js';
 import { MyPlayer } from '../components/Video/Video.jsx';
 import { ArrowLeft } from 'lucide-react';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 
 // Case/whitespace-tolerant title normalization for the meta-title gate.
 const normTitle = value =>
@@ -324,9 +325,14 @@ function Stream({
               getEpisodeData(provider, audio, type, idx);
             }}
           >
-            {episode.image && <img onError={(e) => {
-              e.target.outerHTML = `<div class="${style.noImage}">${idx++}</div>`
-            }} src={episode.image} />}
+            {episode.image && (
+              <img
+                onError={e => {
+                  e.target.outerHTML = `<div class="${style.noImage}">${episode.number}</div>`;
+                }}
+                src={episode.image}
+              />
+            )}
 
             <div className={style.wrapper}>
               <div className={style.episodeTitle}>
