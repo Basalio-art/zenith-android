@@ -122,20 +122,52 @@
       position: relative;
       display: flex;
       font-size: 0.8rem;
-      align-items: center;
       user-select: none;
+      gap: 0;
 
       > * {
-        border: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
-        transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+        border: none;
+      }
+
+      .selectGroup {
+        border: none;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+        align-items: center;
+        
+      }
+
+      .selectLabel {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: color-mix(in srgb, var(--color-2), transparent 45%);
+        margin-left: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        justify-content: flex-start;
       }
 
       .provider,
       .videoType,
       .audio {
+        border: 1px solid color-mix(in srgb, var(--color-1), transparent 75%);
+        border-radius: 8px;
         line-height: 1;
         padding: 1rem;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        height: 100%;
+        transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+        text-align: left;
+        flex: 1 0;
 
         &:hover {
           border-color: color-mix(in srgb, var(--color-2), transparent 45%);
@@ -150,6 +182,15 @@
       .audio,
       .provider {
         border-right: none;
+      }
+
+      .chevron {
+        transition: transform 0.2s ease;
+        flex-shrink: 0;
+      }
+
+      .chevronOpen {
+        transform: rotate(180deg);
       }
 
       .dropdownWrapper {
@@ -171,11 +212,30 @@
           overflow: hidden;
 
           div {
+            height: 3rem;
             padding: 0.5rem;
             border: 1px solid
               color-mix(in srgb, var(--color-1), transparent 75%);
             border-top: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            overflow: hidden;
             text-align: center;
+            transition: background 0.15s, border-color 0.15s;
+
+            &:hover:not(.selected) {
+              background: color-mix(in srgb, var(--color-2), transparent 93%);
+            }
+          }
+
+          /* The active value stays listed and stays highlighted. */
+          div.selected {
+            background: color-mix(in srgb, var(--color-2), transparent 85%);
+            border-color: color-mix(in srgb, var(--color-2), transparent 55%);
+            color: color-mix(in srgb, var(--color-2), #ffffff 15%);
+            font-weight: 600;
           }
         }
 
@@ -184,6 +244,45 @@
           font-style: italic;
           opacity: 0.65;
           pointer-events: none;
+        }
+
+        /* Provider row: icon + name + availability count. */
+        .providerItem {
+          height: 3rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 0.5rem 0.75rem;
+          text-align: left;
+          border: 1px solid
+            color-mix(in srgb, var(--color-1), transparent 75%);
+          border-top: none;
+          transition: background 0.15s, border-color 0.15s;
+
+          &:hover:not(.selected) {
+            background: color-mix(in srgb, var(--color-2), transparent 93%);
+          }
+        }
+
+        .providerIcon {
+          flex-shrink: 0;
+        }
+
+        .rowIcon {
+          flex-shrink: 0;
+        }
+
+        .providerCount {
+          font-size: 0.7rem;
+          opacity: 0.6;
+          margin-left: auto;
+          flex-shrink: 0;
+          white-space: nowrap;
+        }
+
+        .providerItem.selected .providerCount {
+          opacity: 0.85;
         }
       }
     }

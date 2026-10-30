@@ -4,8 +4,18 @@ import { useContext, useState, useEffect, useRef, memo, useMemo } from 'react';
 import { AppContext } from '../App.jsx';
 import { services, ANIVEXA_PROVIDERS } from '../services/manager/index.js';
 import { MyPlayer } from '../components/Video/Video.jsx';
-import { ArrowLeft } from 'lucide-react';
-import { Capacitor, CapacitorHttp } from '@capacitor/core';
+import {
+  ArrowLeft,
+  ChevronDown,
+  Monitor,
+  HardDrive,
+  Tv,
+  Server,
+  Headphones,
+  Film,
+  Volume2,
+  MonitorPlay,
+} from 'lucide-react';
 
 // Case/whitespace-tolerant title normalization for the meta-title gate.
 const normTitle = value =>
@@ -15,6 +25,73 @@ const providerOrder = name => {
   const index = ANIVEXA_PROVIDERS.indexOf(name);
   return index === -1 ? Number.MAX_SAFE_INTEGER : index;
 };
+
+const IMAGE_CHECK_TIMEOUT = 10000;
+
+// Real load test: an <img> only knows a URL is broken when it fires `error`.
+const canLoadImage = src =>
+  new Promise(resolve => {
+    if (typeof src !== 'string' || !src.trim()) {
+      resolve(false);
+      return;
+    }
+
+    const image = new Image();
+    let settled = false;
+    const finish = result => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      image.onload = null;
+      image.onerror = null;
+      resolve(result);
+    };
+
+    const timer = setTimeout(() => {
+      finish(false);
+      image.src = '';
+    }, IMAGE_CHECK_TIMEOUT);
+
+    image.onload = () => finish(true);
+    image.onerror = () => finish(false);
+    image.decoding = 'async';
+    image.src = src.trim();
+  });
+
+// Episode artwork is preferred, but only when it actually loads; otherwise
+// fall back to the anime banner, then its cover.
+const pickThumbnail = async candidates => {
+  const seen = new Set();
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+
+    const src = candidate.trim();
+    if (!src || seen.has(src)) continue;
+
+    seen.add(src);
+    if (await canLoadImage(src)) return src;
+  }
+
+  return null;
+};
+
+function EpisodeThumbnail({ src, number }) {
+  const [failedSrc, setFailedSrc] = useState(null);
+
+  if (!src || failedSrc === src) {
+    return <div className={style.noImage}>{number}</div>;
+  }
+
+  return (
+    <img
+      src={src}
+      loading='lazy'
+      decoding='async'
+      onError={() => setFailedSrc(src)}
+    />
+  );
+}
 
 // Dropdown "providers": providers with ≥1 non-empty audio list whose
 // meta.title equals this anime (english or romaji, normalized) —
@@ -38,6 +115,31 @@ function getVerifiedProviders(providers, titles) {
     })
     .sort((a, b) => providerOrder(a) - providerOrder(b));
 }
+
+// Icon per provider (lucide-react). Falls back to `Monitor` for anything
+// not explicitly mapped, so every provider row always shows an icon.
+const PROVIDER_ICONS = {
+  default: Monitor,
+  '9anime': Tv,
+  anix: Tv,
+  animepahe: Monitor,
+  animekisa: Monitor,
+  gogoanime: Tv,
+  zoro: Tv,
+  animeflix: Tv,
+  animeheaven: Tv,
+  yugen: HardDrive,
+};
+
+// Longest audio list length for a provider = how many episodes are available.
+const providerEpCount = (allProviders, name) => {
+  const provider = allProviders?.[name];
+  if (!provider) return 0;
+  const lists = Object.values(provider?.episodes || {}).filter(list =>
+    Array.isArray(list)
+  );
+  return lists.reduce((max, list) => Math.max(max, list.length), 0);
+};
 
 function Stream({
   providers,
@@ -75,6 +177,7 @@ function Stream({
   const animeTitleRef = useRef(null);
   const countDownRef = useRef(null);
   const getEpisodeDataId = useRef(0);
+  const thumbnailRequestId = useRef(0);
 
   const setDropdownState = dr => {
     if (openDropdown === dr) setOpenDropDown(null);
@@ -107,7 +210,6 @@ function Stream({
 
   const getEpisodeData = async (PROVIDER, AUDIO, TYPE, EPISODE = 0) => {
     const providerList = availProviders;
-    setAvailDropdown(prev => ({ ...prev, audios: [], videoTypes: [] }));
 
     // The selected provider is honored when valid; otherwise fall back to
     // the first verified provider (initial mount / provider gated out).
@@ -117,6 +219,9 @@ function Stream({
 
     if (!provider) {
       prevEpisodeData.current = null;
+      setAvailDropdown(prev => ({ ...prev, audios: [], videoTypes: [] }));
+      thumbnailRequestId.current += 1;
+      setThumbnail(null);
       setVideoSource(prev => ({
         ...prev,
         src: null,
@@ -159,17 +264,27 @@ function Stream({
     const newData = [provider, audio, TYPE, EPISODE];
     if (prevData && prevData.every((data, i) => data === newData[i])) return;
     prevEpisodeData.current = newData;
+
+    // Only reset the dropdown lists on a genuine reload — doing this before
+    // the dedupe guard above emptied the audio/video-type lists whenever the
+    // current selection was re-tapped, leaving the dropdowns blank.
+    setAvailDropdown(prev => ({ ...prev, audios: [], videoTypes: [] }));
     setEpisode(EPISODE);
 
     const episodes = providers[provider]?.episodes?.[audio] || [];
     setAvailDropdown(prev => ({ ...prev, audios: audiosWithEp }));
 
-    setThumbnail(
-      episodes[EPISODE]?.image ??
-        anime.bannerImage ??
-        anime.coverImage.extraLarge ??
-        undefined
-    );
+    // Validate candidates before showing them: a 404 must fall through to
+    // the banner/cover instead of becoming a broken poster/background.
+    const thumbnailId = ++thumbnailRequestId.current;
+    setThumbnail(null);
+    pickThumbnail([
+      episodes[EPISODE]?.image,
+      anime?.bannerImage,
+      anime?.coverImage?.extraLarge
+    ]).then(src => {
+      if (thumbnailId === thumbnailRequestId.current) setThumbnail(src);
+    });
 
     setVideoSource(prev => ({
       ...prev,
@@ -325,14 +440,7 @@ function Stream({
               getEpisodeData(provider, audio, type, idx);
             }}
           >
-            {episode.image && (
-              <img
-                onError={e => {
-                  e.target.outerHTML = `<div class="${style.noImage}">${episode.number}</div>`;
-                }}
-                src={episode.image}
-              />
-            )}
+            <EpisodeThumbnail src={episode.image} number={episode.number} />
 
             <div className={style.wrapper}>
               <div className={style.episodeTitle}>
@@ -391,6 +499,7 @@ function Stream({
 
     return () => {
       setOpenDropDown(null);
+      thumbnailRequestId.current += 1;
       setThumbnail(null);
       setAvailDropdown({
         videoTypes: [],
@@ -437,7 +546,11 @@ function Stream({
       </div>
       <div
         className={style.videoWrapper}
-        style={{ backgroundImage: `url(${thumbnail})` }}
+        style={
+          thumbnail
+            ? { backgroundImage: `url(${JSON.stringify(thumbnail)})` }
+            : undefined
+        }
       >
         {videoSource.error && !videoSource.src ? (
           <div className={style.errorOverlay}>
@@ -451,7 +564,7 @@ function Stream({
           <MyPlayer
             videoType={videoSource.kind || videoSource.type?.split(' ')?.at(-1)}
             // src={videoSource.src}
-            poster={thumbnail}
+            poster={thumbnail || undefined}
             onError={() => {
               // Player-level failure (HLS retries exhausted / media error):
               // surface it in the wrapper; clearing the dedupe ref lets the
@@ -489,33 +602,66 @@ function Stream({
             )}
 
             <div className={style.providerWrapper}>
-              <motion.div
-                layout
-                className={style.provider}
-                onClick={() => {
-                  setDropdownState('provider');
-                }}
-              >
-                {provider}
-              </motion.div>
-              <motion.div
-                layout
-                className={style.audio}
-                onClick={() => {
-                  setDropdownState('audio');
-                }}
-              >
-                {audio || '-'}
-              </motion.div>
-              <motion.div
-                layout
-                className={style.videoType}
-                onClick={() => {
-                  setDropdownState('video-type');
-                }}
-              >
-                {type || '-'}
-              </motion.div>
+              <div className={style.selectGroup}>
+                <div className={style.selectLabel}>
+                  <Server size={11} className={style.labelIcon} /> Provider
+                </div>
+                <motion.div
+                  layout
+                  className={style.provider}
+                  onClick={() => {
+                    setDropdownState('provider');
+                  }}
+                >
+                  {provider}
+                  <ChevronDown
+                    size={12}
+                    className={`${style.chevron} ${
+                      openDropdown === 'provider' ? style.chevronOpen : ''
+                    }`}
+                  />
+                </motion.div>
+              </div>
+              <div className={style.selectGroup}>
+                <div className={style.selectLabel}>
+                  <Headphones size={11} className={style.labelIcon} /> Audio
+                </div>
+                <motion.div
+                  layout
+                  className={style.audio}
+                  onClick={() => {
+                    setDropdownState('audio');
+                  }}
+                >
+                  {audio || '-'}
+                  <ChevronDown
+                    size={12}
+                    className={`${style.chevron} ${
+                      openDropdown === 'audio' ? style.chevronOpen : ''
+                    }`}
+                  />
+                </motion.div>
+              </div>
+              <div className={style.selectGroup}>
+                <div className={style.selectLabel}>
+                  <Film size={11} className={style.labelIcon} /> Video Type
+                </div>
+                <motion.div
+                  layout
+                  className={style.videoType}
+                  onClick={() => {
+                    setDropdownState('video-type');
+                  }}
+                >
+                  {type || '-'}
+                  <ChevronDown
+                    size={12}
+                    className={`${style.chevron} ${
+                      openDropdown === 'video-type' ? style.chevronOpen : ''
+                    }`}
+                  />
+                </motion.div>
+              </div>
 
               <AnimatePresence mode='wait'>
                 <motion.div
@@ -527,19 +673,29 @@ function Stream({
                 >
                   {openDropdown === 'provider' && (
                     <div className={style.providers} key='providers'>
-                      {availProviders
-                        .filter(i => i !== provider)
-                        .map(p => (
+                      {availProviders.map(p => {
+                        const Icon = PROVIDER_ICONS[p] || PROVIDER_ICONS.default;
+                        const eps = providerEpCount(providers, p);
+                        return (
                           <div
                             key={`provider-${p}`}
+                            className={`${style.providerItem} ${
+                              p === provider ? style.selected : ''
+                            }`}
+                            aria-current={p === provider ? 'true' : undefined}
                             onClick={() => {
                               setDropdownState('provider');
                               getEpisodeData(p, audio, type, episode);
                             }}
                           >
-                            {p}
+                            <Icon size={13} className={style.providerIcon} />
+                            <span>{p}</span>
+                            <span className={style.providerCount}>
+                              {eps} eps
+                            </span>
                           </div>
-                        ))}
+                        );
+                      })}
                       {providersLoading && (
                         <div className={style.dropdownLoading}>
                           Checking more providers . . .
@@ -549,36 +705,38 @@ function Stream({
                   )}
                   {openDropdown === 'audio' && (
                     <div className={style.audios}>
-                      {availDropdown.audios
-                        .filter(i => i !== audio)
-                        .map(a => (
-                          <div
-                            key={`audio-${a}`}
-                            onClick={() => {
-                              setDropdownState('audio');
-                              getEpisodeData(provider, a, type, episode);
-                            }}
-                          >
-                            {a}
-                          </div>
-                        ))}
+                      {availDropdown.audios.map(a => (
+                        <div
+                          key={`audio-${a}`}
+                          className={a === audio ? style.selected : undefined}
+                          aria-current={a === audio ? 'true' : undefined}
+                          onClick={() => {
+                            setDropdownState('audio');
+                            getEpisodeData(provider, a, type, episode);
+                          }}
+                        >
+                          <Volume2 size={13} className={style.rowIcon} />
+                          <span>{a}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
                   {openDropdown === 'video-type' && (
                     <div className={style.videoTypes}>
-                      {availDropdown.videoTypes
-                        .filter(i => i !== type)
-                        .map(t => (
-                          <div
-                            key={`video-type-${t}`}
-                            onClick={() => {
-                              setDropdownState('video-type');
-                              getEpisodeData(provider, audio, t, episode);
-                            }}
-                          >
-                            {t}
-                          </div>
-                        ))}
+                      {availDropdown.videoTypes.map(t => (
+                        <div
+                          key={`video-type-${t}`}
+                          className={t === type ? style.selected : undefined}
+                          aria-current={t === type ? 'true' : undefined}
+                          onClick={() => {
+                            setDropdownState('video-type');
+                            getEpisodeData(provider, audio, t, episode);
+                          }}
+                        >
+                          <MonitorPlay size={13} className={style.rowIcon} />
+                          <span>{t}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </motion.div>
