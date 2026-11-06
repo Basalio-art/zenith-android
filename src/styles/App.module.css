@@ -92,6 +92,7 @@
     max-width: calc(700px - 1rem);
     display: flex;
     justify-content: space-between;
+    gap: 1rem;
 
     .loadingInfo,
     .percent {
@@ -101,8 +102,6 @@
 }
 
 .invalidAppVersion,
-.noBackend,
-.backendChanges,
 .anilistStatus {
   position: absolute;
   top: 50%;
@@ -174,54 +173,6 @@
 
     &:active {
       opacity: 0.8;
-    }
-  }
-}
-
-.noBackend,
-.backendChanges {
-  h4 {
-    margin-bottom: -0.5rem;
-  }
-
-  a {
-    color: var(--color-3);
-    text-decoration: underline;
-  }
-
-  .bash1,
-  .bash2,
-  .bash3 {
-    position: relative;
-    font-size: 0.9rem;
-    width: 100%;
-    text-align: start;
-    padding: 1rem;
-    padding-top: 2rem;
-    background: color-mix(in srgb, var(--bg-color), transparent 80%);
-
-    .textType {
-      position: absolute;
-      top: 5px;
-      left: 10px;
-      color: var(--color-1);
-      opacity: 0.25;
-    }
-
-    .copyBtn {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      user-select: none;
-      pointer-events: auto;
-
-      > * {
-        pointer-events: none;
-      }
-    }
-
-    .text {
-      opacity: 0.75;
     }
   }
 }

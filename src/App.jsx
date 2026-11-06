@@ -56,9 +56,6 @@ function App() {
   const [searchIsLoading, setSearchIsLoading] = useState(false);
   const [viewAnimeData, setViewAnimeData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [bash1Copied, setBash1Copied] = useState(false);
-  const [bash2Copied, setBash2Copied] = useState(false);
-  const [bash3Copied, setBash3Copied] = useState(false);
   const [providers, setProviders] = useState(null);
   const [providersLoading, setProvidersLoading] = useState(false);
   const [selProvider, setSelProvider] = useState('bee');
@@ -73,17 +70,12 @@ function App() {
     appVersion: {
       required: APP_VERSION,
       ok: true
-    },
-    backendRun: true,
-    backendVersion: {
-      required: null,
-      ok: true
     }
   });
   const [loadingInfo, setLoadingInfo] = useState({
     msg: 'Loading . . .',
     loaded: 0,
-    loadLength: 3
+    loadLength: 2
   });
   const [page, setPage] = useState('home');
 
@@ -228,9 +220,9 @@ function App() {
       // Catalog now comes from AniList directly via the Service Manager.
       // Each rail is applied independently (same as the old per-request 200 check).
       const [trending, popular, recent] = await Promise.allSettled([
-        services.anilist.getTrending(1, 20),
-        services.anilist.getPopular(1, 20),
-        services.anilist.getRecent(1, 20)
+        services.anilist.getTrending(1, 10),
+        services.anilist.getPopular(1, 10),
+        services.anilist.getRecent(1, 10)
       ]);
 
       if (trending.status === 'fulfilled' && trending.value?.results) {
@@ -314,89 +306,20 @@ function App() {
     // Anivexa liveness via Service Manager (replaces old HEAD request).
     const hasBackend = async () => services.health.checkAnivexa();
 
-    return new Promise(resolve => {
+    return new Promise(async resolve => {
       let isRunning = false;
 
-      let intervalId = setInterval(async () => {
-        isRunning = await hasBackend();
+      isRunning = await hasBackend();
 
-        if (!isLoading) {
-          clearInterval(intervalId);
-          intervalId = null;
-        }
-
-        if (isRunning) {
-          setValid(prev => ({ ...prev, backendRun: true }));
-          if (intervalId) clearInterval(intervalId);
-          resolve(isRunning);
-        } else {
-          setValid(prev => ({ ...prev, backendRun: false }));
-        }
-      }, 2000);
-    });
-  };
-
-  const checkBackendV = () => {
-    // Anivexa has no /version endpoint; its info payload
-    // {name: "Anivexa API 2.2.1", ...} is parsed to "2.2.1" by the manager.
-    const CURRENT_VERSION = async () => services.health.getBackendVersion();
-
-    const ONLINE_VERSION = async () => {
-      try {
-        const { data } = await CapacitorHttp.get({
-          url: CONFIG_URL,
-          connectTimeout: 5000,
-          readTimeout: 5000
-        });
-        const remoteConfig = JSON.parse(data);
-
-        // Preferred key for the Anivexa stack.
-        if (remoteConfig['anivexa-version'])
-          return remoteConfig['anivexa-version'];
-
-        // Legacy anime-api key gates only when it targets the 2.x line.
-        const legacy = remoteConfig['backend-version'];
-        if (typeof legacy === 'string' && /^2\./.test(legacy)) return legacy;
-
-        return null;
-      } catch {
-        return null;
+      if (isRunning) {
+        resolve(isRunning);
+      } else {
+        setLoadingInfo(prev => ({
+          ...prev,
+          loaded: 1,
+          msg: 'Server is not running. Please try again.'
+        }));
       }
-    };
-
-    return new Promise(resolve => {
-      const runGate = async () => {
-        const version = await ONLINE_VERSION();
-
-        // Missing/unknown optional version config → pass gracefully.
-        if (!version) {
-          setValid(prev => ({
-            ...prev,
-            backendVersion: { ok: true, required: null }
-          }));
-          resolve(null);
-          return;
-        }
-
-        await new Promise(r => setTimeout(r, 2500));
-        const currentVersion = await CURRENT_VERSION();
-
-        if (currentVersion && version !== currentVersion) {
-          setValid(prev => ({
-            ...prev,
-            backendVersion: { ok: false, required: version }
-          }));
-        } else {
-          setValid(prev => ({
-            ...prev,
-            backendVersion: { ok: true, required: version }
-          }));
-
-          resolve(version);
-        }
-      };
-
-      runGate();
     });
   };
 
@@ -416,23 +339,11 @@ function App() {
     setLoadingInfo(prev => ({
       ...prev,
       loaded: 2,
-      msg: 'Verifying backend changes . . .'
-    }));
-    await checkBackendV();
-    setLoadingInfo(prev => ({
-      ...prev,
-      loaded: 3,
       msg: 'Initialization complete!'
     }));
 
     await wait();
     setIsLoading(false);
-  };
-
-  const handleCopy = async text => {
-    await Clipboard.write({
-      string: text
-    });
   };
 
   useEffect(() => {
@@ -474,14 +385,10 @@ function App() {
   }, [fallbackProvider]);
 
   useEffect(() => {
-    if (!isLoading && hasInternet && !ServerIsChecked.current) {
-      ServerIsChecked.current = false
-      serverStatus();
-    }
+    serverStatus();
 
     const reChecking = async () => {
       await checkVersion();
-      await checkBackendV();
     };
 
     if (isInitialInternetMount.current) {
@@ -543,7 +450,7 @@ function App() {
       });
 
       return () => {
-        nativeListener.then(handle => handel.remove());
+        nativeListener.then(handle => handle.remove());
       };
     }
   }, []);
@@ -743,166 +650,6 @@ function App() {
             </div>
             <div className={style.downloadBtn}>
               Download v{valid.appVersion.required}
-            </div>
-          </motion.div>
-        )}
-        {!valid.backendRun && (
-          <motion.div
-            className={style.noBackend}
-            key='no-backend'
-            initial={{
-              opacity: 0,
-              x: '-50%',
-              y: '-40%'
-            }}
-            animate={{
-              opacity: 1,
-              y: '-50%'
-            }}
-            exit={{
-              opacity: 0,
-              y: '-30%'
-            }}
-            transition={{
-              duration: 0.5
-            }}
-          >
-            <div className={style.head}>
-              <TriangleAlert className={style.triangleAlert} size={25} />
-              <h3>Local Server Required</h3>
-            </div>
-            <div>
-              Zenith requires a local backend server running in{' '}
-              <a
-                target='_blank'
-                rel='noreferrer noopener'
-                href='https://github.com/termux/termux-app/releases/latest'
-              >
-                Termux
-              </a>{' '}
-              to fetch data.
-            </div>
-            <h4>◈ First-time setup & start</h4>
-            <div className={style.bash1}>
-              <span className={style.textType}>bash</span>
-              <motion.div
-                className={style.copyBtn}
-                whileTap={{
-                  scale: 1.2
-                }}
-                transition={{
-                  type: 'spring'
-                }}
-                onClick={e => {
-                  handleCopy(e.target.parentNode.lastElementChild.innerText);
-                  setBash1Copied(true);
-                }}
-              >
-                {bash1Copied ? (
-                  <Check size={20} color='lime' />
-                ) : (
-                  <Copy size={20} />
-                )}
-              </motion.div>
-              <code className={style.text}>
-                pkg update -y && pkg upgrade -y && pkg install git nodejs-lts
-                golang -y && cd ~/zenith-project/anivexa-api && npm install &&
-                (PORT=9189 node server.js &) && cd ../stream-proxy && go build
-                -o /tmp/stream-proxy ./cmd/stream-proxy && PROXY_PORT=9190
-                ANIVEXA_BASE=http://localhost:9189 /tmp/stream-proxy
-              </code>
-            </div>
-            <h4>◈ If already installed, run this to start</h4>
-            <div className={style.bash2}>
-              <span className={style.textType}>bash</span>
-              <motion.div
-                className={style.copyBtn}
-                whileTap={{
-                  scale: 1.2
-                }}
-                transition={{
-                  type: 'spring'
-                }}
-                onClick={e => {
-                  console.log(e);
-                  handleCopy(e.target.parentNode.lastElementChild.innerText);
-                  setBash2Copied(true);
-                }}
-              >
-                {bash2Copied ? (
-                  <Check size={20} color='lime' />
-                ) : (
-                  <Copy size={20} />
-                )}
-              </motion.div>
-              <code className={style.text}>
-                cd ~/zenith-project/anivexa-api && (PORT=9189 node server.js &)
-                && cd ../stream-proxy && PROXY_PORT=9190
-                ANIVEXA_BASE=http://localhost:9189 /tmp/stream-proxy
-              </code>
-            </div>
-          </motion.div>
-        )}
-        {!valid.backendVersion.ok && (
-          <motion.div
-            className={style.backendChanges}
-            key='backend-changes'
-            initial={{
-              opacity: 0,
-              x: '-50%',
-              y: '-40%'
-            }}
-            animate={{
-              opacity: 1,
-              y: '-50%'
-            }}
-            exit={{
-              opacity: 0,
-              y: '-30%'
-            }}
-            transition={{
-              duration: 0.5
-            }}
-          >
-            <div className={style.head}>
-              <TriangleAlert className={style.triangleAlert} size={25} />
-              <h3>Local Server Out of Date</h3>
-            </div>
-
-            <p>
-              Your local backend is behind the required version. Pull the latest
-              code to continue.
-            </p>
-            <div className={style.bash3}>
-              <span className={style.textType}>bash</span>
-              <motion.div
-                className={style.copyBtn}
-                whileTap={{
-                  scale: 1.2
-                }}
-                transition={{
-                  type: 'spring'
-                }}
-                onClick={e => {
-                  console.log(e);
-                  handleCopy(e.target.parentNode.lastElementChild.innerText);
-                  setBash3Copied(true);
-                }}
-              >
-                {bash3Copied ? (
-                  <Check size={20} color='lime' />
-                ) : (
-                  <Copy size={20} />
-                )}
-              </motion.div>
-
-              <code>
-                pkill -f stream-proxy; pkill -f "node server.js"; cd
-                ~/zenith-project/anivexa-api && git pull; (PORT=9189 node
-                server.js &) && cd ../stream-proxy && go build -o
-                /tmp/stream-proxy ./cmd/stream-proxy && PROXY_PORT=9190
-                ANIVEXA_BASE=http://localhost:9189 /tmp/stream-proxy
-              </code>
             </div>
           </motion.div>
         )}

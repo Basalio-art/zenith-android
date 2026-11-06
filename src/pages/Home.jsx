@@ -108,7 +108,7 @@ function Home({ trendingAnime, popularAnime, latestAnime }) {
             Discover <span>Zenith</span>
           </span>
           <span className={style.bottom}>
-            Welcome back, <span>Ervin-kun 👋</span>
+            Welcome back, <span>User-kun 👋</span>
           </span>
         </div>
       </div>
