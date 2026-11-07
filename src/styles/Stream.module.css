@@ -136,7 +136,6 @@
         gap: 4px;
         flex: 1;
         align-items: center;
-        
       }
 
       .selectLabel {
@@ -149,6 +148,7 @@
         align-items: center;
         gap: 4px;
         justify-content: flex-start;
+        text-wrap: nowrap;
       }
 
       .provider,
@@ -167,6 +167,7 @@
         height: 100%;
         transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
         text-align: left;
+        text-wrap: nowrap;
         flex: 1 0;
 
         &:hover {
@@ -292,8 +293,12 @@
     }
 
     .episodes {
+      padding: 1rem;
+      border-radius: 1rem;
       display: flex;
       flex-direction: column;
+      background: color-mix(in srgb, var(--color-2), transparent 95%);
+      border: 1px solid color-mix(in srgb, var(--color-2), transparent 75%);
       gap: 10px;
       overflow-y: auto;
       max-height: 350px;

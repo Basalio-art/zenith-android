@@ -653,7 +653,7 @@ function Stream({
                     setDropdownState('video-type');
                   }}
                 >
-                  {type || '-'}
+                  {type?.split(" ")[0] || '―'}
                   <ChevronDown
                     size={12}
                     className={`${style.chevron} ${

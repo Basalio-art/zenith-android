@@ -396,6 +396,10 @@ function App() {
       return;
     }
 
+    const backendCheck = async () => {
+      await checkBackendR();
+    };
+
     let intervalFetch;
     if (!hasInternet) {
       newMessage('No internet connection detected', 'alert');
@@ -405,6 +409,7 @@ function App() {
       intervalFetch = setInterval(fetchAnimeData, 360000);
 
       reChecking();
+      backendCheck();
     }
     return () => {
       clearInterval(intervalFetch);
@@ -421,22 +426,16 @@ function App() {
 
     fetchAnimeData();
 
-    const backendCheck = async () => {
-      await checkBackendR();
-    };
-
     const intervalChecker = setInterval(internetCheck, 10000);
 
     window.addEventListener('online', internetCheck);
     window.addEventListener('offline', internetCheck);
-    window.addEventListener('touchend', backendCheck);
 
     return () => {
       clearInterval(intervalChecker);
 
       window.removeEventListener('online', internetCheck);
       window.removeEventListener('offline', internetCheck);
-      window.removeEventListener('touchend', backendCheck);
     };
   }, [isLoading]);
 

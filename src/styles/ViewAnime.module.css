@@ -112,7 +112,6 @@
     &[data-view-type='video'] {
       position: relative;
       transition:
-        margin-bottom 0.5s,
         mask-image 0.5s;
 
       &::after {
@@ -125,17 +124,9 @@
         transition: opacity 0.5s;
       }
 
-      &[data-video-loaded='false'] {
-        margin-bottom: -75px;
-      }
-
-      &[data-video-loaded='true'] {
-        margin-bottom: 0;
-
-        &::after {
+      &[data-video-loaded='true']::after {
           opacity: 0;
           pointer-events: none;
-        }
       }
     }
   }
