@@ -14,7 +14,7 @@ import {
   Headphones,
   Film,
   Volume2,
-  MonitorPlay,
+  MonitorPlay
 } from 'lucide-react';
 
 // Case/whitespace-tolerant title normalization for the meta-title gate.
@@ -128,7 +128,7 @@ const PROVIDER_ICONS = {
   zoro: Tv,
   animeflix: Tv,
   animeheaven: Tv,
-  yugen: HardDrive,
+  yugen: HardDrive
 };
 
 // Longest audio list length for a provider = how many episodes are available.
@@ -158,6 +158,8 @@ function Stream({
     handleBack
   } = useContext(AppContext);
 
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [isLongSypnosis, setIsLongSypnosis] = useState(false);
   const [thumbnail, setThumbnail] = useState(null);
   const [episode, setEpisode] = useState(0);
   const [openDropdown, setOpenDropDown] = useState(null);
@@ -178,6 +180,7 @@ function Stream({
   const countDownRef = useRef(null);
   const getEpisodeDataId = useRef(0);
   const thumbnailRequestId = useRef(0);
+  const sypnosisRef = useRef(null);
 
   const setDropdownState = dr => {
     if (openDropdown === dr) setOpenDropDown(null);
@@ -456,6 +459,33 @@ function Stream({
   );
 
   useEffect(() => {
+    const sypnosisElement = sypnosisRef.current;
+    if (!sypnosisElement) return;
+
+    if (sypnosisElement.scrollHeight >= 57.6) {
+      setIsLongSypnosis(true);
+    } else {
+      setIsLongSypnosis(false);
+    }
+
+    let timeoutId;
+
+    if (descExpanded) {
+      sypnosisElement.classList.add(style.expanded);
+    } else {
+      clearTimeout(timeoutId);
+      sypnosisElement.style.height = '57.6px';
+      timeoutId = setTimeout(() => {
+        sypnosisElement.classList.remove(style.expanded);
+      }, 500);
+    }
+    return () => {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    };
+  }, [descExpanded]);
+
+  useEffect(() => {
     setNavigatorOpen(false);
     navigate('stream', 'preview');
 
@@ -498,6 +528,8 @@ function Stream({
     }
 
     return () => {
+      setDescExpanded(false);
+      setIsLongSypnosis(false);
       setOpenDropDown(null);
       thumbnailRequestId.current += 1;
       setThumbnail(null);
@@ -595,9 +627,33 @@ function Stream({
             </div>
 
             {data.description && (
-              <div className={style.sypnosisContainer}>
+              <div className={`${style.sypnosisContainer} ${isLongSypnosis ? style.islong : ''}`}>
                 <div className={style.head}>Sypnosis</div>
-                <div className={style.sypnosis}>{data.description}</div>
+                <motion.div
+                  className={style.sypnosis}
+                  ref={sypnosisRef}
+                  initial={false}
+                  onClick={() => setDescExpanded(value => !value)}
+                  animate={{
+                    height: descExpanded
+                      ? 'auto'
+                      : isLongSypnosis
+                      ? 57.6
+                      : 'auto'
+                  }}
+                >
+                  {data.description}
+                </motion.div>
+                <div
+                  className={style.moreLess}
+                  onClick={() => setDescExpanded(value => !value)}
+                >
+                  {isLongSypnosis
+                    ? descExpanded
+                      ? 'Show Less'
+                      : 'Read More'
+                    : null}
+                </div>
               </div>
             )}
 
@@ -653,7 +709,7 @@ function Stream({
                     setDropdownState('video-type');
                   }}
                 >
-                  {type?.split(" ")[0] || '―'}
+                  {type?.split(' ')[0] || '―'}
                   <ChevronDown
                     size={12}
                     className={`${style.chevron} ${
@@ -674,7 +730,8 @@ function Stream({
                   {openDropdown === 'provider' && (
                     <div className={style.providers} key='providers'>
                       {availProviders.map(p => {
-                        const Icon = PROVIDER_ICONS[p] || PROVIDER_ICONS.default;
+                        const Icon =
+                          PROVIDER_ICONS[p] || PROVIDER_ICONS.default;
                         const eps = providerEpCount(providers, p);
                         return (
                           <div

@@ -27,11 +27,13 @@ function ViewAnime({ anime: animeProp, providers }) {
   } = useContext(AppContext);
 
   const animeIDRef = useRef(null);
+  const descriptionRef = useRef(null);
 
   const [detail, setDetail] = useState(null);
   const [trailerLoaded, setTrailerLoaded] = useState(false);
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [isLongDescription, setIsLongDescription] = useState(false);
 
   // Progressive enhancement: render the clicked list item immediately and
   // overlay fresher AniList detail once it arrives. Keyed by id so clicking
@@ -149,8 +151,39 @@ function ViewAnime({ anime: animeProp, providers }) {
 
     getProviders(animeProp?.id);
     // New card click (or unmount) → collapsed description.
-    return () => setDescExpanded(false);
+
+    return () => {
+      setDescExpanded(false);
+      setIsLongDescription(false);
+    };
   }, [animeProp]);
+
+  useEffect(() => {
+    const descriptionElement = descriptionRef.current;
+    if (!descriptionElement) return;
+
+    if (descriptionElement.scrollHeight >= 72) {
+      setIsLongDescription(true);
+    } else {
+      setIsLongDescription(false);
+    }
+
+    let timeoutId;
+
+    if (descExpanded) {
+      descriptionElement.classList.add(style.expanded);
+    } else {
+      clearTimeout(timeoutId);
+      descriptionElement.style.height = '72px';
+      timeoutId = setTimeout(() => {
+        descriptionElement.classList.remove(style.expanded);
+      }, 500);
+    }
+    return () => {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    };
+  }, [descExpanded]);
 
   useEffect(() => {
     // Detail fetch keyed on the id: progressive enhancement over the list
@@ -189,7 +222,9 @@ function ViewAnime({ anime: animeProp, providers }) {
 
       <div
         className={style.trailerWrapper}
-        data-view-type={`${anime.trailer ? 'video' : anime.bannerImage ? 'banner' : 'cover'}`}
+        data-view-type={`${
+          anime.trailer ? 'video' : anime.bannerImage ? 'banner' : 'cover'
+        }`}
         data-video-loaded={
           anime.trailer ? (trailerLoaded ? true : false) : undefined
         }
@@ -252,15 +287,36 @@ function ViewAnime({ anime: animeProp, providers }) {
           </div>
         )}
 
-        <p
-          className={`${style.description}${descExpanded ? ' ' + style.expanded : ''}`}
+        <div
+          className={`${style.descriptionWrapper} ${
+            isLongDescription ? style.isLong : ''
+          }`}
           onClick={() => setDescExpanded(value => !value)}
-          dangerouslySetInnerHTML={{
-            __html:
-              anime.description ||
-              '<i>No description available for this title.</i>'
-          }}
-        ></p>
+        >
+          <motion.p
+            className={style.description}
+            ref={descriptionRef}
+            animate={{
+              height: descExpanded ? 'auto' : isLongDescription ? 72 : 'auto'
+            }}
+            transition={{ duration: 0.5 }}
+            dangerouslySetInnerHTML={{
+              __html:
+                anime.description ||
+                '<i>No description available for this title.</i>'
+            }}
+          ></motion.p>
+          <div
+            className={style.moreLess}
+            onClick={() => setDescExpanded(value => !value)}
+          >
+            {isLongDescription
+              ? descExpanded
+                ? 'Show Less'
+                : 'Read More'
+              : null}
+          </div>
+        </div>
 
         <div className={style.stats}>
           {anime.tags.length > 0 && (
@@ -294,8 +350,8 @@ function ViewAnime({ anime: animeProp, providers }) {
               {anime.nextAiringEpisode
                 ? Math.max(anime.nextAiringEpisode.episode - 1, 1)
                 : anime.episodes
-                  ? anime.episodes
-                  : '-'}
+                ? anime.episodes
+                : '-'}
             </span>
           </p>
 
@@ -391,7 +447,9 @@ function ViewAnime({ anime: animeProp, providers }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            key={`${loadingProviders ? 'loading' : 'loaded'}-anime-providers-${true ? 'true' : 'false'}`}
+            key={`${loadingProviders ? 'loading' : 'loaded'}-anime-providers-${
+              true ? 'true' : 'false'
+            }`}
             className={style.watchNDownload}
           >
             {loadingProviders ? (

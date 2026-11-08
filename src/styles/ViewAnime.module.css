@@ -19,8 +19,7 @@
     top: 0;
     left: 0;
     z-index: 50;
-    box-shadow:
-      0 10px 24px color-mix(in srgb, var(--color-2), transparent 90%),
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--color-2), transparent 90%),
       0 1px 0 color-mix(in srgb, var(--color-2), transparent 70%);
 
     .backWrapper {
@@ -55,6 +54,7 @@
     transition: background-color 0.5s;
     overflow: hidden;
     flex-shrink: 0;
+    user-select: none;
     position: relative;
 
     .thumbnail {
@@ -111,8 +111,7 @@
 
     &[data-view-type='video'] {
       position: relative;
-      transition:
-        mask-image 0.5s;
+      transition: mask-image 0.5s;
 
       &::after {
         content: '';
@@ -125,8 +124,8 @@
       }
 
       &[data-video-loaded='true']::after {
-          opacity: 0;
-          pointer-events: none;
+        opacity: 0;
+        pointer-events: none;
       }
     }
   }
@@ -162,25 +161,45 @@
       }
     }
 
-    .description {
-      font-size: 0.9rem;
+    .descriptionWrapper {
       margin-bottom: 1rem;
-      line-height: 1.25;
-
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 4;
-      line-clamp: 4;
-      text-overflow: ellipsis;
-
+      position: relative;
       cursor: pointer;
-      -webkit-user-select: none;
       user-select: none;
 
-      &.expanded {
-        -webkit-line-clamp: none;
-        line-clamp: none;
+      &.isLong {
+        padding-bottom: 1rem;
+      }
+
+      .description {
+        font-size: 0.9rem;
+        line-height: 1.25;
+
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+        text-overflow: ellipsis;
+
+        &.expanded {
+          -webkit-line-clamp: none;
+          line-clamp: none;
+        }
+
+      }
+
+      .moreLess {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: var(--color-3);
+        border-radius: 100em;
+        cursor: pointer;
+        pointer-events: none;
+        user-select: none;
       }
     }
 
@@ -247,7 +266,7 @@
         display: flex;
         gap: 0.5rem;
         align-items: center;
-        justify-content: center;
+        justify-content: start;
 
         .watch,
         .download {
@@ -260,9 +279,7 @@
           font-weight: 600;
           cursor: pointer;
           box-shadow: var(--glow-sm);
-          transition:
-            box-shadow 0.15s,
-            opacity 0.15s;
+          transition: box-shadow 0.15s, opacity 0.15s;
 
           &:hover {
             box-shadow: var(--glow-md);
