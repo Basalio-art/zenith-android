@@ -61,6 +61,7 @@
     z-index: 5;
 
     .backBtn {
+      cursor: pointer;
       user-select: none;
 
       > * {
@@ -117,6 +118,7 @@
         -webkit-line-clamp: 3;
         line-clamp: 3;
         overflow: hidden;
+        cursor: pointer;
         text-overflow: ellipsis;
 
         &.expanded {
@@ -130,10 +132,10 @@
         bottom: 1rem;
         right: 1rem;
         font-weight: bold;
+        font-size: 0.75rem;
         color: var(--color-3);
         border-radius: 100em;
         cursor: pointer;
-        pointer-events: none;
         user-select: none;
       }
     }

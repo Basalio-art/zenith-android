@@ -1,6 +1,14 @@
 import style from '../styles/Stream.module.css';
 import { motion, AnimatePresence } from 'motion/react';
-import { useContext, useState, useEffect, useRef, memo, useMemo } from 'react';
+import {
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  memo,
+  useMemo,
+  useCallback
+} from 'react';
 import { AppContext } from '../App.jsx';
 import { services, ANIVEXA_PROVIDERS } from '../services/manager/index.js';
 import { MyPlayer } from '../components/Video/Video.jsx';
@@ -163,6 +171,7 @@ function Stream({
   const [thumbnail, setThumbnail] = useState(null);
   const [episode, setEpisode] = useState(0);
   const [openDropdown, setOpenDropDown] = useState(null);
+  const [hideNavTop, setHideNavTop] = useState(false);
   const [availDropdown, setAvailDropdown] = useState({
     audios: [],
     videoTypes: []
@@ -181,6 +190,9 @@ function Stream({
   const getEpisodeDataId = useRef(0);
   const thumbnailRequestId = useRef(0);
   const sypnosisRef = useRef(null);
+  const containerRef = useRef(null);
+  const lastScrollRef = useRef(0);
+  const titleAnimationRef = useRef(null);
 
   const setDropdownState = dr => {
     if (openDropdown === dr) setOpenDropDown(null);
@@ -400,35 +412,56 @@ function Stream({
 
   const animeTitleDisplay = () => {
     const animeTitle = animeTitleRef.current;
-
     if (!animeTitle) return;
 
-    const firstChild = animeTitle.children[0];
+    const wrapper = animeTitle.children[0]; 
 
-    if (animeTitle.clientWidth < firstChild.scrollWidth) {
-      animeTitle.children[0].appendChild(
-        firstChild.children[0].cloneNode(true)
-      );
+    const observer = new ResizeObserver(() => {
+      // 1. Instantly halt any running marquee timelines
+      titleAnimationRef.current?.cancel();
+      titleAnimationRef.current = null;
 
-      animeTitle.children[0].animate(
-        [
-          {
-            transform: 'translateX(0)',
-            offset: 0.1
-          },
-          {
-            transform: `translateX(-${
-              firstChild.children[0].clientWidth + 50
-            }px)`
-          }
-        ],
-        {
-          duration: 10000,
-          easing: 'ease-in-out',
-          iterations: Infinity
+      // 2. Erase any old duplicate clone tracks so we can measure accurately
+      if (wrapper.children.length > 1) {
+        while (wrapper.children.length > 1) {
+          wrapper.removeChild(wrapper.lastChild);
         }
-      );
-    }
+      }
+
+      // 3. Reset positions to baseline for an authentic evaluation
+      wrapper.style.transform = 'none';
+
+      const originalTextNode = wrapper.children[0];
+      if (!originalTextNode) return;
+
+      // 4. Evaluate overflow boundaries cleanly
+      const isOverlapping =
+        animeTitle.clientWidth < originalTextNode.offsetWidth;
+
+      if (isOverlapping) {
+        // 5. Duplicate ONLY when overlapping
+        const textClone = originalTextNode.cloneNode(true);
+        wrapper.appendChild(textClone);
+
+        // 6. Fire up the marquee translation timeline
+        titleAnimationRef.current = wrapper.animate(
+          [
+            { transform: 'translateX(0)', offset: 0.1 },
+            { transform: `translateX(-${originalTextNode.offsetWidth + 50}px)` }
+          ],
+          {
+            duration: 10000,
+            easing: 'linear', // 'linear' prevents weird snapping jumps at loop boundaries
+            iterations: Infinity
+          }
+        );
+      }
+    });
+
+    observer.observe(animeTitle);
+
+    // Return the observer reference so we can detach it in our master unmount block
+    return observer;
   };
 
   const renderedEpisode = useMemo(
@@ -458,15 +491,26 @@ function Stream({
     [selectedProviderEpisodes, videoSource]
   );
 
+  const sypnosisRefCallback = useCallback(node => {
+    sypnosisRef.current = node;
+
+    const observer = new ResizeObserver(() => {
+      if (node.scrollHeight > 57.6) {
+        setIsLongSypnosis(true);
+      } else {
+        setIsLongSypnosis(false);
+      }
+    });
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     const sypnosisElement = sypnosisRef.current;
     if (!sypnosisElement) return;
-
-    if (sypnosisElement.scrollHeight >= 57.6) {
-      setIsLongSypnosis(true);
-    } else {
-      setIsLongSypnosis(false);
-    }
 
     let timeoutId;
 
@@ -496,7 +540,7 @@ function Stream({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     getEpisodeData(PROVIDER, AUDIO, selVideoType);
 
-    animeTitleDisplay();
+    const titleObserver = animeTitleDisplay();
 
     const nextAiring = anime.nextAiringEpisode;
     let countdownInterval = null;
@@ -527,7 +571,35 @@ function Stream({
       }, 1000);
     }
 
+    const containerEl = containerRef.current;
+
+    const handleScroll = e => {
+      const target = e.target;
+
+      if (target.scrollTop > lastScrollRef.current && target.scrollTop > 50) {
+        setHideNavTop(true);
+      } else {
+        setHideNavTop(false);
+      }
+
+      lastScrollRef.current = target.scrollTop;
+    };
+
+    if (containerEl) {
+      containerEl.addEventListener('scroll', handleScroll, { passive: true });
+    }
+
     return () => {
+      if (titleObserver) {
+        titleObserver.disconnect();
+      }
+
+      if (titleAnimationRef.current) {
+        titleAnimationRef.current.cancel();
+        titleAnimationRef.current = null;
+      }
+
+      containerEl.removeEventListener('scroll', handleScroll);
       setDescExpanded(false);
       setIsLongSypnosis(false);
       setOpenDropDown(null);
@@ -565,8 +637,13 @@ function Stream({
   }, [availProviders.length, videoSource.provider]);
 
   return (
-    <div className={style.container}>
-      <div className={style.animeTitle}>
+    <div className={style.container} ref={containerRef}>
+      <motion.div
+        className={style.animeTitle}
+        initial={false}
+        animate={{ y: hideNavTop ? -100 : 0, opacity: hideNavTop ? 0 : 1 }}
+        transition={{ ease: 'easeInOut' }}
+      >
         <div className={style.backBtn} onClick={handleBack}>
           <ArrowLeft size={27.5} />
         </div>
@@ -575,7 +652,7 @@ function Stream({
             <span>{anime.title.english || anime.title.romaji}</span>
           </div>
         </div>
-      </div>
+      </motion.div>
       <div
         className={style.videoWrapper}
         style={
@@ -627,11 +704,14 @@ function Stream({
             </div>
 
             {data.description && (
-              <div className={`${style.sypnosisContainer} ${isLongSypnosis ? style.islong : ''}`}>
+              <div
+                className={`${style.sypnosisContainer} ${
+                  isLongSypnosis ? style.islong : ''
+                }`}
+              >
                 <div className={style.head}>Sypnosis</div>
                 <motion.div
                   className={style.sypnosis}
-                  ref={sypnosisRef}
                   initial={false}
                   onClick={() => setDescExpanded(value => !value)}
                   animate={{
@@ -641,6 +721,7 @@ function Stream({
                       ? 57.6
                       : 'auto'
                   }}
+                  ref={sypnosisRefCallback}
                 >
                   {data.description}
                 </motion.div>

@@ -1,7 +1,15 @@
 import style from '../styles/ViewAnime.module.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
-import { useState, useContext, useEffect, useMemo, useRef, memo } from 'react';
+import {
+  useState,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  memo,
+  useCallback
+} from 'react';
 import { AppContext } from '../App.jsx';
 import {
   services,
@@ -28,12 +36,15 @@ function ViewAnime({ anime: animeProp, providers }) {
 
   const animeIDRef = useRef(null);
   const descriptionRef = useRef(null);
+  const lastScrollRef = useRef(0);
+  const containerRef = useRef(null);
 
   const [detail, setDetail] = useState(null);
   const [trailerLoaded, setTrailerLoaded] = useState(false);
   const [loadingProviders, setLoadingProviders] = useState(true);
   const [descExpanded, setDescExpanded] = useState(false);
   const [isLongDescription, setIsLongDescription] = useState(false);
+  const [hideNavTop, setHideNavTop] = useState(false);
 
   // Progressive enhancement: render the clicked list item immediately and
   // overlay fresher AniList detail once it arrives. Keyed by id so clicking
@@ -58,7 +69,7 @@ function ViewAnime({ anime: animeProp, providers }) {
 
   const embededLink = () => {
     if (anime.trailer.site === 'youtube') {
-      return `https://www.youtube.com/embed/${anime.trailer.id}?fs=0&autoplay=1`;
+      return `https://www.youtube.com/embed/${anime.trailer.id}?fs=0&autoplay=0`;
     } else if (anime.trailer.site === 'dailymotion') {
       return `https://www.dailymotion.com/embed/video/${anime.trailer.id}`;
     }
@@ -162,11 +173,14 @@ function ViewAnime({ anime: animeProp, providers }) {
     const descriptionElement = descriptionRef.current;
     if (!descriptionElement) return;
 
-    if (descriptionElement.scrollHeight >= 72) {
-      setIsLongDescription(true);
-    } else {
-      setIsLongDescription(false);
-    }
+    const observer = new ResizeObserver(() => {
+      if (descriptionElement.scrollHeight > 72) {
+        setIsLongDescription(true);
+      } else {
+        setIsLongDescription(false);
+      }
+    });
+    observer.observe(descriptionElement);
 
     let timeoutId;
 
@@ -205,20 +219,44 @@ function ViewAnime({ anime: animeProp, providers }) {
 
   useEffect(() => {
     setNavigatorOpen(false);
+
+    const containerEl = containerRef.current;
+    if (!containerEl) return;
+
+    const handleScroll = e => {
+      const target = e.target;
+
+      if (target.scrollTop > lastScrollRef.current && target.scrollTop > 50) {
+        setHideNavTop(true);
+      } else {
+        setHideNavTop(false);
+      }
+
+      lastScrollRef.current = target.scrollTop;
+    };
+
+    containerEl.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
       setTrailerLoaded(false);
+      containerEl.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
   return (
-    <section className={style.viewAnimeSection}>
-      <div className={style.backContainer}>
+    <section className={style.viewAnimeSection} ref={containerRef}>
+      <motion.div
+        className={style.backContainer}
+        initial={false}
+        animate={{ y: hideNavTop ? -100 : 0, opacity: hideNavTop ? 0 : 1 }}
+        transition={{ ease: 'easeInOut' }}
+      >
         <div className={style.backWrapper} onClick={handleBack}>
           <ArrowLeft className={style.backButton} size={30} />
         </div>
 
         <div className={style.headTitle}>Anime Overview</div>
-      </div>
+      </motion.div>
 
       <div
         className={style.trailerWrapper}
