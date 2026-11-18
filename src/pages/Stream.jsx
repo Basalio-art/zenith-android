@@ -22,7 +22,8 @@ import {
   Headphones,
   Film,
   Volume2,
-  MonitorPlay
+  MonitorPlay,
+  Clapperboard
 } from 'lucide-react';
 
 // Case/whitespace-tolerant title normalization for the meta-title gate.
@@ -414,44 +415,38 @@ function Stream({
     const animeTitle = animeTitleRef.current;
     if (!animeTitle) return;
 
-    const wrapper = animeTitle.children[0]; 
+    const wrapper = animeTitle.children[0];
 
     const observer = new ResizeObserver(() => {
-      // 1. Instantly halt any running marquee timelines
       titleAnimationRef.current?.cancel();
       titleAnimationRef.current = null;
 
-      // 2. Erase any old duplicate clone tracks so we can measure accurately
       if (wrapper.children.length > 1) {
         while (wrapper.children.length > 1) {
           wrapper.removeChild(wrapper.lastChild);
         }
       }
 
-      // 3. Reset positions to baseline for an authentic evaluation
       wrapper.style.transform = 'none';
 
       const originalTextNode = wrapper.children[0];
       if (!originalTextNode) return;
 
-      // 4. Evaluate overflow boundaries cleanly
       const isOverlapping =
         animeTitle.clientWidth < originalTextNode.offsetWidth;
 
       if (isOverlapping) {
-        // 5. Duplicate ONLY when overlapping
         const textClone = originalTextNode.cloneNode(true);
         wrapper.appendChild(textClone);
 
-        // 6. Fire up the marquee translation timeline
         titleAnimationRef.current = wrapper.animate(
           [
-            { transform: 'translateX(0)', offset: 0.1 },
+            { transform: 'translateX(0)', offset: 0.2 },
             { transform: `translateX(-${originalTextNode.offsetWidth + 50}px)` }
           ],
           {
             duration: 10000,
-            easing: 'linear', // 'linear' prevents weird snapping jumps at loop boundaries
+            easing: 'linear',
             iterations: Infinity
           }
         );
@@ -460,7 +455,6 @@ function Stream({
 
     observer.observe(animeTitle);
 
-    // Return the observer reference so we can detach it in our master unmount block
     return observer;
   };
 
@@ -891,7 +885,12 @@ function Stream({
             )}
 
             <div className={style.episodes}>
-              {renderedEpisode ?? 'No avail episodes change provider'}
+              {renderedEpisode && (
+                <h4 className={style.episodesHeader}><Clapperboard size={13} /> EPISODES</h4>
+              )}
+              <div className={style.wrapper}>
+                {renderedEpisode ?? 'No avail episodes change provider'}
+              </div>
             </div>
           </div>
         );
