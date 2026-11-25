@@ -83,7 +83,6 @@ function App() {
   const loadingPercentRef = useRef(0);
 
   const isInitialInternetMount = useRef(true);
-  const ServerIsChecked = useRef(false);
   const bodyRef = useRef(null);
 
   const currentPageData = useRef({
@@ -568,7 +567,111 @@ function App() {
             exit={{ opacity: 0, transition: { duration: 0.5 } }}
             className={style.loadingPage}
           >
-            <img src='./icon/logo.png' type='image/png' />
+            <div className={style.logoWrapper}>
+              <svg
+                version='1.1'
+                viewBox='0 0 522.82 522.82'
+                xmlns='http://www.w3.org/2000/svg'
+              >
+                <defs>
+                  <linearGradient
+                    id='linearGradient5'
+                    x1='290.28'
+                    x2='290.21'
+                    y1='167.82'
+                    y2='282.5'
+                    gradientUnits='userSpaceOnUse'
+                  >
+                    <stop stop-color='#d426c3' offset='0' />
+                    <stop stop-color='#76baff' offset='1' />
+                  </linearGradient>
+                </defs>
+                <path
+                  d='m260.8 167.77-33.85 96.535m81.715-22.229 45.966-.30793-13.962 40.489-71.94.34921m71.881-73.699-107.12 107.01 119.91-.0798-14.446 41.002-204.68-.11635 148.24-147.81h98.764l14.403-40.926-210.78-.3315-14.37 41.237 75.725.39283'
+                  fill='none'
+                  stroke='url(#linearGradient5)'
+                  stroke-linecap='round'
+                  stroke-width='14'
+                />
+                <path
+                  d='m324.55 234.96-14.369 14.02 8.8424-.11635 14.253-13.962z'
+                  fill='#6e57cb'
+                />
+                <path
+                  d='m283.89 275.45-14.165 14.148 9.0086-.0308 13.948-14.062z'
+                  fill='#4d86d5'
+                />
+                <path
+                  d='m315.59 224.06 19.786-.0823 8.227-8.1859-19.868.12341z'
+                  fill='#b944bc'
+                />
+                <path
+                  d='m243.82 237.68 4.6533-13.597-22.407 21.99-4.9302 14.253z'
+                  fill='#8f4dd5'
+                />
+                <path
+                  d='m232.37 202.24 8.8133.0291-4.7702 13.933-8.697-.0291z'
+                  fill='#9634df'
+                />
+                <path
+                  d='m250.86 174.71 14.873-.0682-2.9016 8.1713-14.777-.0682z'
+                  fill='#872cba'
+                />
+              </svg>
+
+              <div className={style.blur}>
+                <svg
+                  version='1.1'
+                  viewBox='0 0 522.82 522.82'
+                  xmlns='http://www.w3.org/2000/svg'
+                >
+                  <defs>
+                    <linearGradient
+                      id='linearGradient5'
+                      x1='290.28'
+                      x2='290.21'
+                      y1='167.82'
+                      y2='282.5'
+                      gradientUnits='userSpaceOnUse'
+                    >
+                      <stop stop-color='#d426c3' offset='0' />
+                      <stop stop-color='#76baff' offset='1' />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d='m260.8 167.77-33.85 96.535m81.715-22.229 45.966-.30793-13.962 40.489-71.94.34921m71.881-73.699-107.12 107.01 119.91-.0798-14.446 41.002-204.68-.11635 148.24-147.81h98.764l14.403-40.926-210.78-.3315-14.37 41.237 75.725.39283'
+                    fill='none'
+                    stroke='url(#linearGradient5)'
+                    stroke-linecap='round'
+                    stroke-width='14'
+                  />
+                  <path
+                    d='m324.55 234.96-14.369 14.02 8.8424-.11635 14.253-13.962z'
+                    fill='#6e57cb'
+                  />
+                  <path
+                    d='m283.89 275.45-14.165 14.148 9.0086-.0308 13.948-14.062z'
+                    fill='#4d86d5'
+                  />
+                  <path
+                    d='m315.59 224.06 19.786-.0823 8.227-8.1859-19.868.12341z'
+                    fill='#b944bc'
+                  />
+                  <path
+                    d='m243.82 237.68 4.6533-13.597-22.407 21.99-4.9302 14.253z'
+                    fill='#8f4dd5'
+                  />
+                  <path
+                    d='m232.37 202.24 8.8133.0291-4.7702 13.933-8.697-.0291z'
+                    fill='#9634df'
+                  />
+                  <path
+                    d='m250.86 174.71 14.873-.0682-2.9016 8.1713-14.777-.0682z'
+                    fill='#872cba'
+                  />
+                </svg>
+              </div>
+            </div>
             <div className={style.loadingIndicator}>
               <motion.div
                 initial={{ scaleX: 0 }}

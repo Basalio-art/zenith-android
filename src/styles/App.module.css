@@ -68,8 +68,26 @@
   align-items: center;
   justify-content: center;
 
-  img {
+  .logoWrapper {
     width: 200px;
+    position: relative;
+
+    > * {
+      height: 100%;
+      width: 100%;
+    }
+
+    .blur {
+      position: absolute;
+      top: 0;
+      left: 0;
+      filter: blur(1rem);
+      
+      svg {
+        height: 100%;
+        width: 100%;
+      }
+    }
   }
 
   .loadingIndicator {
